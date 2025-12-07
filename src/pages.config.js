@@ -21,7 +21,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Quizzes",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };
