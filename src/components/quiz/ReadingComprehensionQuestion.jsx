@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, BookOpen } from 'lucide-react';
@@ -9,6 +9,12 @@ export default function ReadingComprehensionQuestion({
   onAnswer, 
   showResults 
 }) {
+  const passages = question.passages?.length > 0 
+    ? question.passages 
+    : [{ id: 'main', title: 'Passage', content: question.passage }];
+  
+  const [activeTab, setActiveTab] = useState(passages[0]?.id);
+
   const handleAnswer = (questionId, answer) => {
     if (showResults) return;
     onAnswer({
@@ -17,21 +23,42 @@ export default function ReadingComprehensionQuestion({
     });
   };
 
+  const activePassage = passages.find(p => p.id === activeTab) || passages[0];
+
   return (
     <div className="h-full grid grid-cols-2 divide-x divide-slate-200">
       {/* Left Pane - Passage */}
       <div className="p-8 overflow-y-auto bg-slate-50">
         <div className="max-w-2xl">
           <div className="mb-6">
-            <p className="text-sm text-slate-600 mb-2">
+            <p className="text-sm text-slate-600 mb-4">
               {question.question || "Using the passage below, read and answer the questions opposite."}
             </p>
+            
+            {passages.length > 1 && (
+              <div className="flex gap-2 mb-4">
+                {passages.map((passage) => (
+                  <button
+                    key={passage.id}
+                    onClick={() => setActiveTab(passage.id)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                      activeTab === passage.id
+                        ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    {passage.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="bg-white rounded-lg p-6 border border-slate-200">
             <div className="prose prose-slate max-w-none">
               <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
-                {question.passage}
+                {activePassage?.content}
               </p>
             </div>
           </div>
