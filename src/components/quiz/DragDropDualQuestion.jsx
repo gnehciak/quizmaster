@@ -98,10 +98,10 @@ export default function DragDropDualQuestion({
                   key={passage.id}
                   onClick={() => setActiveTab(passage.id)}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
                     activeTab === passage.id
-                      ? "bg-white text-slate-800 shadow-sm border border-slate-200"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-white text-slate-800 shadow-sm border-slate-200"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 border-transparent"
                   )}
                 >
                   {passage.title}
