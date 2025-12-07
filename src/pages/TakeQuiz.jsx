@@ -266,6 +266,7 @@ export default function TakeQuiz() {
           score={calculateScore()}
           total={getTotalPoints()}
           onRetry={handleRetry}
+          onReview={handleReview}
           quizTitle={quiz.title}
         />
       </div>
