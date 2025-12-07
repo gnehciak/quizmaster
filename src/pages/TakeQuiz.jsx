@@ -14,6 +14,7 @@ import DragDropQuestion from '@/components/quiz/DragDropQuestion';
 import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
+import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
 
 export default function TakeQuiz() {
@@ -120,7 +121,7 @@ export default function TakeQuiz() {
     
     questions.forEach((q, idx) => {
       const answer = answers[idx];
-      
+
       if (q.type === 'multiple_choice') {
         if (answer === q.correctAnswer) correct++;
       } else if (q.type === 'reading_comprehension') {
@@ -138,6 +139,11 @@ export default function TakeQuiz() {
         blanks.forEach(blank => {
           if (answer?.[blank.id] === blank.correctAnswer) correct++;
         });
+      } else if (q.type === 'matching_list_dual') {
+        const matchingQuestions = q.matchingQuestions || [];
+        matchingQuestions.forEach(mq => {
+          if (answer?.[mq.id] === mq.correctAnswer) correct++;
+        });
       }
     });
     
@@ -151,6 +157,7 @@ export default function TakeQuiz() {
       else if (q.type === 'reading_comprehension') total += (q.comprehensionQuestions?.length || 0);
       else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') total += (q.dropZones?.length || 0);
       else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') total += (q.blanks?.length || 0);
+      else if (q.type === 'matching_list_dual') total += (q.matchingQuestions?.length || 0);
     });
     return total;
   };
@@ -246,6 +253,14 @@ export default function TakeQuiz() {
       case 'inline_dropdown_same':
         return (
           <InlineDropdownSameQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={handleAnswer}
+          />
+        );
+      case 'matching_list_dual':
+        return (
+          <MatchingListQuestion
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}

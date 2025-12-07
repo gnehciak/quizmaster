@@ -122,7 +122,30 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
     drag_drop_single: 'Drag & Drop (Single Pane)',
     drag_drop_dual: 'Drag & Drop (Dual Pane)',
     inline_dropdown_separate: 'Fill in the Blanks (Separate Options)',
-    inline_dropdown_same: 'Fill in the Blanks (Same Options)'
+    inline_dropdown_same: 'Fill in the Blanks (Same Options)',
+    matching_list_dual: 'Matching List (Dual Pane)'
+  };
+
+  // Matching List handlers
+  const addMatchingQuestion = () => {
+    const questions = [...(question.matchingQuestions || [])];
+    questions.push({
+      id: `mq_${Date.now()}`,
+      question: '',
+      correctAnswer: ''
+    });
+    updateField('matchingQuestions', questions);
+  };
+
+  const updateMatchingQuestion = (index, field, value) => {
+    const questions = [...(question.matchingQuestions || [])];
+    questions[index] = { ...questions[index], [field]: value };
+    updateField('matchingQuestions', questions);
+  };
+
+  const removeMatchingQuestion = (index) => {
+    const questions = question.matchingQuestions.filter((_, i) => i !== index);
+    updateField('matchingQuestions', questions);
   };
 
   return (
@@ -699,6 +722,180 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Matching List Dual Pane */}
+      {question.type === 'matching_list_dual' && (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Left Pane Question (shown with passage)</Label>
+            <Textarea
+              value={question.question || ''}
+              onChange={(e) => updateField('question', e.target.value)}
+              placeholder="Enter question text for left pane..."
+              className="min-h-[60px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Right Pane Question (shown above matching list)</Label>
+            <Textarea
+              value={question.rightPaneQuestion || ''}
+              onChange={(e) => updateField('rightPaneQuestion', e.target.value)}
+              placeholder="Enter question text for right pane..."
+              className="min-h-[60px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Reading Passages</Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const passages = question.passages || [];
+                  updateField('passages', [
+                    ...passages,
+                    { id: `passage_${Date.now()}`, title: `Passage ${passages.length + 1}`, content: '' }
+                  ]);
+                }}
+                className="gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add Passage
+              </Button>
+            </div>
+            
+            {(!question.passages || question.passages.length === 0) && (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Passage title..."
+                  value="Main Passage"
+                  disabled
+                  className="font-medium text-sm"
+                />
+                <Textarea
+                  value={question.passage || ''}
+                  onChange={(e) => updateField('passage', e.target.value)}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            )}
+            
+            {question.passages?.map((passage, idx) => (
+              <div key={passage.id} className="space-y-2 p-4 bg-slate-50 rounded-lg mb-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Passage title..."
+                    value={passage.title || ''}
+                    onChange={(e) => {
+                      const updated = [...question.passages];
+                      updated[idx] = { ...passage, title: e.target.value };
+                      updateField('passages', updated);
+                    }}
+                    className="font-medium text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const updated = question.passages.filter((_, i) => i !== idx);
+                      updateField('passages', updated);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Textarea
+                  value={passage.content || ''}
+                  onChange={(e) => {
+                    const updated = [...question.passages];
+                    updated[idx] = { ...passage, content: e.target.value };
+                    updateField('passages', updated);
+                  }}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[120px]"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <Label>Dropdown Options (shared across all matching questions)</Label>
+            {question.options?.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <Input
+                  value={option}
+                  onChange={(e) => updateOption(idx, e.target.value)}
+                  placeholder={`Option ${idx + 1}`}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeOption(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addOption} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Option
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <Label>Matching Questions</Label>
+            {question.matchingQuestions?.map((mq, qIdx) => (
+              <div key={mq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeMatchingQuestion(qIdx)}
+                    className="text-red-500 h-8"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                
+                <Input
+                  value={mq.question}
+                  onChange={(e) => updateMatchingQuestion(qIdx, 'question', e.target.value)}
+                  placeholder="Enter matching question..."
+                />
+                
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-slate-600">Correct Answer:</Label>
+                  <Select
+                    value={mq.correctAnswer || ''}
+                    onValueChange={(value) => updateMatchingQuestion(qIdx, 'correctAnswer', value)}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select correct answer..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {question.options?.filter(o => o).map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addMatchingQuestion} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Matching Question
+            </Button>
           </div>
         </div>
       )}
