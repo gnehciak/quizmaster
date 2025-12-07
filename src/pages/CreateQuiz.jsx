@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { categoryConfig } from '@/components/quiz/CategoryFilter';
 import { 
   ChevronLeft, 
   Plus, 
@@ -35,6 +36,8 @@ export default function CreateQuiz() {
   const [quiz, setQuiz] = useState({
     title: '',
     description: '',
+    category: 'general_knowledge',
+    difficulty: 'intermediate',
     status: 'draft',
     timer_enabled: false,
     timer_duration: 30,
@@ -179,6 +182,42 @@ export default function CreateQuiz() {
               />
             </div>
             
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select
+                value={quiz.category || 'general_knowledge'}
+                onValueChange={(value) => setQuiz(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(categoryConfig).map(([value, config]) => (
+                    <SelectItem key={value} value={value}>
+                      {config.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Difficulty</Label>
+              <Select
+                value={quiz.difficulty || 'intermediate'}
+                onValueChange={(value) => setQuiz(prev => ({ ...prev, difficulty: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label>Status</Label>
               <Select

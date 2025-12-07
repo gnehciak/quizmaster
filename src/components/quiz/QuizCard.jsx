@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { categoryConfig } from './CategoryFilter';
 
 export default function QuizCard({ quiz, onDelete, onEdit, index }) {
   const questionCount = quiz.questions?.length || 0;
@@ -30,6 +31,16 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
     inline_dropdown: 'bg-emerald-100 text-emerald-700'
   };
 
+  const difficultyConfig = {
+    beginner: { label: 'Beginner', color: 'bg-green-100 text-green-700' },
+    intermediate: { label: 'Intermediate', color: 'bg-yellow-100 text-yellow-700' },
+    advanced: { label: 'Advanced', color: 'bg-red-100 text-red-700' }
+  };
+
+  const category = categoryConfig[quiz.category || 'general_knowledge'];
+  const CategoryIcon = category?.icon;
+  const difficulty = difficultyConfig[quiz.difficulty || 'intermediate'];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -38,16 +49,16 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
       className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all duration-300 overflow-hidden"
     >
       <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
-              {quiz.title}
-            </h3>
-            {quiz.description && (
-              <p className="text-slate-500 text-sm line-clamp-2">
-                {quiz.description}
-              </p>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            {CategoryIcon && (
+              <div className={cn("p-1.5 rounded-lg", category.color.split(' ')[0])}>
+                <CategoryIcon className="w-4 h-4" />
+              </div>
             )}
+            <span className={cn("text-xs font-semibold uppercase tracking-wide", category.color.split(' ')[1])}>
+              {category.label}
+            </span>
           </div>
           
           <Badge 
@@ -60,6 +71,17 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
           >
             {quiz.status || 'draft'}
           </Badge>
+        </div>
+
+        <div className="flex-1 mb-4">
+          <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
+            {quiz.title}
+          </h3>
+          {quiz.description && (
+            <p className="text-slate-500 text-sm line-clamp-2">
+              {quiz.description}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
@@ -77,6 +99,14 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
+          <Badge 
+            variant="secondary"
+            className={cn("text-xs flex items-center gap-1", difficulty.color)}
+          >
+            <Signal className="w-3 h-3" />
+            {difficulty.label}
+          </Badge>
+          
           {getQuestionTypes().map(type => (
             <Badge 
               key={type} 
