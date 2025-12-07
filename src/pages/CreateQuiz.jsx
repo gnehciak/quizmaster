@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categoryConfig } from '@/components/quiz/CategoryFilter';
 import { 
   ChevronLeft, 
   Plus, 
@@ -23,9 +22,12 @@ import {
   FileQuestion,
   CheckCircle,
   Loader2,
-  Clock
+  Clock,
+  Eye,
+  GripVertical
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export default function CreateQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -37,12 +39,13 @@ export default function CreateQuiz() {
     title: '',
     description: '',
     category: 'general_knowledge',
-    difficulty: 'intermediate',
     status: 'draft',
     timer_enabled: false,
     timer_duration: 30,
     questions: []
   });
+  
+  const [previewMode, setPreviewMode] = useState(false);
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,6 +55,11 @@ export default function CreateQuiz() {
     queryFn: () => base44.entities.Quiz.filter({ id: quizId }),
     enabled: !!quizId,
     select: (data) => data[0]
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['quizCategories'],
+    queryFn: () => base44.entities.QuizCategory.list(),
   });
 
   useEffect(() => {
@@ -110,6 +118,16 @@ export default function CreateQuiz() {
     setQuiz(prev => ({ ...prev, questions }));
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(quiz.questions);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    
+    setQuiz(prev => ({ ...prev, questions: items }));
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -135,25 +153,62 @@ export default function CreateQuiz() {
               </h1>
             </div>
             
-            <Button 
-              onClick={handleSave}
-              disabled={saving || !quiz.title}
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : saved ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              {saved ? 'Saved!' : 'Save Quiz'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setPreviewMode(!previewMode)}
+                variant="outline"
+                className="gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                {previewMode ? 'Edit' : 'Preview'}
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={saving || !quiz.title}
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : saved ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {saved ? 'Saved!' : 'Save Quiz'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {previewMode ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">{quiz.title}</h1>
+            <p className="text-slate-600 mb-6">{quiz.description}</p>
+            
+            <div className="space-y-8">
+              {quiz.questions?.map((q, idx) => (
+                <div key={q.id} className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                    Question {idx + 1}: {q.question}
+                  </h3>
+                  {q.type === 'multiple_choice' && (
+                    <div className="space-y-2">
+                      {q.options?.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>
+                          <span>{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Quiz Info */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
           <h2 className="font-semibold text-slate-800 flex items-center gap-2">
@@ -185,35 +240,18 @@ export default function CreateQuiz() {
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={quiz.category || 'general_knowledge'}
+                value={quiz.category || ''}
                 onValueChange={(value) => setQuiz(prev => ({ ...prev, category: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(categoryConfig).map(([value, config]) => (
-                    <SelectItem key={value} value={value}>
-                      {config.label}
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Difficulty</Label>
-              <Select
-                value={quiz.difficulty || 'intermediate'}
-                onValueChange={(value) => setQuiz(prev => ({ ...prev, difficulty: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -286,26 +324,40 @@ export default function CreateQuiz() {
             </h2>
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {quiz.questions?.map((question, idx) => (
-              <motion.div
-                key={question.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <div className="mb-2 text-sm font-medium text-slate-500">
-                  Question {idx + 1}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="questions">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {quiz.questions?.map((question, idx) => (
+                    <Draggable key={question.id} draggableId={question.id} index={idx}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className="mb-4"
+                        >
+                          <div className="mb-2 flex items-center gap-2">
+                            <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                              <GripVertical className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <span className="text-sm font-medium text-slate-500">
+                              Question {idx + 1}
+                            </span>
+                          </div>
+                          <QuestionEditor
+                            question={question}
+                            onChange={(updated) => updateQuestion(idx, updated)}
+                            onDelete={() => deleteQuestion(idx)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-                <QuestionEditor
-                  question={question}
-                  onChange={(updated) => updateQuestion(idx, updated)}
-                  onDelete={() => deleteQuestion(idx)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              )}
+            </Droppable>
+          </DragDropContext>
 
           <motion.div layout>
             <Button
@@ -318,6 +370,8 @@ export default function CreateQuiz() {
             </Button>
           </motion.div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

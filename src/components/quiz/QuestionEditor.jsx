@@ -143,10 +143,21 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
 
           <div className="space-y-2">
             <Label>Question</Label>
-            <Input
+            <Textarea
               value={question.question || ''}
               onChange={(e) => updateField('question', e.target.value)}
               placeholder="Enter your question..."
+              className="min-h-[80px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Explanation (shown when answer is wrong)</Label>
+            <Textarea
+              value={question.explanation || ''}
+              onChange={(e) => updateField('explanation', e.target.value)}
+              placeholder="Explain the correct answer..."
+              className="min-h-[60px]"
             />
           </div>
         </div>
@@ -174,11 +185,11 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
                 onChange={() => updateField('correctAnswer', option)}
                 className="w-4 h-4 text-indigo-600"
               />
-              <Input
+              <Textarea
                 value={option}
                 onChange={(e) => updateOption(idx, e.target.value)}
                 placeholder={`Option ${idx + 1}`}
-                className="flex-1"
+                className="flex-1 min-h-[60px]"
               />
               <Button
                 variant="ghost"
