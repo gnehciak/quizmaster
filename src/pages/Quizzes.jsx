@@ -85,12 +85,20 @@ export default function Quizzes() {
               </div>
             </div>
             
-            <Link to={createPageUrl('CreateQuiz')}>
-              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-                <Plus className="w-4 h-4" />
-                Create Quiz
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link to={createPageUrl('ManageCategories')}>
+                <Button variant="outline" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Manage Categories
+                </Button>
+              </Link>
+              <Link to={createPageUrl('CreateQuiz')}>
+                <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                  <Plus className="w-4 h-4" />
+                  Create Quiz
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

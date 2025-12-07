@@ -67,8 +67,7 @@ export default function ManageCourses() {
       category: formData.get('category'),
       is_locked: formData.get('is_locked') === 'true',
       unlock_code: formData.get('unlock_code') || undefined,
-      price: formData.get('price') ? parseFloat(formData.get('price')) : undefined,
-      quiz_ids: Array.from(formData.getAll('quiz_ids'))
+      price: formData.get('price') ? parseFloat(formData.get('price')) : undefined
     };
     saveMutation.mutate(data);
   };
@@ -150,22 +149,7 @@ export default function ManageCourses() {
                     <Input name="price" type="number" step="0.01" defaultValue={editingCourse?.price} />
                   </div>
 
-                  <div>
-                    <Label>Quizzes</Label>
-                    <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                      {quizzes.map(quiz => (
-                        <label key={quiz.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="quiz_ids"
-                            value={quiz.id}
-                            defaultChecked={editingCourse?.quiz_ids?.includes(quiz.id)}
-                          />
-                          <span className="text-sm">{quiz.title}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+
 
                   <Button type="submit" className="w-full">
                     {editingCourse ? 'Update Course' : 'Create Course'}

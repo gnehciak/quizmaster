@@ -6,6 +6,7 @@ import CourseDetail from './pages/CourseDetail';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import ManageCourses from './pages/ManageCourses';
+import ManageCategories from './pages/ManageCategories';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "Profile": Profile,
     "AdminDashboard": AdminDashboard,
     "ManageCourses": ManageCourses,
+    "ManageCategories": ManageCategories,
 }
 
 export const pagesConfig = {
