@@ -795,6 +795,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
           </div>
         </div>
       )}
+        </>
+      )}
     </div>
   );
 }
