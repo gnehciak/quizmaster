@@ -425,6 +425,26 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
       {question.type === 'drag_drop_dual' && (
         <div className="space-y-6">
           <div className="space-y-2">
+            <Label>Left Pane Question (shown with passage)</Label>
+            <Textarea
+              value={question.question || ''}
+              onChange={(e) => updateField('question', e.target.value)}
+              placeholder="Enter question text for left pane..."
+              className="min-h-[60px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Right Pane Question (shown above drag & drop activity)</Label>
+            <Textarea
+              value={question.rightPaneQuestion || ''}
+              onChange={(e) => updateField('rightPaneQuestion', e.target.value)}
+              placeholder="Enter question text for right pane..."
+              className="min-h-[60px]"
+            />
+          </div>
+
+          <div className="space-y-2">
             <div className="flex items-center justify-between mb-2">
               <Label>Reading Passage</Label>
             </div>

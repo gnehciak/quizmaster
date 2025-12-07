@@ -139,10 +139,10 @@ export default function DragDropDualQuestion({
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-2xl space-y-8">
           {/* Question Text */}
-          {question.question && (
+          {question.rightPaneQuestion && (
             <div className="pb-4 border-b border-slate-200">
               <h3 className="text-lg font-medium text-slate-800 leading-relaxed">
-                {question.question}
+                {question.rightPaneQuestion}
               </h3>
             </div>
           )}
