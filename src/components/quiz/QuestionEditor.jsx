@@ -479,10 +479,6 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
                 </div>
               </div>
             ))}
-            <Button variant="outline" onClick={addBlank} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Blank
-            </Button>
           </div>
         </div>
       )}
