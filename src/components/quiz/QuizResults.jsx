@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function QuizResults({ score, total, onRetry, quizTitle }) {
+export default function QuizResults({ score, total, onRetry, quizTitle, onReview }) {
   const percentage = Math.round((score / total) * 100);
   
   const getGrade = () => {

@@ -25,6 +25,7 @@ export default function TakeQuiz() {
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
   const [timerVisible, setTimerVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [reviewMode, setReviewMode] = useState(false);
 
   const { data: quiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -157,10 +158,17 @@ export default function TakeQuiz() {
     setCurrentIndex(0);
     setShowResults(false);
     setSubmitted(false);
+    setReviewMode(false);
     setFlaggedQuestions(new Set());
     if (quiz?.timer_enabled && quiz?.timer_duration) {
       setTimeLeft(quiz.timer_duration * 60);
     }
+  };
+
+  const handleReview = () => {
+    setReviewMode(true);
+    setShowResults(false);
+    setCurrentIndex(0);
   };
 
   const toggleFlag = () => {
@@ -189,7 +197,7 @@ export default function TakeQuiz() {
 
     const commonProps = {
       question: currentQuestion,
-      showResults: submitted,
+      showResults: submitted || reviewMode,
     };
 
     switch (currentQuestion.type) {
@@ -336,12 +344,13 @@ export default function TakeQuiz() {
           )}
         </AnimatePresence>
 
-        {showResults && submitted && (
+        {showResults && submitted && !reviewMode && (
           <div className="h-full overflow-auto py-12 px-4">
             <QuizResults
               score={calculateScore()}
               total={getTotalPoints()}
               onRetry={handleRetry}
+              onReview={handleReview}
               quizTitle={quiz.title}
             />
           </div>
@@ -349,7 +358,7 @@ export default function TakeQuiz() {
       </div>
 
       {/* Bottom Navigation */}
-      {!showResults && (
+      {(!showResults || reviewMode) && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
           <Button
             onClick={handlePrev}
@@ -365,18 +374,31 @@ export default function TakeQuiz() {
             Back
           </Button>
 
-          <button
-            onClick={toggleFlag}
-            className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-lg border-2 transition-all",
-              flaggedQuestions.has(currentIndex)
-                ? "bg-amber-50 border-amber-400 text-amber-700"
-                : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
-            )}
-          >
-            <Flag className={cn("w-5 h-5", flaggedQuestions.has(currentIndex) && "fill-current")} />
-            <span className="font-medium">Flag</span>
-          </button>
+          {reviewMode ? (
+            <Button
+              onClick={() => {
+                setReviewMode(false);
+                setShowResults(true);
+              }}
+              variant="outline"
+              className="px-6 py-3"
+            >
+              Back to Results
+            </Button>
+          ) : (
+            <button
+              onClick={toggleFlag}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-lg border-2 transition-all",
+                flaggedQuestions.has(currentIndex)
+                  ? "bg-amber-50 border-amber-400 text-amber-700"
+                  : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
+              )}
+            >
+              <Flag className={cn("w-5 h-5", flaggedQuestions.has(currentIndex) && "fill-current")} />
+              <span className="font-medium">Flag</span>
+            </button>
+          )}
 
           {currentIndex < totalQuestions - 1 ? (
             <Button
@@ -386,10 +408,22 @@ export default function TakeQuiz() {
               Next
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
+          ) : reviewMode ? (
+            <Button
+              onClick={() => {
+                setReviewMode(false);
+                setShowResults(true);
+              }}
+              className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
+            >
+              Finish Review
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
           ) : (
             <Button
               onClick={handleSubmit}
               className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
+              disabled={submitted}
             >
               Submit
               <ChevronRight className="w-5 h-5 ml-2" />
