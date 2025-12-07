@@ -88,11 +88,16 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
       options: ['', '', ''],
       correctAnswer: ''
     });
-    updateField('blanks', blanks);
     
     // Add placeholder to text
     const text = question.textWithBlanks || '';
-    updateField('textWithBlanks', text + ` {{${blankId}}}`);
+    
+    // Update both fields at once
+    onChange({
+      ...question,
+      blanks: blanks,
+      textWithBlanks: text + ` {{${blankId}}}`
+    });
   };
 
   const updateBlank = (index, field, value) => {
