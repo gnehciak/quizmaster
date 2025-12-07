@@ -13,10 +13,29 @@ import {
   Key,
   PlayCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Plus,
+  FileText,
+  GripVertical,
+  Trash2
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -26,6 +45,10 @@ export default function CourseDetail() {
   const [unlockCode, setUnlockCode] = useState('');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [addContentOpen, setAddContentOpen] = useState(false);
+  const [contentType, setContentType] = useState('text');
+  const [textContent, setTextContent] = useState('');
+  const [selectedQuizId, setSelectedQuizId] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -56,6 +79,15 @@ export default function CourseDetail() {
 
   const hasAccess = !course?.is_locked || !!access || user?.role === 'admin';
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
+  const isAdmin = user?.role === 'admin';
+  const contentBlocks = course?.content_blocks || [];
+
+  const updateCourseMutation = useMutation({
+    mutationFn: (data) => base44.entities.Course.update(courseId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+    }
+  });
 
   const unlockMutation = useMutation({
     mutationFn: (data) => base44.entities.CourseAccess.create(data),
@@ -93,6 +125,28 @@ export default function CourseDetail() {
       unlock_method: 'purchase'
     });
     setProcessing(false);
+  };
+
+  const handleAddContent = async () => {
+    const newBlock = {
+      id: `block_${Date.now()}`,
+      type: contentType,
+      ...(contentType === 'text' ? { text: textContent } : { quiz_id: selectedQuizId })
+    };
+
+    const updatedBlocks = [...contentBlocks, newBlock];
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    
+    setAddContentOpen(false);
+    setTextContent('');
+    setSelectedQuizId('');
+    setContentType('text');
+  };
+
+  const handleDeleteBlock = async (blockId) => {
+    if (!confirm('Delete this content block?')) return;
+    const updatedBlocks = contentBlocks.filter(b => b.id !== blockId);
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
   };
 
   if (isLoading) {
@@ -201,51 +255,163 @@ export default function CourseDetail() {
           </div>
         )}
 
-        {/* Quizzes List */}
+        {/* Course Content */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-xl font-bold text-slate-800 mb-6">
-            Course Content ({courseQuizzes.length} quizzes)
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-800">
+              Course Content
+            </h2>
+            {isAdmin && (
+              <Dialog open={addContentOpen} onOpenChange={setAddContentOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Content
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Content Block</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Content Type</label>
+                      <Select value={contentType} onValueChange={setContentType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Text Block</SelectItem>
+                          <SelectItem value="quiz">Quiz</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-          <div className="space-y-3">
-            {courseQuizzes.map((quiz, idx) => (
-              <div
-                key={quiz.id}
-                className={cn(
-                  "flex items-center justify-between p-4 rounded-xl border-2 transition-all",
-                  hasAccess 
-                    ? "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50" 
-                    : "border-slate-200 bg-slate-50 opacity-60"
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
-                    <p className="text-sm text-slate-500">
-                      {quiz.questions?.length || 0} questions
-                    </p>
-                  </div>
-                </div>
+                    {contentType === 'text' ? (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Text Content</label>
+                        <Textarea
+                          value={textContent}
+                          onChange={(e) => setTextContent(e.target.value)}
+                          placeholder="Enter text content..."
+                          className="min-h-[120px]"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Select Quiz</label>
+                        <Select value={selectedQuizId} onValueChange={setSelectedQuizId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a quiz..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {quizzes.map(quiz => (
+                              <SelectItem key={quiz.id} value={quiz.id}>
+                                {quiz.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-                {hasAccess ? (
-                  <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}`)}>
-                    <Button size="sm" className="gap-2">
-                      <PlayCircle className="w-4 h-4" />
-                      Start
+                    <Button 
+                      onClick={handleAddContent}
+                      className="w-full"
+                      disabled={contentType === 'text' ? !textContent.trim() : !selectedQuizId}
+                    >
+                      Add Content
                     </Button>
-                  </Link>
-                ) : (
-                  <Lock className="w-5 h-5 text-slate-400" />
-                )}
-              </div>
-            ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
 
-            {courseQuizzes.length === 0 && (
+          <div className="space-y-4">
+            {contentBlocks.map((block, idx) => {
+              if (block.type === 'text') {
+                return (
+                  <div
+                    key={block.id}
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1">
+                        <FileText className="w-5 h-5 text-slate-500 mt-0.5" />
+                        <p className="text-slate-700 whitespace-pre-wrap">{block.text}</p>
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteBlock(block.id)}
+                          className="text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (block.type === 'quiz') {
+                const quiz = quizzes.find(q => q.id === block.quiz_id);
+                if (!quiz) return null;
+
+                return (
+                  <div
+                    key={block.id}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-xl border-2 transition-all",
+                      hasAccess 
+                        ? "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50" 
+                        : "border-slate-200 bg-slate-50 opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
+                        <p className="text-sm text-slate-500">
+                          {quiz.questions?.length || 0} questions
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {hasAccess ? (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}`)}>
+                          <Button size="sm" className="gap-2">
+                            <PlayCircle className="w-4 h-4" />
+                            Start
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Lock className="w-5 h-5 text-slate-400" />
+                      )}
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteBlock(block.id)}
+                          className="text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+            })}
+
+            {contentBlocks.length === 0 && (
               <p className="text-center text-slate-500 py-8">
-                No quizzes in this course yet
+                No content in this course yet
               </p>
             )}
           </div>
