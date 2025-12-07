@@ -327,28 +327,50 @@ export default function CreateQuiz() {
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="questions">
               {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
                   {quiz.questions?.map((question, idx) => (
                     <Draggable key={question.id} draggableId={question.id} index={idx}>
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className="mb-4"
+                          className={`bg-white rounded-lg border-2 p-3 transition-all ${
+                            snapshot.isDragging ? 'border-indigo-400 shadow-lg' : 'border-slate-200'
+                          }`}
                         >
-                          <div className="mb-2 flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
                               <GripVertical className="w-5 h-5 text-slate-400" />
                             </div>
-                            <span className="text-sm font-medium text-slate-500">
+                            <span className="text-sm font-semibold text-slate-600 min-w-[80px]">
                               Question {idx + 1}
                             </span>
+                            <span className="text-sm text-slate-500 flex-1 truncate">
+                              {question.question || 'Untitled question'}
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                              {question.type?.replace('_', ' ')}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const el = document.getElementById(`question-editor-${idx}`);
+                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }}
+                              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteQuestion(idx)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
                           </div>
-                          <QuestionEditor
-                            question={question}
-                            onChange={(updated) => updateQuestion(idx, updated)}
-                            onDelete={() => deleteQuestion(idx)}
-                          />
                         </div>
                       )}
                     </Draggable>
@@ -358,6 +380,22 @@ export default function CreateQuiz() {
               )}
             </Droppable>
           </DragDropContext>
+
+          {/* Question Editors */}
+          <div className="space-y-4 mt-8">
+            {quiz.questions?.map((question, idx) => (
+              <div key={question.id} id={`question-editor-${idx}`}>
+                <h3 className="text-sm font-medium text-slate-500 mb-2">
+                  Question {idx + 1}
+                </h3>
+                <QuestionEditor
+                  question={question}
+                  onChange={(updated) => updateQuestion(idx, updated)}
+                  onDelete={() => deleteQuestion(idx)}
+                />
+              </div>
+            ))}
+          </div>
 
           <motion.div layout>
             <Button
