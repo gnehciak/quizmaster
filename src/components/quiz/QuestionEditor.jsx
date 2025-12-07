@@ -119,8 +119,10 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
   const typeLabels = {
     multiple_choice: 'Multiple Choice',
     reading_comprehension: 'Reading Comprehension',
-    drag_drop: 'Drag & Drop',
-    inline_dropdown: 'Fill in the Blanks'
+    drag_drop_single: 'Drag & Drop (Single Pane)',
+    drag_drop_dual: 'Drag & Drop (Dual Pane)',
+    inline_dropdown_separate: 'Fill in the Blanks (Separate Options)',
+    inline_dropdown_same: 'Fill in the Blanks (Same Options)'
   };
 
   return (
@@ -348,8 +350,8 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
         </div>
       )}
 
-      {/* Drag & Drop */}
-      {question.type === 'drag_drop' && (
+      {/* Drag & Drop Single Pane */}
+      {question.type === 'drag_drop_single' && (
         <div className="space-y-6">
           <div className="space-y-4">
             <Label>Draggable Options</Label>
@@ -419,8 +421,140 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
         </div>
       )}
 
-      {/* Inline Dropdown */}
-      {question.type === 'inline_dropdown' && (
+      {/* Drag & Drop Dual Pane */}
+      {question.type === 'drag_drop_dual' && (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Reading Passage</Label>
+            </div>
+            
+            {(!question.passages || question.passages.length === 0) && (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Passage title..."
+                  value="Main Passage"
+                  disabled
+                  className="font-medium text-sm"
+                />
+                <Textarea
+                  value={question.passage || ''}
+                  onChange={(e) => updateField('passage', e.target.value)}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            )}
+            
+            {question.passages?.map((passage, idx) => (
+              <div key={passage.id} className="space-y-2 p-4 bg-slate-50 rounded-lg mb-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Passage title..."
+                    value={passage.title || ''}
+                    onChange={(e) => {
+                      const updated = [...question.passages];
+                      updated[idx] = { ...passage, title: e.target.value };
+                      updateField('passages', updated);
+                    }}
+                    className="font-medium text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const updated = question.passages.filter((_, i) => i !== idx);
+                      updateField('passages', updated);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Textarea
+                  value={passage.content || ''}
+                  onChange={(e) => {
+                    const updated = [...question.passages];
+                    updated[idx] = { ...passage, content: e.target.value };
+                    updateField('passages', updated);
+                  }}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[120px]"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <Label>Draggable Options</Label>
+            {question.options?.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <GripVertical className="w-4 h-4 text-slate-400" />
+                <Input
+                  value={option}
+                  onChange={(e) => updateOption(idx, e.target.value)}
+                  placeholder={`Item ${idx + 1}`}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeOption(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addOption} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Draggable Item
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <Label>Drop Zones</Label>
+            {question.dropZones?.map((zone, idx) => (
+              <div key={zone.id} className="flex items-center gap-3">
+                <Input
+                  value={zone.label}
+                  onChange={(e) => updateDropZone(idx, 'label', e.target.value)}
+                  placeholder="Zone label..."
+                  className="flex-1"
+                />
+                <Select
+                  value={zone.correctAnswer || ''}
+                  onValueChange={(value) => updateDropZone(idx, 'correctAnswer', value)}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Correct..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {question.options?.filter(o => o).map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeDropZone(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" onClick={addDropZone} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Drop Zone
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Dropdown Separate */}
+      {question.type === 'inline_dropdown_separate' && (
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Text with Blanks</Label>
@@ -459,7 +593,7 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
                   {blank.options?.map((opt, optIdx) => (
                     <div key={optIdx} className="flex items-center gap-2">
                       <input
@@ -477,13 +611,132 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
                           updateBlank(idx, 'options', options);
                         }}
                         placeholder={`Option ${optIdx + 1}`}
-                        className="text-sm h-9"
+                        className="text-sm h-9 flex-1"
                       />
+                      {blank.options.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const options = blank.options.filter((_, i) => i !== optIdx);
+                            updateBlank(idx, 'options', options);
+                          }}
+                          className="text-slate-400 hover:text-red-500 h-9 w-9"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
                   ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const options = [...(blank.options || []), ''];
+                      updateBlank(idx, 'options', options);
+                    }}
+                    className="gap-2 w-full"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Option
+                  </Button>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inline Dropdown Same */}
+      {question.type === 'inline_dropdown_same' && (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Text with Blanks</Label>
+            <p className="text-xs text-slate-500">
+              Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
+            </p>
+            <Textarea
+              value={question.textWithBlanks || ''}
+              onChange={(e) => updateField('textWithBlanks', e.target.value)}
+              placeholder="The {{blank_1}} is a type of {{blank_2}}..."
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <Label>Shared Options (for all blanks)</Label>
+            {question.options?.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <Input
+                  value={option}
+                  onChange={(e) => updateOption(idx, e.target.value)}
+                  placeholder={`Option ${idx + 1}`}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeOption(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={addOption} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Option
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <Label>Correct Answers for Each Blank</Label>
+            {question.blanks?.map((blank, idx) => (
+              <div key={blank.id} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+                <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">
+                  {`{{${blank.id}}}`}
+                </span>
+                <Select
+                  value={blank.correctAnswer || ''}
+                  onValueChange={(value) => updateBlank(idx, 'correctAnswer', value)}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select correct answer..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {question.options?.filter(o => o).map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeBlank(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => {
+              const blanks = [...(question.blanks || [])];
+              const blankId = `blank_${blanks.length + 1}`;
+              blanks.push({
+                id: blankId,
+                correctAnswer: ''
+              });
+              const text = question.textWithBlanks || '';
+              onChange({
+                ...question,
+                blanks: blanks,
+                textWithBlanks: text + ` {{${blankId}}}`
+              });
+            }} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Blank
+            </Button>
           </div>
         </div>
       )}
