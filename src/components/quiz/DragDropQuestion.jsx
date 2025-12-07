@@ -193,7 +193,7 @@ export default function DragDropQuestion({
           );
         })}
       </div>
-      </div>
+    </div>
     </div>
   );
 }
