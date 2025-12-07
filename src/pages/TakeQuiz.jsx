@@ -3,17 +3,16 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Send, BookOpen, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { cn } from '@/lib/utils';
 
 import MultipleChoiceQuestion from '@/components/quiz/MultipleChoiceQuestion';
 import ReadingComprehensionQuestion from '@/components/quiz/ReadingComprehensionQuestion';
 import DragDropQuestion from '@/components/quiz/DragDropQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
-import QuizProgress from '@/components/quiz/QuizProgress';
 import QuizResults from '@/components/quiz/QuizResults';
-import QuizTimer from '@/components/quiz/QuizTimer';
 
 export default function TakeQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -23,6 +22,9 @@ export default function TakeQuiz() {
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
+  const [timerVisible, setTimerVisible] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
 
   const { data: quiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -34,6 +36,31 @@ export default function TakeQuiz() {
   const questions = quiz?.questions || [];
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
+
+  // Initialize timer
+  useEffect(() => {
+    if (quiz?.timer_enabled && quiz?.timer_duration) {
+      setTimeLeft(quiz.timer_duration * 60);
+    }
+  }, [quiz]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!quiz?.timer_enabled || submitted || showResults || timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [quiz?.timer_enabled, submitted, showResults, timeLeft]);
 
   const handleAnswer = (answer) => {
     setAnswers(prev => ({
@@ -110,6 +137,31 @@ export default function TakeQuiz() {
     setCurrentIndex(0);
     setShowResults(false);
     setSubmitted(false);
+    setFlaggedQuestions(new Set());
+    if (quiz?.timer_enabled && quiz?.timer_duration) {
+      setTimeLeft(quiz.timer_duration * 60);
+    }
+  };
+
+  const toggleFlag = () => {
+    const newFlags = new Set(flaggedQuestions);
+    if (newFlags.has(currentIndex)) {
+      newFlags.delete(currentIndex);
+    } else {
+      newFlags.add(currentIndex);
+    }
+    setFlaggedQuestions(newFlags);
+  };
+
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return {
+      hours: String(hrs).padStart(2, '0'),
+      minutes: String(mins).padStart(2, '0'),
+      seconds: String(secs).padStart(2, '0')
+    };
   };
 
   const renderQuestion = () => {
@@ -192,90 +244,139 @@ export default function TakeQuiz() {
     );
   }
 
+  const time = formatTime(timeLeft);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-3">
-              <Link to={createPageUrl('Quizzes')}>
-                <Button variant="ghost" size="icon" className="hover:bg-slate-100">
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-500" />
-                <h1 className="text-lg font-semibold text-slate-800">{quiz.title}</h1>
+    <div className="h-screen flex flex-col bg-white">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-4">
+          {/* Close Button */}
+          <Link to={createPageUrl('Quizzes')}>
+            <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </Link>
+
+          {/* Timer */}
+          {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
+            <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-slate-800 tabular-nums">{time.hours}:{time.minutes}</div>
+                <div className="text-xs text-slate-500 flex items-center gap-1">
+                  <span>Hours</span>
+                  <span>Mins</span>
+                </div>
               </div>
+              <button
+                onClick={() => setTimerVisible(false)}
+                className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
+              >
+                Hide timer
+              </button>
             </div>
-            
-            {/* Timer */}
-            {quiz.timer_enabled && quiz.timer_duration && !showResults && (
-              <QuizTimer 
-                durationInMinutes={quiz.timer_duration}
-                onTimeUp={handleTimeUp}
-                isActive={!submitted}
-              />
-            )}
-          </div>
-          
-          <QuizProgress 
-            current={currentIndex} 
-            total={totalQuestions}
-            answers={answers}
-          />
+          )}
+
+          {quiz.timer_enabled && !timerVisible && !showResults && (
+            <button
+              onClick={() => setTimerVisible(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-800"
+            >
+              <Eye className="w-4 h-4" />
+              Show timer
+            </button>
+          )}
         </div>
+
+        {/* Question Counter */}
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">
+            Question {currentIndex + 1} of {totalQuestions}
+          </h2>
+        </div>
+
+        {/* Logo/Brand Space */}
+        <div className="w-20"></div>
       </div>
 
-      {/* Question Area */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/60 p-6 sm:p-8"
-          >
-            {renderQuestion()}
-          </motion.div>
+          {!showResults && (
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              {renderQuestion()}
+            </motion.div>
+          )}
         </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8">
+        {showResults && submitted && (
+          <div className="h-full overflow-auto py-12 px-4">
+            <QuizResults
+              score={calculateScore()}
+              total={getTotalPoints()}
+              onRetry={handleRetry}
+              quizTitle={quiz.title}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Navigation */}
+      {!showResults && (
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
           <Button
-            variant="outline"
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="gap-2"
+            className={cn(
+              "px-8 py-6 text-base font-semibold",
+              currentIndex === 0 
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-slate-800 text-white hover:bg-slate-700"
+            )}
           >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
+            <ChevronLeft className="w-5 h-5 mr-2" />
+            Back
           </Button>
 
-          <div className="flex gap-3">
-            {currentIndex < totalQuestions - 1 ? (
-              <Button
-                onClick={handleNext}
-                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Send className="w-4 h-4" />
-                Submit Quiz
-              </Button>
+          <button
+            onClick={toggleFlag}
+            className={cn(
+              "flex items-center gap-2 px-6 py-3 rounded-lg border-2 transition-all",
+              flaggedQuestions.has(currentIndex)
+                ? "bg-amber-50 border-amber-400 text-amber-700"
+                : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
             )}
-          </div>
+          >
+            <Flag className={cn("w-5 h-5", flaggedQuestions.has(currentIndex) && "fill-current")} />
+            <span className="font-medium">Flag</span>
+          </button>
+
+          {currentIndex < totalQuestions - 1 ? (
+            <Button
+              onClick={handleNext}
+              className="bg-slate-800 text-white hover:bg-slate-700 px-8 py-6 text-base font-semibold"
+            >
+              Next
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
+            >
+              Submit
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -59,7 +59,8 @@ export default function DragDropQuestion({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="h-full p-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-medium text-slate-800 leading-relaxed">
           {question.question}

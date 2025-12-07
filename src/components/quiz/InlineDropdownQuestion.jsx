@@ -89,7 +89,8 @@ export default function InlineDropdownQuestion({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full p-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto space-y-6">
       <h3 className="text-xl font-medium text-slate-800 leading-relaxed">
         {question.question}
       </h3>
@@ -98,6 +99,7 @@ export default function InlineDropdownQuestion({
         <p className="text-lg leading-loose text-slate-700">
           {renderTextWithBlanks()}
         </p>
+      </div>
       </div>
     </div>
   );
