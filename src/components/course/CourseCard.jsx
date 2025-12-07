@@ -3,13 +3,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { Lock, ChevronRight } from 'lucide-react';
+import { Lock, ChevronRight, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { categoryConfig } from '@/components/quiz/CategoryFilter';
 
 export default function CourseCard({ course, index, hasAccess }) {
-  const Icon = categoryConfig[course.category]?.icon;
-  const color = categoryConfig[course.category]?.color;
 
   return (
     <motion.div
@@ -28,7 +25,7 @@ export default function CourseCard({ course, index, hasAccess }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            {Icon && <Icon className="w-20 h-20 text-indigo-300" />}
+            <BookOpen className="w-20 h-20 text-indigo-300" />
           </div>
         )}
         
@@ -44,16 +41,9 @@ export default function CourseCard({ course, index, hasAccess }) {
 
       {/* Content */}
       <div className="p-6">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-bold text-slate-800 flex-1">
-            {course.title}
-          </h3>
-          {Icon && (
-            <div className={cn("p-2 rounded-lg", color)}>
-              <Icon className="w-5 h-5" />
-            </div>
-          )}
-        </div>
+        <h3 className="text-xl font-bold text-slate-800 mb-3">
+          {course.title}
+        </h3>
 
         <p className="text-slate-600 text-sm mb-4 line-clamp-2">
           {course.description || 'No description available'}
