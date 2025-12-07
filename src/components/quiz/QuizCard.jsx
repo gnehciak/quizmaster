@@ -20,15 +20,21 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
   const typeLabels = {
     multiple_choice: 'Multiple Choice',
     reading_comprehension: 'Reading',
-    drag_drop: 'Drag & Drop',
-    inline_dropdown: 'Fill in Blanks'
+    drag_drop_single: 'Drag & Drop (Single)',
+    drag_drop_dual: 'Drag & Drop (Dual)',
+    inline_dropdown_separate: 'Fill in Blanks (Separate)',
+    inline_dropdown_same: 'Fill in Blanks (Same)',
+    matching_list_dual: 'Matching List'
   };
 
   const typeColors = {
     multiple_choice: 'bg-blue-100 text-blue-700',
     reading_comprehension: 'bg-violet-100 text-violet-700',
-    drag_drop: 'bg-amber-100 text-amber-700',
-    inline_dropdown: 'bg-emerald-100 text-emerald-700'
+    drag_drop_single: 'bg-amber-100 text-amber-700',
+    drag_drop_dual: 'bg-amber-100 text-amber-700',
+    inline_dropdown_separate: 'bg-emerald-100 text-emerald-700',
+    inline_dropdown_same: 'bg-emerald-100 text-emerald-700',
+    matching_list_dual: 'bg-pink-100 text-pink-700'
   };
 
   return (
