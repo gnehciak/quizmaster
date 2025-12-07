@@ -11,7 +11,9 @@ import { cn } from '@/lib/utils';
 import MultipleChoiceQuestion from '@/components/quiz/MultipleChoiceQuestion';
 import ReadingComprehensionQuestion from '@/components/quiz/ReadingComprehensionQuestion';
 import DragDropQuestion from '@/components/quiz/DragDropQuestion';
+import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
+import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
 
 export default function TakeQuiz() {
@@ -126,12 +128,12 @@ export default function TakeQuiz() {
         compQuestions.forEach(cq => {
           if (answer?.[cq.id] === cq.correctAnswer) correct++;
         });
-      } else if (q.type === 'drag_drop') {
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
         const zones = q.dropZones || [];
         zones.forEach(zone => {
           if (answer?.[zone.id] === zone.correctAnswer) correct++;
         });
-      } else if (q.type === 'inline_dropdown') {
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
         const blanks = q.blanks || [];
         blanks.forEach(blank => {
           if (answer?.[blank.id] === blank.correctAnswer) correct++;
@@ -147,8 +149,8 @@ export default function TakeQuiz() {
     questions.forEach(q => {
       if (q.type === 'multiple_choice') total++;
       else if (q.type === 'reading_comprehension') total += (q.comprehensionQuestions?.length || 0);
-      else if (q.type === 'drag_drop') total += (q.dropZones?.length || 0);
-      else if (q.type === 'inline_dropdown') total += (q.blanks?.length || 0);
+      else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') total += (q.dropZones?.length || 0);
+      else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') total += (q.blanks?.length || 0);
     });
     return total;
   };
@@ -217,7 +219,7 @@ export default function TakeQuiz() {
             onAnswer={handleAnswer}
           />
         );
-      case 'drag_drop':
+      case 'drag_drop_single':
         return (
           <DragDropQuestion
             {...commonProps}
@@ -225,9 +227,25 @@ export default function TakeQuiz() {
             onAnswer={handleAnswer}
           />
         );
-      case 'inline_dropdown':
+      case 'drag_drop_dual':
+        return (
+          <DragDropDualQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={handleAnswer}
+          />
+        );
+      case 'inline_dropdown_separate':
         return (
           <InlineDropdownQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={handleAnswer}
+          />
+        );
+      case 'inline_dropdown_same':
+        return (
+          <InlineDropdownSameQuestion
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
