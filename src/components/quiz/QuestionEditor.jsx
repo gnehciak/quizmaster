@@ -431,7 +431,13 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
           </div>
 
           <div className="space-y-4">
-            <Label>Blank Options</Label>
+            <div className="flex items-center justify-between">
+              <Label>Blank Options</Label>
+            </div>
+            <Button type="button" variant="outline" onClick={addBlank} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Blank
+            </Button>
             {question.blanks?.map((blank, idx) => (
               <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
