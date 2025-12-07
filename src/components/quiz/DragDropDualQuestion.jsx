@@ -138,6 +138,15 @@ export default function DragDropDualQuestion({
       {/* Right Pane - Drag & Drop Activity */}
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-2xl space-y-8">
+          {/* Question Text */}
+          {question.question && (
+            <div className="pb-4 border-b border-slate-200">
+              <h3 className="text-lg font-medium text-slate-800 leading-relaxed">
+                {question.question}
+              </h3>
+            </div>
+          )}
+          
           {/* Available Options */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-slate-600">Drag from here:</h3>
