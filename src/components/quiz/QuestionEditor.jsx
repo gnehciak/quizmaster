@@ -212,13 +212,80 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
       {question.type === 'reading_comprehension' && (
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label>Reading Passage</Label>
-            <Textarea
-              value={question.passage || ''}
-              onChange={(e) => updateField('passage', e.target.value)}
-              placeholder="Enter the reading passage..."
-              className="min-h-[150px]"
-            />
+            <div className="flex items-center justify-between mb-2">
+              <Label>Reading Passages</Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const passages = question.passages || [];
+                  updateField('passages', [
+                    ...passages,
+                    { id: `passage_${Date.now()}`, title: `Passage ${passages.length + 1}`, content: '' }
+                  ]);
+                }}
+                className="gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add Passage
+              </Button>
+            </div>
+            
+            {(!question.passages || question.passages.length === 0) && (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Passage title..."
+                  value="Main Passage"
+                  disabled
+                  className="font-medium text-sm"
+                />
+                <Textarea
+                  value={question.passage || ''}
+                  onChange={(e) => updateField('passage', e.target.value)}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            )}
+            
+            {question.passages?.map((passage, idx) => (
+              <div key={passage.id} className="space-y-2 p-4 bg-slate-50 rounded-lg mb-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Passage title..."
+                    value={passage.title || ''}
+                    onChange={(e) => {
+                      const updated = [...question.passages];
+                      updated[idx] = { ...passage, title: e.target.value };
+                      updateField('passages', updated);
+                    }}
+                    className="font-medium text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const updated = question.passages.filter((_, i) => i !== idx);
+                      updateField('passages', updated);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Textarea
+                  value={passage.content || ''}
+                  onChange={(e) => {
+                    const updated = [...question.passages];
+                    updated[idx] = { ...passage, content: e.target.value };
+                    updateField('passages', updated);
+                  }}
+                  placeholder="Enter the reading passage..."
+                  className="min-h-[120px]"
+                />
+              </div>
+            ))}
           </div>
 
           <div className="space-y-4">
