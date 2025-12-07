@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Edit, Trash2, ChevronLeft } from 'lucide-react';
-import { categoryConfig } from '@/components/quiz/CategoryFilter';
 
 export default function ManageCourses() {
   const queryClient = useQueryClient();
@@ -34,9 +33,9 @@ export default function ManageCourses() {
     queryFn: () => base44.entities.Course.list('-created_date'),
   });
 
-  const { data: quizzes = [] } = useQuery({
-    queryKey: ['quizzes'],
-    queryFn: () => base44.entities.Quiz.list(),
+  const { data: categories = [] } = useQuery({
+    queryKey: ['quizCategories'],
+    queryFn: () => base44.entities.QuizCategory.list(),
   });
 
   const saveMutation = useMutation({
@@ -112,14 +111,14 @@ export default function ManageCourses() {
 
                   <div>
                     <Label>Category</Label>
-                    <Select name="category" defaultValue={editingCourse?.category || 'general_knowledge'}>
+                    <Select name="category" defaultValue={editingCourse?.category}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select category..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(categoryConfig).map(([value, config]) => (
-                          <SelectItem key={value} value={value}>
-                            {config.label}
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
