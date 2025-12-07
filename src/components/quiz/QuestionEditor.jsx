@@ -10,10 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function QuestionEditor({ question, onChange, onDelete }) {
+export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse }) {
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
   };
@@ -127,6 +127,41 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onToggleCollapse}
+          className="gap-2"
+        >
+          {isCollapsed ? (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              Expand
+            </>
+          ) : (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              Collapse
+            </>
+          )}
+        </Button>
+
+        {!isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      {!isCollapsed && (
+        <>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">

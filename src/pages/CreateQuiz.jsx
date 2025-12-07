@@ -46,6 +46,7 @@ export default function CreateQuiz() {
   });
   
   const [previewMode, setPreviewMode] = useState(false);
+  const [collapsedQuestions, setCollapsedQuestions] = useState(new Set());
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -116,6 +117,18 @@ export default function CreateQuiz() {
   const deleteQuestion = (index) => {
     const questions = quiz.questions.filter((_, i) => i !== index);
     setQuiz(prev => ({ ...prev, questions }));
+  };
+
+  const toggleCollapseQuestion = (index) => {
+    setCollapsedQuestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   const handleDragEnd = (result) => {
@@ -392,6 +405,8 @@ export default function CreateQuiz() {
                   question={question}
                   onChange={(updated) => updateQuestion(idx, updated)}
                   onDelete={() => deleteQuestion(idx)}
+                  isCollapsed={collapsedQuestions.has(idx)}
+                  onToggleCollapse={() => toggleCollapseQuestion(idx)}
                 />
               </div>
             ))}
