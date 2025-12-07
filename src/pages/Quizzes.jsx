@@ -58,7 +58,7 @@ export default function Quizzes() {
 
   // Calculate quiz counts by category
   const quizCounts = quizzes.reduce((acc, quiz) => {
-    const category = quiz.category || 'general_knowledge';
+    const category = quiz.category || 'Uncategorized';
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
