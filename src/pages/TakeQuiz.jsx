@@ -81,9 +81,29 @@ export default function TakeQuiz() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
     setShowResults(true);
+
+    // Save quiz attempt
+    try {
+      const user = await base44.auth.me();
+      const score = calculateScore();
+      const total = getTotalPoints();
+      const percentage = Math.round((score / total) * 100);
+
+      await base44.entities.QuizAttempt.create({
+        user_email: user.email,
+        quiz_id: quizId,
+        course_id: urlParams.get('courseId'),
+        score,
+        total,
+        percentage,
+        time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : 0
+      });
+    } catch (e) {
+      console.error('Failed to save attempt:', e);
+    }
   };
 
   const handleTimeUp = () => {
