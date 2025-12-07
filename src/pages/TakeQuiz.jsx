@@ -13,6 +13,7 @@ import DragDropQuestion from '@/components/quiz/DragDropQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import QuizProgress from '@/components/quiz/QuizProgress';
 import QuizResults from '@/components/quiz/QuizResults';
+import QuizTimer from '@/components/quiz/QuizTimer';
 
 export default function TakeQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -56,6 +57,12 @@ export default function TakeQuiz() {
   const handleSubmit = () => {
     setSubmitted(true);
     setShowResults(true);
+  };
+
+  const handleTimeUp = () => {
+    if (!submitted) {
+      handleSubmit();
+    }
   };
 
   const calculateScore = () => {
@@ -190,16 +197,27 @@ export default function TakeQuiz() {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Link to={createPageUrl('Quizzes')}>
-              <Button variant="ghost" size="icon" className="hover:bg-slate-100">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-500" />
-              <h1 className="text-lg font-semibold text-slate-800">{quiz.title}</h1>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <Link to={createPageUrl('Quizzes')}>
+                <Button variant="ghost" size="icon" className="hover:bg-slate-100">
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-indigo-500" />
+                <h1 className="text-lg font-semibold text-slate-800">{quiz.title}</h1>
+              </div>
             </div>
+            
+            {/* Timer */}
+            {quiz.timer_enabled && quiz.timer_duration && !showResults && (
+              <QuizTimer 
+                durationInMinutes={quiz.timer_duration}
+                onTimeUp={handleTimeUp}
+                isActive={!submitted}
+              />
+            )}
           </div>
           
           <QuizProgress 

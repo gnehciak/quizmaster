@@ -21,7 +21,8 @@ import {
   Save, 
   FileQuestion,
   CheckCircle,
-  Loader2
+  Loader2,
+  Clock
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 
@@ -35,6 +36,8 @@ export default function CreateQuiz() {
     title: '',
     description: '',
     status: 'draft',
+    timer_enabled: false,
+    timer_duration: 30,
     questions: []
   });
   
@@ -191,6 +194,48 @@ export default function CreateQuiz() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </div>
+
+        {/* Timer Settings */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+          <h2 className="font-semibold text-slate-800 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-500" />
+            Timer Settings
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="timer_enabled"
+                checked={quiz.timer_enabled || false}
+                onChange={(e) => setQuiz(prev => ({ ...prev, timer_enabled: e.target.checked }))}
+                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+              />
+              <Label htmlFor="timer_enabled" className="cursor-pointer">
+                Enable time limit for this quiz
+              </Label>
+            </div>
+            
+            {quiz.timer_enabled && (
+              <div className="space-y-2 pl-7">
+                <Label>Duration (minutes)</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="180"
+                    value={quiz.timer_duration || 30}
+                    onChange={(e) => setQuiz(prev => ({ ...prev, timer_duration: parseInt(e.target.value) || 30 }))}
+                    className="w-32"
+                  />
+                  <span className="text-sm text-slate-500">
+                    Quiz will auto-submit when time expires
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

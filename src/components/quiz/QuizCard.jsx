@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function QuizCard({ quiz, onDelete, onEdit, index }) {
@@ -62,9 +62,18 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-          <FileQuestion className="w-4 h-4" />
-          <span>{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
+          <div className="flex items-center gap-2">
+            <FileQuestion className="w-4 h-4" />
+            <span>{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
+          </div>
+          
+          {quiz.timer_enabled && quiz.timer_duration && (
+            <div className="flex items-center gap-2 text-indigo-600">
+              <Clock className="w-4 h-4" />
+              <span>{quiz.timer_duration} min</span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
