@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical } from 'lucide-react';
 
 export default function ReadingComprehensionQuestion({ 
   question, 
@@ -14,6 +14,9 @@ export default function ReadingComprehensionQuestion({
     : [{ id: 'main', title: 'Passage', content: question.passage }];
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
 
   const handleAnswer = (questionId, answer) => {
     if (showResults) return;
@@ -23,39 +26,75 @@ export default function ReadingComprehensionQuestion({
     });
   };
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging || !containerRef.current) return;
+      
+      const container = containerRef.current;
+      const rect = container.getBoundingClientRect();
+      const newLeftWidth = ((e.clientX - rect.left) / rect.width) * 100;
+      
+      // Constrain between 30% and 70%
+      if (newLeftWidth >= 30 && newLeftWidth <= 70) {
+        setLeftWidth(newLeftWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
   const activePassage = passages.find(p => p.id === activeTab) || passages[0];
 
   return (
-    <div className="h-full grid grid-cols-2 divide-x divide-slate-200">
+    <div ref={containerRef} className="h-full flex relative">
       {/* Left Pane - Passage */}
-      <div className="p-8 overflow-y-auto bg-slate-50">
-        <div className="max-w-2xl">
-          <div className="mb-6">
-            <p className="text-sm text-slate-600 mb-4">
-              {question.question || "Using the passage below, read and answer the questions opposite."}
-            </p>
-            
-            {passages.length > 1 && (
-              <div className="flex gap-2 mb-4">
-                {passages.map((passage) => (
-                  <button
-                    key={passage.id}
-                    onClick={() => setActiveTab(passage.id)}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                      activeTab === passage.id
-                        ? "bg-white text-slate-800 shadow-sm border border-slate-200"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    )}
-                  >
-                    {passage.title}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="overflow-y-auto bg-slate-50 flex flex-col" style={{ width: `${leftWidth}%` }}>
+        {/* Sticky Header */}
+        <div className="sticky top-0 bg-slate-50 z-10 px-8 pt-8 pb-4 border-b border-slate-200">
+          <p className="text-sm text-slate-600 mb-4">
+            {question.question || "Using the passage below, read and answer the questions opposite."}
+          </p>
           
-          <div className="bg-white rounded-lg p-6 border border-slate-200">
+          {passages.length > 1 && (
+            <div className="flex gap-2">
+              {passages.map((passage) => (
+                <button
+                  key={passage.id}
+                  onClick={() => setActiveTab(passage.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                    activeTab === passage.id
+                      ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  )}
+                >
+                  {passage.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Scrollable Passage Content */}
+        <div className="flex-1 px-8 py-6">
+          <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div className="prose prose-slate max-w-none">
               <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
                 {activePassage?.content}
@@ -65,8 +104,21 @@ export default function ReadingComprehensionQuestion({
         </div>
       </div>
 
+      {/* Draggable Divider */}
+      <div
+        onMouseDown={handleMouseDown}
+        className={cn(
+          "w-1 bg-slate-300 hover:bg-indigo-500 cursor-col-resize relative group transition-colors flex-shrink-0",
+          isDragging && "bg-indigo-500"
+        )}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-400 group-hover:bg-indigo-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="w-3 h-3 text-white" />
+        </div>
+      </div>
+
       {/* Right Pane - Questions */}
-      <div className="p-8 overflow-y-auto">
+      <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-2xl space-y-8">
           {question.comprehensionQuestions?.map((q, qIdx) => (
             <div key={q.id} className="space-y-3">
