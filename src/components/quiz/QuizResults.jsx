@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Trophy, RotateCcw, Home, CheckCircle2, XCircle } from 'lucide-react';
+import { Trophy, RotateCcw, Home, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -80,8 +80,16 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="flex gap-4 justify-center"
+        className="flex gap-3 justify-center flex-wrap"
       >
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onReview}
+          className="gap-2"
+        >
+          Review Answers
+        </Button>
         <Button
           variant="outline"
           size="lg"
@@ -92,10 +100,10 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
           Try Again
         </Button>
         
-        <Link to={createPageUrl('Quizzes')}>
+        <Link to={createPageUrl('Home')}>
           <Button size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-            <Home className="w-4 h-4" />
-            All Quizzes
+            <BookOpen className="w-4 h-4" />
+            Back to Courses
           </Button>
         </Link>
       </motion.div>
