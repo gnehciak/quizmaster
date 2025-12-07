@@ -20,7 +20,7 @@ export default function Quizzes() {
 
   const { data: quizzes = [], isLoading } = useQuery({
     queryKey: ['quizzes'],
-    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    queryFn: () => base44.entities.Quiz.list('-created_date')
   });
 
   const deleteMutation = useMutation({
@@ -29,9 +29,9 @@ export default function Quizzes() {
   });
 
   // Filter by search and category
-  const filteredQuizzes = quizzes.filter(quiz => {
+  const filteredQuizzes = quizzes.filter((quiz) => {
     const matchesSearch = quiz.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || quiz.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -80,8 +80,8 @@ export default function Quizzes() {
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-800">My Quizzes</h1>
-                <p className="text-sm text-slate-500">Create and manage interactive quizzes</p>
+                <h1 className="text-2xl font-bold text-slate-800">Quiz Editor</h1>
+                <p className="text-sm text-slate-500">Create and manage quizzes</p>
               </div>
             </div>
             
@@ -103,8 +103,8 @@ export default function Quizzes() {
             placeholder="Search quizzes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 h-12 text-base bg-white border-slate-200 rounded-xl shadow-sm"
-          />
+            className="pl-12 h-12 text-base bg-white border-slate-200 rounded-xl shadow-sm" />
+
         </div>
 
         {/* Category Filter */}
@@ -112,8 +112,8 @@ export default function Quizzes() {
           <CategoryFilter
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
-            quizCounts={quizCounts}
-          />
+            quizCounts={quizCounts} />
+
         </div>
 
         {/* Sort Controls */}
@@ -125,35 +125,35 @@ export default function Quizzes() {
         </div>
 
         {/* Quiz Grid */}
-        {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200">
+        {isLoading ?
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) =>
+          <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200">
                 <Skeleton className="h-6 w-3/4 mb-3" />
                 <Skeleton className="h-4 w-full mb-2" />
                 <Skeleton className="h-4 w-2/3 mb-6" />
                 <Skeleton className="h-10 w-full" />
               </div>
-            ))}
-          </div>
-        ) : sortedQuizzes.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedQuizzes.map((quiz, idx) => (
-              <QuizCard
-                key={quiz.id}
-                quiz={quiz}
-                index={idx}
-                onDelete={handleDelete}
-                onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)}
-              />
-            ))}
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
+          )}
+          </div> :
+        sortedQuizzes.length > 0 ?
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedQuizzes.map((quiz, idx) =>
+          <QuizCard
+            key={quiz.id}
+            quiz={quiz}
+            index={idx}
+            onDelete={handleDelete}
+            onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)} />
+
+          )}
+          </div> :
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16">
+
             <div className="w-20 h-20 bg-indigo-100 rounded-full mx-auto mb-6 flex items-center justify-center">
               <Sparkles className="w-10 h-10 text-indigo-500" />
             </div>
@@ -161,21 +161,21 @@ export default function Quizzes() {
               {searchTerm ? 'No quizzes found' : 'No quizzes yet'}
             </h3>
             <p className="text-slate-500 mb-6">
-              {searchTerm 
-                ? 'Try a different search term' 
-                : 'Create your first quiz to get started'}
+              {searchTerm ?
+            'Try a different search term' :
+            'Create your first quiz to get started'}
             </p>
-            {!searchTerm && (
-              <Link to={createPageUrl('CreateQuiz')}>
+            {!searchTerm &&
+          <Link to={createPageUrl('CreateQuiz')}>
                 <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700">
                   <Plus className="w-4 h-4" />
                   Create Your First Quiz
                 </Button>
               </Link>
-            )}
+          }
           </motion.div>
-        )}
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 }
