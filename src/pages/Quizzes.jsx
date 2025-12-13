@@ -88,6 +88,11 @@ export default function Quizzes() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
+              <Link to={createPageUrl('AdminDashboard')}>
+                <Button variant="ghost" size="icon">
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+              </Link>
               <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg shadow-indigo-200">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
