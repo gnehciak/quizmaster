@@ -86,6 +86,7 @@ export default function Home() {
                 course={course}
                 index={idx}
                 hasAccess={!course.is_locked || accessMap[course.id] || user?.role === 'admin'}
+                user={user}
               />
             ))}
           </div>
