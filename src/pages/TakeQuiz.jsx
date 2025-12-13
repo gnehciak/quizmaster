@@ -599,8 +599,55 @@ export default function TakeQuiz() {
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
+          </div>
+          )}
+
+          {/* Submit Confirmation Dialog */}
+          <Dialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
+          <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Confirm Submission</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-base font-medium text-slate-800">
+              Are you sure you want to finish the test?
+            </p>
+
+            <div className="space-y-2 text-sm text-slate-600">
+              <p>• Have you completed all questions?</p>
+              <p>• Have you reviewed all your answers?</p>
+            </div>
+
+            {quiz?.timer_enabled && quiz?.timer_duration && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-semibold">Time Remaining:</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-900 mt-2">
+                  {formatTime(timeLeft).hours}:{formatTime(timeLeft).minutes}:{formatTime(timeLeft).seconds}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmSubmitOpen(false)}
+              className="px-6"
+            >
+              No, Go Back
+            </Button>
+            <Button
+              onClick={handleConfirmSubmit}
+              className="bg-emerald-600 hover:bg-emerald-700 px-6"
+            >
+              Yes, Submit
+            </Button>
+          </div>
+          </DialogContent>
+          </Dialog>
+          </div>
+          );
+          }
