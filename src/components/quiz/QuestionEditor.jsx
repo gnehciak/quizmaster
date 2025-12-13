@@ -100,10 +100,15 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
       correctAnswer: ''
     });
     
+    // Add placeholder to text
+    const text = question.textWithBlanks || '';
+    const newText = text + (text ? ' ' : '') + `{{${blankId}}}`;
+    
     // Update both fields at once
     onChange({
       ...question,
-      blanks: blanks
+      blanks: blanks,
+      textWithBlanks: newText
     });
   };
 
@@ -690,11 +695,26 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
       {/* Inline Dropdown Separate */}
       {question.type === 'inline_dropdown_separate' && (
         <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Question Text</Label>
+            <p className="text-xs text-slate-500">
+              Write your question text. Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. for dropdowns
+            </p>
+            <ReactQuill
+              value={question.textWithBlanks || ''}
+              onChange={(value) => updateField('textWithBlanks', value)}
+              placeholder="The {{blank_1}} is a type of {{blank_2}}..."
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg min-h-[100px]"
+            />
+          </div>
+
           <div className="space-y-4">
             <div>
-              <Label>Step 1: Add Blanks</Label>
+              <Label>Blank Options</Label>
               <p className="text-xs text-slate-500 mb-2">
-                Click "Add Blank" below to create blanks, then type the options for each blank
+                Add blanks and configure their dropdown options
               </p>
               <Button type="button" variant="outline" onClick={addBlank} className="gap-2">
                 <Plus className="w-4 h-4" />
@@ -707,12 +727,9 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 {question.blanks.map((blank, idx) => (
                   <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-300">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
-                          {`{{${blank.id}}}`}
-                        </span>
-                        <span className="text-xs text-slate-500 ml-2">Add options below</span>
-                      </div>
+                      <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
+                        {`{{${blank.id}}}`}
+                      </span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -725,45 +742,44 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs">Options (select correct answer with radio button)</Label>
-                      {(!blank.options || blank.options.length === 0) && (
-                        <p className="text-xs text-red-600">No options found. Click "Add Option" below.</p>
-                      )}
-                      {blank.options?.map((opt, optIdx) => (
-                        <div key={optIdx} className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name={`correct_blank_${blank.id}`}
-                            checked={blank.correctAnswer === opt && opt !== ''}
-                            onChange={() => updateBlank(idx, 'correctAnswer', opt)}
-                            className="w-3 h-3 text-indigo-600"
-                          />
-                          <Input
-                            value={opt}
-                            onChange={(e) => {
-                              const options = [...blank.options];
-                              options[optIdx] = e.target.value;
-                              updateBlank(idx, 'options', options);
-                            }}
-                            placeholder={`Option ${optIdx + 1}`}
-                            className="text-sm h-9 flex-1"
-                          />
-                          {blank.options.length > 2 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const options = blank.options.filter((_, i) => i !== optIdx);
+                      <Label className="text-xs">Options (select correct answer)</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {blank.options?.map((opt, optIdx) => (
+                          <div key={optIdx} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`correct_blank_${blank.id}`}
+                              checked={blank.correctAnswer === opt && opt !== ''}
+                              onChange={() => updateBlank(idx, 'correctAnswer', opt)}
+                              className="w-3 h-3 text-indigo-600 flex-shrink-0"
+                            />
+                            <Input
+                              value={opt}
+                              onChange={(e) => {
+                                const options = [...blank.options];
+                                options[optIdx] = e.target.value;
                                 updateBlank(idx, 'options', options);
                               }}
-                              className="text-slate-400 hover:text-red-500 h-9 w-9"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                              placeholder={`Option ${optIdx + 1}`}
+                              className="text-sm h-9 flex-1"
+                            />
+                            {blank.options.length > 2 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const options = blank.options.filter((_, i) => i !== optIdx);
+                                  updateBlank(idx, 'options', options);
+                                }}
+                                className="text-slate-400 hover:text-red-500 h-9 w-9 flex-shrink-0"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
@@ -775,28 +791,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                         className="gap-2 w-full"
                       >
                         <Plus className="w-3 h-3" />
-                        Add Option to {blank.id}
+                        Add Option
                       </Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Step 2: Write Your Question Text</Label>
-            <p className="text-xs text-slate-500">
-              Copy and paste the blank placeholders (e.g. {"{{blank_1}}"}) from above into your text where you want the dropdowns
-            </p>
-            <ReactQuill
-              value={question.textWithBlanks || ''}
-              onChange={(value) => updateField('textWithBlanks', value)}
-              placeholder="The {{blank_1}} is a type of {{blank_2}}..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg min-h-[100px]"
-            />
           </div>
         </div>
       )}
