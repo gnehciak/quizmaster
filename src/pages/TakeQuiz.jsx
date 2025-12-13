@@ -79,6 +79,16 @@ export default function TakeQuiz() {
       setQuizStarted(true);
       setSubmitted(true);
       setReviewMode(true);
+      
+      // Load the last attempt's answers and generate AI explanations
+      const latestAttempt = userAttempts[userAttempts.length - 1];
+      if (latestAttempt && latestAttempt.answers) {
+        setAnswers(latestAttempt.answers);
+        // Generate AI explanations for review mode
+        setTimeout(() => {
+          generateAIExplanations({});
+        }, 500);
+      }
     }
   }, [isReviewMode, userAttempts]);
 
@@ -219,6 +229,7 @@ export default function TakeQuiz() {
           score,
           total,
           percentage,
+          answers,
           time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
         });
 
