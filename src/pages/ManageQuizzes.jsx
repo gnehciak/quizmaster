@@ -6,7 +6,7 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, BookOpen, Sparkles, ChevronLeft } from 'lucide-react';
+import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3 } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import CategoryFilter from '@/components/quiz/CategoryFilter';
 import SortFilter from '@/components/quiz/SortFilter';
@@ -103,6 +103,12 @@ export default function ManageQuizzes() {
             </div>
             
             <div className="flex gap-2">
+              <Link to={createPageUrl('QuizAnalytics')}>
+                <Button variant="outline" className="gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Analytics
+                </Button>
+              </Link>
               <Link to={createPageUrl('ManageCategories')}>
                 <Button variant="outline" className="gap-2">
                   <Plus className="w-4 h-4" />

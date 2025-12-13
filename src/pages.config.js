@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ManageCourses from './pages/ManageCourses';
 import ManageCategories from './pages/ManageCategories';
 import ManageQuizzes from './pages/ManageQuizzes';
+import QuizAnalytics from './pages/QuizAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "ManageCourses": ManageCourses,
     "ManageCategories": ManageCategories,
     "ManageQuizzes": ManageQuizzes,
+    "QuizAnalytics": QuizAnalytics,
 }
 
 export const pagesConfig = {
