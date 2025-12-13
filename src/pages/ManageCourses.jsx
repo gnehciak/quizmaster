@@ -54,8 +54,8 @@ export default function ManageCourses() {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['quizCategories'],
-    queryFn: () => base44.entities.QuizCategory.list(),
+    queryKey: ['courseCategories'],
+    queryFn: () => base44.entities.CourseCategory.list(),
   });
 
   const saveMutation = useMutation({
@@ -78,25 +78,25 @@ export default function ManageCourses() {
   });
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data) => base44.entities.QuizCategory.create(data),
+    mutationFn: (data) => base44.entities.CourseCategory.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
       setCategoryName('');
     }
   });
 
   const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.QuizCategory.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities.CourseCategory.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
       setEditingCategory(null);
       setCategoryName('');
     }
   });
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: (id) => base44.entities.QuizCategory.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizCategories'] })
+    mutationFn: (id) => base44.entities.CourseCategory.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courseCategories'] })
   });
 
   // Filter courses

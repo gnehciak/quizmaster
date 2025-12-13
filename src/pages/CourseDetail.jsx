@@ -89,8 +89,8 @@ export default function CourseDetail() {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['quizCategories'],
-    queryFn: () => base44.entities.QuizCategory.list(),
+    queryKey: ['courseCategories'],
+    queryFn: () => base44.entities.CourseCategory.list(),
   });
 
   const { data: access } = useQuery({
