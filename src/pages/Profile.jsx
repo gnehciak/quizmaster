@@ -40,12 +40,16 @@ export default function Profile() {
     queryFn: () => base44.entities.Course.list(),
   });
 
-  if (userLoading) {
+  if (userLoading || attemptsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   // Calculate stats
