@@ -324,11 +324,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   disabled
                   className="font-medium text-sm"
                 />
-                <Textarea
+                <ReactQuill
                   value={question.passage || ''}
-                  onChange={(e) => updateField('passage', e.target.value)}
+                  onChange={(value) => updateField('passage', value)}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[150px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[150px]"
                 />
               </div>
             )}
@@ -358,15 +360,17 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <Textarea
+                <ReactQuill
                   value={passage.content || ''}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     const updated = [...question.passages];
-                    updated[idx] = { ...passage, content: e.target.value };
+                    updated[idx] = { ...passage, content: value };
                     updateField('passages', updated);
                   }}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[120px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[120px]"
                 />
               </div>
             ))}
@@ -669,11 +673,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             <p className="text-xs text-slate-500">
               Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
             </p>
-            <Textarea
+            <ReactQuill
               value={question.textWithBlanks || ''}
-              onChange={(e) => updateField('textWithBlanks', e.target.value)}
+              onChange={(value) => updateField('textWithBlanks', value)}
               placeholder="The {{blank_1}} is a type of {{blank_2}}..."
-              className="min-h-[100px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg min-h-[100px]"
             />
           </div>
 
@@ -949,11 +955,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             <p className="text-xs text-slate-500">
               Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
             </p>
-            <Textarea
+            <ReactQuill
               value={question.textWithBlanks || ''}
-              onChange={(e) => updateField('textWithBlanks', e.target.value)}
+              onChange={(value) => updateField('textWithBlanks', value)}
               placeholder="The {{blank_1}} is a type of {{blank_2}}..."
-              className="min-h-[100px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg min-h-[100px]"
             />
           </div>
 
