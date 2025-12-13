@@ -705,7 +705,7 @@ export default function CourseDetail() {
                             </div>
 
                             <div className="flex gap-2">
-                              <Link to={createPageUrl('CreateQuiz')} className="flex-1">
+                              <Link to={createPageUrl(`CreateQuiz?courseId=${courseId}`)} className="flex-1">
                                 <Button type="button" variant="outline" className="w-full gap-2">
                                   <Plus className="w-4 h-4" />
                                   Create New Quiz
@@ -933,7 +933,7 @@ export default function CourseDetail() {
                       </div>
                       <div className="flex items-center gap-2">
                         {isAdmin && (
-                          <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}`)}>
+                          <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}&courseId=${courseId}`)}>
                             <Button size="sm" variant="outline" className="gap-2">
                               <Pencil className="w-4 h-4" />
                               Edit
