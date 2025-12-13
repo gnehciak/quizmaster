@@ -68,9 +68,10 @@ export default function ReadingComprehensionQuestion({
       <div className="overflow-y-auto bg-slate-50 flex flex-col" style={{ width: `${leftWidth}%` }}>
         {/* Sticky Header */}
         <div className="sticky top-0 bg-slate-50 z-10 px-8 pt-8 pb-4 border-b border-slate-200">
-          <p className="text-sm text-slate-600 mb-4">
-            {question.question || "Using the passage below, read and answer the questions opposite."}
-          </p>
+          <div 
+            className="text-sm text-slate-600 mb-4 prose prose-slate max-w-none prose-p:my-0"
+            dangerouslySetInnerHTML={{ __html: question.question || "Using the passage below, read and answer the questions opposite." }}
+          />
           
           {passages.length > 1 && (
             <div className="flex gap-2">
@@ -95,11 +96,10 @@ export default function ReadingComprehensionQuestion({
         {/* Scrollable Passage Content */}
         <div className="flex-1 px-8 py-6">
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
-            <div className="prose prose-slate max-w-none">
-              <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
-                {activePassage?.content}
-              </p>
-            </div>
+            <div 
+              className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
+            />
           </div>
         </div>
       </div>
@@ -122,9 +122,10 @@ export default function ReadingComprehensionQuestion({
         <div className="max-w-2xl space-y-8">
           {question.comprehensionQuestions?.map((q, qIdx) => (
             <div key={q.id} className="space-y-3">
-              <p className="font-medium text-slate-800 text-base">
-                {q.question}
-              </p>
+              <div 
+                className="font-medium text-slate-800 text-base prose prose-slate max-w-none prose-p:my-0"
+                dangerouslySetInnerHTML={{ __html: q.question }}
+              />
               
               <div className="space-y-2">
                 {q.options.map((option, optIdx) => {

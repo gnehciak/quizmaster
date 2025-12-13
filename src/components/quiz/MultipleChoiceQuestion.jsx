@@ -12,9 +12,10 @@ export default function MultipleChoiceQuestion({
   return (
     <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
-        <h3 className="text-lg font-medium text-slate-800 leading-relaxed">
-          {question.question}
-        </h3>
+        <div 
+          className="text-lg font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none"
+          dangerouslySetInnerHTML={{ __html: question.question }}
+        />
         
         <div className="space-y-3">
           {question.options.map((option, idx) => {
@@ -48,14 +49,15 @@ export default function MultipleChoiceQuestion({
                   )}
                 </div>
                 
-                <span className={cn(
-                  "font-medium",
-                  isCorrect && "text-emerald-700",
-                  isWrong && "text-red-600",
-                  !showResults && isSelected && "text-slate-800"
-                )}>
-                  {option}
-                </span>
+                <div 
+                  className={cn(
+                    "font-medium prose prose-slate max-w-none prose-p:my-0",
+                    isCorrect && "text-emerald-700",
+                    isWrong && "text-red-600",
+                    !showResults && isSelected && "text-slate-800"
+                  )}
+                  dangerouslySetInnerHTML={{ __html: option }}
+                />
                 
                 {showResults && isCorrect && (
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 ml-auto" />
@@ -71,7 +73,10 @@ export default function MultipleChoiceQuestion({
         {showResults && question.explanation && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm font-medium text-blue-900 mb-1">Explanation:</p>
-            <p className="text-sm text-blue-800">{question.explanation}</p>
+            <div 
+              className="text-sm text-blue-800 prose prose-slate max-w-none prose-p:my-0"
+              dangerouslySetInnerHTML={{ __html: question.explanation }}
+            />
           </div>
         )}
       </div>

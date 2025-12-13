@@ -26,6 +26,8 @@ export default function InlineDropdownQuestion({
   // Parse text with blanks - format: "Text {{blank_id}} more text"
   const renderTextWithBlanks = () => {
     const text = question.textWithBlanks || "";
+    // Remove HTML tags for parsing blanks
+    const cleanText = text.replace(/<[^>]*>/g, '');
     const parts = text.split(/(\{\{[^}]+\}\})/g);
     
     return parts.map((part, idx) => {
@@ -84,16 +86,17 @@ export default function InlineDropdownQuestion({
         );
       }
       
-      return <span key={idx}>{part}</span>;
+      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
     });
   };
 
   return (
     <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-6">
-      <h3 className="text-xl font-medium text-slate-800 leading-relaxed">
-        {question.question}
-      </h3>
+      <div 
+        className="text-xl font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
+        dangerouslySetInnerHTML={{ __html: question.question }}
+      />
       
       <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
         <p className="text-lg leading-loose text-slate-700">

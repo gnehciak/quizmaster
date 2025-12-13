@@ -73,9 +73,10 @@ export default function MatchingListQuestion({
       <div className="overflow-y-auto bg-slate-50 flex flex-col" style={{ width: `${leftWidth}%` }}>
         {/* Sticky Header */}
         <div className="sticky top-0 bg-slate-50 z-10 px-8 pt-8 pb-4 border-b border-slate-200">
-          <p className="text-sm text-slate-600 mb-4">
-            {question.question || "Using the passage below, read and answer the matching questions opposite."}
-          </p>
+          <div 
+            className="text-sm text-slate-600 mb-4 prose prose-slate max-w-none prose-p:my-0"
+            dangerouslySetInnerHTML={{ __html: question.question || "Using the passage below, read and answer the matching questions opposite." }}
+          />
           
           {passages.length > 1 && (
             <div className="flex gap-2">
@@ -100,11 +101,10 @@ export default function MatchingListQuestion({
         {/* Scrollable Passage Content */}
         <div className="flex-1 px-8 py-6">
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
-            <div className="prose prose-slate max-w-none">
-              <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
-                {activePassage?.content}
-              </p>
-            </div>
+            <div 
+              className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
+            />
           </div>
         </div>
       </div>
@@ -126,9 +126,10 @@ export default function MatchingListQuestion({
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-3xl">
           {question.rightPaneQuestion && (
-            <p className="text-base text-slate-700 mb-6">
-              {question.rightPaneQuestion}
-            </p>
+            <div 
+              className="text-base text-slate-700 mb-6 prose prose-slate max-w-none prose-p:my-0"
+              dangerouslySetInnerHTML={{ __html: question.rightPaneQuestion }}
+            />
           )}
 
           <div className="space-y-3">
@@ -147,9 +148,10 @@ export default function MatchingListQuestion({
                     isWrong && "border-red-400 bg-red-50"
                   )}
                 >
-                  <div className="flex-1 text-sm text-slate-800">
-                    {q.question}
-                  </div>
+                  <div 
+                    className="flex-1 text-sm text-slate-800 prose prose-slate max-w-none prose-p:my-0"
+                    dangerouslySetInnerHTML={{ __html: q.question }}
+                  />
                   
                   <div className="flex items-center gap-3 min-w-[200px]">
                     <Select

@@ -62,9 +62,10 @@ export default function DragDropQuestion({
     <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-medium text-slate-800 leading-relaxed">
-          {question.question}
-        </h3>
+        <div 
+          className="text-xl font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
+          dangerouslySetInnerHTML={{ __html: question.question }}
+        />
         
         {!showResults && Object.keys(selectedAnswers).length > 0 && (
           <Button 

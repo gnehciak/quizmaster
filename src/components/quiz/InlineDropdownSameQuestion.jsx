@@ -72,7 +72,7 @@ export default function InlineDropdownSameQuestion({
         );
       }
       
-      return <span key={idx}>{part}</span>;
+      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
     });
   };
 
@@ -88,7 +88,10 @@ export default function InlineDropdownSameQuestion({
       
       {showResults && question.explanation && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <p className="text-sm text-slate-700">{question.explanation}</p>
+          <div 
+            className="text-sm text-slate-700 prose prose-slate max-w-none prose-p:my-0"
+            dangerouslySetInnerHTML={{ __html: question.explanation }}
+          />
         </div>
       )}
     </motion.div>
