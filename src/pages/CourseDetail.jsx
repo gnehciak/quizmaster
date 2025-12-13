@@ -22,12 +22,16 @@ import {
   Link as LinkIcon,
   FileUp,
   Youtube,
-  Download
+  Upload,
+  Search,
+  Copy
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   Dialog,
   DialogContent,
@@ -65,6 +69,16 @@ export default function CourseDetail() {
   const [editingBlock, setEditingBlock] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [purchaseSuccessOpen, setPurchaseSuccessOpen] = useState(false);
+  const [quizSearch, setQuizSearch] = useState('');
+
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ 'background': [] }]
+    ]
+  };
+
+  const quillFormats = ['bold', 'italic', 'underline', 'background'];
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -595,7 +609,7 @@ export default function CourseDetail() {
                             </div>
                           </Button>
                           <Button variant="outline" onClick={() => setContentType('upload_file')} className="justify-start gap-2 h-auto py-3">
-                            <Download className="w-5 h-5" />
+                            <Upload className="w-5 h-5" />
                             <div className="text-left">
                               <div className="font-medium">Upload File</div>
                               <div className="text-xs text-slate-500">Upload a file for download</div>
@@ -614,30 +628,88 @@ export default function CourseDetail() {
                         {contentType === 'text' && (
                           <div>
                             <label className="text-sm font-medium mb-2 block">Text Content</label>
-                            <Textarea
+                            <ReactQuill
                               value={textContent}
-                              onChange={(e) => setTextContent(e.target.value)}
+                              onChange={setTextContent}
                               placeholder="Enter text content..."
-                              className="min-h-[120px]"
+                              modules={quillModules}
+                              formats={quillFormats}
+                              className="bg-white rounded-lg"
                             />
                           </div>
                         )}
 
                         {contentType === 'quiz' && (
-                          <div>
-                            <label className="text-sm font-medium mb-2 block">Select Quiz</label>
-                            <Select value={selectedQuizId} onValueChange={setSelectedQuizId}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Choose a quiz..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {quizzes.map(quiz => (
-                                  <SelectItem key={quiz.id} value={quiz.id}>
-                                    {quiz.title}
-                                  </SelectItem>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Search Quiz</label>
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <Input
+                                  value={quizSearch}
+                                  onChange={(e) => setQuizSearch(e.target.value)}
+                                  placeholder="Search quizzes..."
+                                  className="pl-10"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                              {quizzes
+                                .filter(q => q.title?.toLowerCase().includes(quizSearch.toLowerCase()))
+                                .map(quiz => (
+                                  <button
+                                    key={quiz.id}
+                                    type="button"
+                                    onClick={() => setSelectedQuizId(quiz.id)}
+                                    className={cn(
+                                      "w-full p-3 rounded-lg border-2 text-left transition-all",
+                                      selectedQuizId === quiz.id
+                                        ? "border-indigo-500 bg-indigo-50"
+                                        : "border-slate-200 hover:border-slate-300"
+                                    )}
+                                  >
+                                    <div className="font-medium text-slate-800">{quiz.title}</div>
+                                    <div className="text-xs text-slate-500 mt-1">
+                                      {quiz.questions?.length || 0} questions
+                                    </div>
+                                  </button>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Link to={createPageUrl('CreateQuiz')} className="flex-1">
+                                <Button type="button" variant="outline" className="w-full gap-2">
+                                  <Plus className="w-4 h-4" />
+                                  Create New Quiz
+                                </Button>
+                              </Link>
+                              {selectedQuizId && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    const quiz = quizzes.find(q => q.id === selectedQuizId);
+                                    if (!quiz) return;
+
+                                    const duplicated = {
+                                      ...quiz,
+                                      title: quiz.title + ' (Copy)',
+                                      id: undefined
+                                    };
+
+                                    const newQuiz = await base44.entities.Quiz.create(duplicated);
+                                    setSelectedQuizId(newQuiz.id);
+                                    queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+                                    toast.success('Quiz duplicated successfully');
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Copy className="w-4 h-4" />
+                                  Duplicate Selected
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         )}
 
@@ -734,7 +806,7 @@ export default function CourseDetail() {
                               }}
                               className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer"
                               onClick={() => document.getElementById('download-file-upload').click()}
-                            >
+                              >
                               <input
                                 id="download-file-upload"
                                 type="file"
@@ -747,7 +819,7 @@ export default function CourseDetail() {
                               {uploadingFile ? (
                                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto mb-2" />
                               ) : (
-                                <Download className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                               )}
                               <p className="text-sm text-slate-600">
                                 {uploadingFile ? 'Uploading...' : 'Drag and drop a file or click to browse'}
@@ -788,7 +860,7 @@ export default function CourseDetail() {
                   return (
                     <div className="flex items-start gap-3 flex-1">
                       <FileText className="w-5 h-5 text-slate-500 mt-0.5" />
-                      <p className="text-slate-700 whitespace-pre-wrap">{block.text}</p>
+                      <div className="text-slate-700 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: block.text }} />
                     </div>
                   );
                 }
@@ -940,7 +1012,7 @@ export default function CourseDetail() {
                   if (!hasAccess) {
                     return (
                       <div className="flex items-center gap-3 flex-1 opacity-60">
-                        <Download className="w-5 h-5 text-slate-400" />
+                        <Upload className="w-5 h-5 text-slate-400" />
                         <span className="text-slate-500">Download File (Locked)</span>
                         <Lock className="w-4 h-4 text-slate-400 ml-auto" />
                       </div>
@@ -948,7 +1020,7 @@ export default function CourseDetail() {
                   }
                   return (
                     <div className="flex items-center gap-3 flex-1">
-                      <Download className="w-5 h-5 text-indigo-500" />
+                      <Upload className="w-5 h-5 text-indigo-500" />
                       <a 
                         href={block.file_url} 
                         download
