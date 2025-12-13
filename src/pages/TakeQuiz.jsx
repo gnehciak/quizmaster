@@ -43,6 +43,8 @@ export default function TakeQuiz() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [questionTimes, setQuestionTimes] = useState({});
   const [aiExplanations, setAiExplanations] = useState({});
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [confirmExitOpen, setConfirmExitOpen] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -61,6 +63,12 @@ export default function TakeQuiz() {
     queryFn: () => base44.entities.Quiz.filter({ id: quizId }),
     enabled: !!quizId,
     select: (data) => data[0]
+  });
+
+  const { data: userAttempts = [] } = useQuery({
+    queryKey: ['quizAttempts', quizId, user?.email],
+    queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quizId, user_email: user?.email }),
+    enabled: !!quizId && !!user?.email
   });
 
   // Flatten questions - expand comprehension questions into individual questions
@@ -156,6 +164,25 @@ export default function TakeQuiz() {
     setConfirmSubmitOpen(true);
   };
 
+  const handleStartQuiz = async () => {
+    setQuizStarted(true);
+    
+    // Create attempt record when quiz starts
+    try {
+      await base44.entities.QuizAttempt.create({
+        user_email: user.email,
+        quiz_id: quizId,
+        course_id: urlParams.get('courseId'),
+        score: 0,
+        total: getTotalPoints(),
+        percentage: 0,
+        time_taken: 0
+      });
+    } catch (e) {
+      console.error('Failed to create attempt:', e);
+    }
+  };
+
   const handleConfirmSubmit = async () => {
     // Track time for last question
     const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
@@ -169,27 +196,36 @@ export default function TakeQuiz() {
     setSubmitted(true);
     setShowResults(true);
 
-    // Save quiz attempt
+    // Update the most recent attempt with final score
     try {
       const score = calculateScore();
       const total = getTotalPoints();
       const percentage = Math.round((score / total) * 100);
 
-      await base44.entities.QuizAttempt.create({
-        user_email: user.email,
-        quiz_id: quizId,
-        course_id: urlParams.get('courseId'),
-        score,
-        total,
-        percentage,
-        time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : 0
-      });
+      // Get the most recent attempt
+      const recentAttempt = userAttempts[userAttempts.length - 1];
+      if (recentAttempt) {
+        await base44.entities.QuizAttempt.update(recentAttempt.id, {
+          score,
+          total,
+          percentage,
+          time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
+        });
+      }
 
       // Generate AI explanations for wrong answers
       generateAIExplanations(finalQuestionTimes);
     } catch (e) {
-      console.error('Failed to save attempt:', e);
+      console.error('Failed to update attempt:', e);
     }
+  };
+
+  const handleExitQuiz = () => {
+    setConfirmExitOpen(true);
+  };
+
+  const handleConfirmExit = () => {
+    handleConfirmSubmit();
   };
 
   const generateAIExplanations = async (times) => {
@@ -471,6 +507,95 @@ export default function TakeQuiz() {
             <Button>Back to Quizzes</Button>
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  // Pre-start screen
+  if (!quizStarted && !showResults) {
+    const attemptsAllowed = quiz.attempts_allowed || 999;
+    const attemptsUsed = userAttempts.length;
+    const attemptsLeft = attemptsAllowed - attemptsUsed;
+    const isAdmin = user?.role === 'admin';
+    const canTakeQuiz = isAdmin || attemptsLeft > 0;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8"
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-slate-800 mb-3">{quiz.title}</h1>
+            {quiz.description && (
+              <p className="text-slate-600 text-lg">{quiz.description}</p>
+            )}
+          </div>
+
+          <div className="space-y-4 mb-8">
+            {quiz.timer_enabled && quiz.timer_duration && (
+              <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <Clock className="w-6 h-6 text-amber-600" />
+                <div>
+                  <div className="font-semibold text-slate-800">Time Limit</div>
+                  <div className="text-slate-600">{quiz.timer_duration} minutes</div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <CheckCircle2 className="w-6 h-6 text-indigo-600" />
+              <div>
+                <div className="font-semibold text-slate-800">Total Questions</div>
+                <div className="text-slate-600">{totalQuestions} questions</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <Flag className="w-6 h-6 text-emerald-600" />
+              <div>
+                <div className="font-semibold text-slate-800">Attempts</div>
+                <div className="text-slate-600">
+                  {isAdmin ? (
+                    'Unlimited (Admin)'
+                  ) : attemptsAllowed >= 999 ? (
+                    'Unlimited attempts'
+                  ) : (
+                    `${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining`
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {canTakeQuiz ? (
+            <Button
+              onClick={handleStartQuiz}
+              size="lg"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-lg py-6"
+            >
+              Start Quiz
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          ) : (
+            <div className="text-center">
+              <p className="text-red-600 font-semibold mb-4">No attempts remaining</p>
+              <Link to={createPageUrl('Home')}>
+                <Button variant="outline">Back to Courses</Button>
+              </Link>
+            </div>
+          )}
+
+          <div className="mt-6 text-center">
+            <Link to={urlParams.get('courseId') ? createPageUrl(`CourseDetail?id=${urlParams.get('courseId')}`) : createPageUrl('Home')}>
+              <Button variant="ghost" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -922,11 +1047,12 @@ export default function TakeQuiz() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-4">
           {/* Close Button */}
-          <Link to={createPageUrl('ManageQuizzes')}>
-            <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </Link>
+          <button
+            onClick={handleExitQuiz}
+            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
           {/* Timer */}
           {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
@@ -1177,6 +1303,42 @@ export default function TakeQuiz() {
               className="bg-emerald-600 hover:bg-emerald-700 px-6"
             >
               Yes, Submit
+            </Button>
+          </div>
+          </DialogContent>
+          </Dialog>
+
+          {/* Exit Confirmation Dialog */}
+          <Dialog open={confirmExitOpen} onOpenChange={setConfirmExitOpen}>
+          <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Leave Quiz?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-base font-medium text-slate-800">
+              Are you sure you want to leave this quiz?
+            </p>
+
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">
+                ⚠️ <strong>Warning:</strong> You cannot come back to this quiz. Quitting now will abandon and submit your quiz early with your current answers.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmExitOpen(false)}
+              className="px-6"
+            >
+              Continue Quiz
+            </Button>
+            <Button
+              onClick={handleConfirmExit}
+              className="bg-red-600 hover:bg-red-700 px-6"
+            >
+              Exit & Submit
             </Button>
           </div>
           </DialogContent>
