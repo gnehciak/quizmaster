@@ -730,6 +730,9 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
                     <div className="space-y-2">
                       <Label className="text-xs">Options (select correct answer with radio button)</Label>
+                      {(!blank.options || blank.options.length === 0) && (
+                        <p className="text-xs text-red-600">No options found. Click "Add Option" below.</p>
+                      )}
                       {blank.options?.map((opt, optIdx) => (
                         <div key={optIdx} className="flex items-center gap-2">
                           <input
