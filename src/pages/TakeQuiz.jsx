@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,9 @@ export default function TakeQuiz() {
   const [reviewMode, setReviewMode] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  const [questionTimes, setQuestionTimes] = useState({});
+  const [aiExplanations, setAiExplanations] = useState({});
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -121,14 +124,30 @@ export default function TakeQuiz() {
   };
 
   const handleNext = () => {
+    // Track time spent on current question
+    const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
+    setQuestionTimes(prev => ({
+      ...prev,
+      [currentIndex]: (prev[currentIndex] || 0) + timeSpent
+    }));
+    
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(prev => prev + 1);
+      setQuestionStartTime(Date.now());
     }
   };
 
   const handlePrev = () => {
+    // Track time spent on current question
+    const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
+    setQuestionTimes(prev => ({
+      ...prev,
+      [currentIndex]: (prev[currentIndex] || 0) + timeSpent
+    }));
+    
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
+      setQuestionStartTime(Date.now());
     }
   };
 
@@ -137,6 +156,14 @@ export default function TakeQuiz() {
   };
 
   const handleConfirmSubmit = async () => {
+    // Track time for last question
+    const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
+    const finalQuestionTimes = {
+      ...questionTimes,
+      [currentIndex]: (questionTimes[currentIndex] || 0) + timeSpent
+    };
+    setQuestionTimes(finalQuestionTimes);
+    
     setConfirmSubmitOpen(false);
     setSubmitted(true);
     setShowResults(true);
@@ -156,9 +183,57 @@ export default function TakeQuiz() {
         percentage,
         time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : 0
       });
+
+      // Generate AI explanations for wrong answers
+      generateAIExplanations(finalQuestionTimes);
     } catch (e) {
       console.error('Failed to save attempt:', e);
     }
+  };
+
+  const generateAIExplanations = async (times) => {
+    const explanations = {};
+    
+    for (let idx = 0; idx < questions.length; idx++) {
+      const q = questions[idx];
+      const answer = answers[idx];
+      let isCorrect = false;
+
+      if (q.isSubQuestion) {
+        isCorrect = answer === q.subQuestion.correctAnswer;
+      } else if (q.type === 'multiple_choice') {
+        isCorrect = answer === q.correctAnswer;
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+        isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+        isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
+      } else if (q.type === 'matching_list_dual') {
+        isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+      }
+
+      if (!isCorrect) {
+        try {
+          const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
+          const prompt = `A student answered a quiz question incorrectly. Explain why their answer is wrong and how to find the correct answer. Keep it concise (2-3 sentences).
+
+Question: ${questionText?.replace(/<[^>]*>/g, '')}
+Student's Answer: ${JSON.stringify(answer)}
+Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}
+
+Provide a helpful explanation:`;
+
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: prompt
+          });
+          
+          explanations[idx] = result;
+        } catch (e) {
+          explanations[idx] = "Unable to generate explanation at this time.";
+        }
+      }
+    }
+    
+    setAiExplanations(explanations);
   };
 
   const handleTimeUp = () => {
@@ -230,9 +305,9 @@ export default function TakeQuiz() {
   };
 
   const handleReview = () => {
+    // Review mode will show all questions at once, no need to change these
     setReviewMode(true);
     setShowResults(false);
-    setCurrentIndex(0);
   };
 
   const toggleFlag = () => {
@@ -357,7 +432,7 @@ export default function TakeQuiz() {
     );
   }
 
-  if (showResults && submitted) {
+  if (showResults && submitted && !reviewMode) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 py-12 px-4">
         <QuizResults
@@ -367,6 +442,191 @@ export default function TakeQuiz() {
           onReview={handleReview}
           quizTitle={quiz.title}
         />
+      </div>
+    );
+  }
+
+  if (reviewMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-800">{quiz.title}</h1>
+                <p className="text-slate-600 mt-2">Detailed Review</p>
+              </div>
+              <Button onClick={() => { setReviewMode(false); setShowResults(true); }} variant="outline">
+                Back to Results
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <div className="text-sm text-emerald-600 font-medium">Score</div>
+                <div className="text-2xl font-bold text-emerald-700">{calculateScore()} / {getTotalPoints()}</div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="text-sm text-blue-600 font-medium">Accuracy</div>
+                <div className="text-2xl font-bold text-blue-700">
+                  {Math.round((calculateScore() / getTotalPoints()) * 100)}%
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="text-sm text-amber-600 font-medium">Total Time</div>
+                <div className="text-2xl font-bold text-amber-700">
+                  {Math.floor(Object.values(questionTimes).reduce((a, b) => a + b, 0) / 60)}m {Object.values(questionTimes).reduce((a, b) => a + b, 0) % 60}s
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {questions.map((q, idx) => {
+              const answer = answers[idx];
+              let isCorrect = false;
+              let correctAnswer = '';
+
+              if (q.isSubQuestion) {
+                isCorrect = answer === q.subQuestion.correctAnswer;
+                correctAnswer = q.subQuestion.correctAnswer;
+              } else if (q.type === 'multiple_choice') {
+                isCorrect = answer === q.correctAnswer;
+                correctAnswer = q.correctAnswer;
+              } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
+              } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
+              } else if (q.type === 'matching_list_dual') {
+                isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+              }
+
+              return (
+                <div key={idx} className={cn(
+                  "bg-white rounded-2xl shadow-lg border-2 p-6",
+                  isCorrect ? "border-emerald-300" : "border-red-300"
+                )}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-bold",
+                        isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                      )}>
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <div className={cn(
+                          "text-sm font-semibold",
+                          isCorrect ? "text-emerald-700" : "text-red-700"
+                        )}>
+                          {isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          Time spent: {questionTimes[idx] || 0}s
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="font-semibold text-slate-800 mb-3" dangerouslySetInnerHTML={{
+                      __html: q.isSubQuestion ? q.subQuestion.question : q.question
+                    }} />
+
+                    {q.type === 'multiple_choice' && (
+                      <div className="space-y-2">
+                        {q.options?.map((opt, i) => {
+                          const isSelected = answer === opt;
+                          const isCorrectOption = opt === q.correctAnswer;
+
+                          return (
+                            <div key={i} className={cn(
+                              "p-3 rounded-lg border-2 flex items-center gap-3",
+                              isSelected && isCorrectOption && "bg-emerald-50 border-emerald-400",
+                              isSelected && !isCorrectOption && "bg-red-50 border-red-400",
+                              !isSelected && isCorrectOption && "bg-emerald-50 border-emerald-300",
+                              !isSelected && !isCorrectOption && "border-slate-200"
+                            )}>
+                              <div className={cn(
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                                isSelected && "border-slate-600",
+                                !isSelected && "border-slate-300"
+                              )}>
+                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />}
+                              </div>
+                              <span dangerouslySetInnerHTML={{ __html: opt }} />
+                              {isCorrectOption && <CheckCircle2 className="w-5 h-5 text-emerald-600 ml-auto" />}
+                              {isSelected && !isCorrectOption && <X className="w-5 h-5 text-red-600 ml-auto" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {q.isSubQuestion && q.subQuestion?.options && (
+                      <div className="space-y-2">
+                        {q.subQuestion.options.map((opt, i) => {
+                          const isSelected = answer === opt;
+                          const isCorrectOption = opt === q.subQuestion.correctAnswer;
+
+                          return (
+                            <div key={i} className={cn(
+                              "p-3 rounded-lg border-2 flex items-center gap-3",
+                              isSelected && isCorrectOption && "bg-emerald-50 border-emerald-400",
+                              isSelected && !isCorrectOption && "bg-red-50 border-red-400",
+                              !isSelected && isCorrectOption && "bg-emerald-50 border-emerald-300",
+                              !isSelected && !isCorrectOption && "border-slate-200"
+                            )}>
+                              <div className={cn(
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                                isSelected && "border-slate-600",
+                                !isSelected && "border-slate-300"
+                              )}>
+                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />}
+                              </div>
+                              <span>{opt}</span>
+                              {isCorrectOption && <CheckCircle2 className="w-5 h-5 text-emerald-600 ml-auto" />}
+                              {isSelected && !isCorrectOption && <X className="w-5 h-5 text-red-600 ml-auto" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {!isCorrect && aiExplanations[idx] && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-blue-900 mb-1">AI Explanation</div>
+                          <div className="text-sm text-blue-800 leading-relaxed">{aiExplanations[idx]}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {(q.explanation || q.subQuestion?.explanation) && (
+                    <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="font-semibold text-slate-700 mb-1">Explanation</div>
+                      <div className="text-sm text-slate-600" dangerouslySetInnerHTML={{
+                        __html: q.explanation || q.subQuestion?.explanation
+                      }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <Button onClick={() => { setReviewMode(false); setShowResults(true); }} size="lg">
+              Back to Results
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -514,17 +774,7 @@ export default function TakeQuiz() {
           )}
         </AnimatePresence>
 
-        {showResults && submitted && !reviewMode && (
-          <div className="h-full overflow-auto py-12 px-4">
-            <QuizResults
-              score={calculateScore()}
-              total={getTotalPoints()}
-              onRetry={handleRetry}
-              onReview={handleReview}
-              quizTitle={quiz.title}
-            />
-          </div>
-        )}
+
       </div>
 
       {/* Bottom Navigation */}
