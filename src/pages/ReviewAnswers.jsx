@@ -65,6 +65,16 @@ export default function ReviewAnswers() {
   const questions = flattenedQuestions;
   const answers = attempt?.answers || {};
 
+  // Load saved AI data on mount
+  React.useEffect(() => {
+    if (attempt?.ai_performance_analysis) {
+      setPerformanceAnalysis(attempt.ai_performance_analysis);
+    }
+    if (attempt?.ai_explanations) {
+      setAiExplanations(attempt.ai_explanations);
+    }
+  }, [attempt]);
+
   const generateSingleExplanation = async (idx) => {
     const q = questions[idx];
     const answer = answers[idx];
@@ -100,7 +110,13 @@ export default function ReviewAnswers() {
       const response = await result.response;
       const text = response.text();
 
+      const newExplanations = {...(attempt.ai_explanations || {}), [idx]: text};
       setAiExplanations(prev => ({...prev, [idx]: text}));
+      
+      // Save to attempt
+      await base44.entities.QuizAttempt.update(attemptId, {
+        ai_explanations: newExplanations
+      });
     } catch (e) {
       setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
     } finally {
@@ -169,6 +185,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
       if (jsonMatch) {
         const analysis = JSON.parse(jsonMatch[0]);
         setPerformanceAnalysis(analysis);
+        
+        // Save to attempt
+        await base44.entities.QuizAttempt.update(attemptId, {
+          ai_performance_analysis: analysis
+        });
       }
     } catch (e) {
       console.error('Failed to generate analysis:', e);
@@ -208,7 +229,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
           </div>
 
           {/* Score Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
               <div className="text-sm text-emerald-600 font-medium">Score</div>
               <div className="text-2xl font-bold text-emerald-700">{score} / {total}</div>
@@ -220,6 +241,56 @@ Be specific and constructive. Focus on what the student did well and what needs 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <div className="text-sm text-amber-600 font-medium">Questions</div>
               <div className="text-2xl font-bold text-amber-700">{questions.length}</div>
+            </div>
+          </div>
+
+          {/* Quick Jump Buttons */}
+          <div className="mb-8">
+            <div className="text-sm font-medium text-slate-600 mb-3">Jump to Question</div>
+            <div className="flex flex-wrap gap-2">
+              {questions.map((q, idx) => {
+                const answer = answers[idx];
+                let isCorrect = false;
+                let isPartial = false;
+
+                if (q.isSubQuestion) {
+                  isCorrect = answer === q.subQuestion.correctAnswer;
+                } else if (q.type === 'multiple_choice') {
+                  isCorrect = answer === q.correctAnswer;
+                } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                  const zones = q.dropZones || [];
+                  const correctCount = zones.filter(zone => answer?.[zone.id] === zone.correctAnswer).length;
+                  isCorrect = correctCount === zones.length;
+                  isPartial = correctCount > 0 && correctCount < zones.length;
+                } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                  const blanks = q.blanks || [];
+                  const correctCount = blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
+                  isCorrect = correctCount === blanks.length;
+                  isPartial = correctCount > 0 && correctCount < blanks.length;
+                } else if (q.type === 'matching_list_dual') {
+                  const matchingQs = q.matchingQuestions || [];
+                  const correctCount = matchingQs.filter(mq => answer?.[mq.id] === mq.correctAnswer).length;
+                  isCorrect = correctCount === matchingQs.length;
+                  isPartial = correctCount > 0 && correctCount < matchingQs.length;
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      document.getElementById(`question-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={cn(
+                      "w-10 h-10 rounded-lg font-semibold text-sm transition-all hover:scale-110",
+                      isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
+                      isPartial && "bg-amber-500 text-white hover:bg-amber-600",
+                      !isCorrect && !isPartial && "bg-red-500 text-white hover:bg-red-600"
+                    )}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -351,10 +422,14 @@ Be specific and constructive. Focus on what the student did well and what needs 
             }
 
             return (
-              <div key={idx} className={cn(
-                "bg-white rounded-2xl shadow-lg border-2 p-6",
-                isCorrect ? "border-emerald-300" : "border-red-300"
-              )}>
+              <div 
+                key={idx} 
+                id={`question-${idx}`}
+                className={cn(
+                  "bg-white rounded-2xl shadow-lg border-2 p-6 scroll-mt-24",
+                  isCorrect ? "border-emerald-300" : "border-red-300"
+                )}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className={cn(

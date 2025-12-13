@@ -941,7 +941,7 @@ export default function CourseDetail() {
                           </Link>
                         )}
                         {hasAccess && hasCompleted && (
-                          <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}&review=true`)}>
+                          <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${courseId}&attemptId=${latestAttempt.id}`)}>
                             <Button size="sm" variant="outline" className="gap-2">
                               <PlayCircle className="w-4 h-4" />
                               Review
