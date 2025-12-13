@@ -1059,16 +1059,16 @@ export default function TakeQuiz() {
   const time = formatTime(timeLeft);
 
   return (
-    <div className={cn("h-screen flex flex-col", nswTheme ? "bg-white" : "bg-white")}>
+    <div className={cn("h-screen flex flex-col", nswTheme ? "bg-[#f5f5f5]" : "bg-white")}>
       {/* Top Bar */}
-      <div className={cn("flex items-center justify-between px-6 py-4 border-b bg-white", nswTheme ? "border-slate-300" : "border-slate-200")}>
+      <div className={cn("flex items-center justify-between px-6 py-4 bg-white", nswTheme ? "border-b-2 border-slate-300" : "border-b border-slate-200")}>
         <div className="flex items-center gap-4">
           {/* Close Button */}
           <button
             onClick={handleExitQuiz}
             className={cn(
-              "w-10 h-10 text-white flex items-center justify-center hover:opacity-90 transition-colors",
-              nswTheme ? "rounded bg-[#002664]" : "rounded-full bg-slate-800 hover:bg-slate-700"
+              "w-10 h-10 text-white flex items-center justify-center transition-colors",
+              nswTheme ? "bg-[#002664] hover:bg-[#003380]" : "rounded-full bg-slate-800 hover:bg-slate-700"
             )}
           >
             <X className="w-5 h-5" />
@@ -1076,7 +1076,7 @@ export default function TakeQuiz() {
 
           {/* Timer */}
           {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
-            <div className={cn("flex items-center gap-3 px-4 py-2 border border-slate-300", nswTheme ? "rounded" : "rounded-lg")}>
+            <div className={cn("flex items-center gap-3 px-4 py-2", nswTheme ? "border-2 border-slate-400 bg-white" : "border border-slate-300 rounded-lg")}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-800 tabular-nums">{time.hours}:{time.minutes}</div>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
@@ -1087,8 +1087,8 @@ export default function TakeQuiz() {
               <button
                 onClick={() => setTimerVisible(false)}
                 className={cn(
-                  "px-3 py-1 text-white text-sm transition-colors",
-                  nswTheme ? "bg-[#002664] rounded hover:opacity-90" : "bg-slate-800 rounded-full hover:bg-slate-700"
+                  "px-3 py-1 text-white text-sm font-semibold transition-colors",
+                  nswTheme ? "bg-[#002664] hover:bg-[#003380]" : "bg-slate-800 rounded-full hover:bg-slate-700"
                 )}
               >
                 Hide timer
@@ -1109,12 +1109,12 @@ export default function TakeQuiz() {
 
         {/* Question Counter */}
         <div className="text-center flex items-center justify-center gap-3">
-          <h2 className="text-xl font-semibold text-slate-800">
+          <h2 className={cn("text-xl font-semibold", nswTheme ? "text-black" : "text-slate-800")}>
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
           <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("gap-2", nswTheme && "rounded")}>
+              <Button variant="outline" size="sm" className={cn("gap-2", nswTheme && "border-2 border-slate-400")}>
                 <List className="w-4 h-4" />
                 Overview
               </Button>
@@ -1187,17 +1187,18 @@ export default function TakeQuiz() {
 
         {/* Theme Toggle & Logo/Brand Space */}
         <div className="flex items-center gap-3">
-          <button
+          <Button
             onClick={() => setNswTheme(!nswTheme)}
+            variant="outline"
+            size="sm"
             className={cn(
-              "p-2 transition-colors",
-              nswTheme ? "text-[#002664] hover:bg-blue-50" : "text-slate-600 hover:bg-slate-100",
-              nswTheme ? "rounded" : "rounded-lg"
+              "gap-2",
+              nswTheme ? "border-[#002664] text-[#002664]" : ""
             )}
-            title="Toggle theme"
           >
-            <Palette className="w-5 h-5" />
-          </button>
+            <Palette className="w-4 h-4" />
+            {nswTheme ? 'Default Theme' : 'NSW Theme'}
+          </Button>
         </div>
         </div>
 
@@ -1223,16 +1224,16 @@ export default function TakeQuiz() {
 
       {/* Bottom Navigation */}
       {(!showResults || reviewMode) && (
-        <div className={cn("flex items-center justify-between px-6 py-4 border-t", nswTheme ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-slate-50")}>
+        <div className={cn("flex items-center justify-between px-6 py-4 bg-white", nswTheme ? "border-t-2 border-slate-300" : "border-t border-slate-200 bg-slate-50")}>
           <Button
             onClick={handlePrev}
             disabled={currentIndex === 0}
             className={cn(
-              "px-8 py-6 text-base font-semibold",
-              nswTheme ? "rounded" : "rounded-lg",
+              "text-base font-bold",
+              nswTheme ? "px-10 py-6" : "px-8 py-6 rounded-lg",
               currentIndex === 0 
                 ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                : nswTheme ? "bg-[#002664] text-white hover:opacity-90" : "bg-slate-800 text-white hover:bg-slate-700"
+                : nswTheme ? "bg-[#002664] text-white hover:bg-[#003380]" : "bg-slate-800 text-white hover:bg-slate-700"
             )}
           >
             <ChevronLeft className="w-5 h-5 mr-2" />
@@ -1254,15 +1255,15 @@ export default function TakeQuiz() {
             <button
               onClick={toggleFlag}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 border-2 transition-all",
-                nswTheme ? "rounded" : "rounded-lg",
+                "flex items-center gap-2 px-6 py-3 transition-all",
+                nswTheme ? "border-2 border-slate-400 font-bold" : "border-2 rounded-lg",
                 flaggedQuestions.has(currentIndex)
-                  ? "bg-amber-50 border-amber-400 text-amber-700"
-                  : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
+                  ? nswTheme ? "bg-blue-100 border-blue-400 text-[#002664]" : "bg-amber-50 border-amber-400 text-amber-700"
+                  : nswTheme ? "bg-white border-slate-400 text-black hover:bg-slate-50" : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
               )}
             >
               <Flag className={cn("w-5 h-5", flaggedQuestions.has(currentIndex) && "fill-current")} />
-              <span className="font-medium">Flag</span>
+              <span className={nswTheme ? "font-bold" : "font-medium"}>Flag</span>
             </button>
           )}
 
@@ -1270,8 +1271,8 @@ export default function TakeQuiz() {
             <Button
               onClick={handleNext}
               className={cn(
-                "text-white px-8 py-6 text-base font-semibold",
-                nswTheme ? "bg-[#002664] hover:opacity-90 rounded" : "bg-slate-800 hover:bg-slate-700 rounded-lg"
+                "text-white text-base",
+                nswTheme ? "px-10 py-6 bg-[#002664] hover:bg-[#003380] font-bold" : "px-8 py-6 bg-slate-800 hover:bg-slate-700 rounded-lg font-semibold"
               )}
             >
               Next
@@ -1284,8 +1285,8 @@ export default function TakeQuiz() {
                 setShowResults(true);
               }}
               className={cn(
-                "text-white px-8 py-6 text-base font-semibold",
-                nswTheme ? "bg-emerald-700 hover:opacity-90 rounded" : "bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+                "text-white text-base",
+                nswTheme ? "px-10 py-6 bg-emerald-700 hover:bg-emerald-800 font-bold" : "px-8 py-6 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold"
               )}
             >
               Finish Review
@@ -1295,8 +1296,8 @@ export default function TakeQuiz() {
             <Button
               onClick={handleSubmitClick}
               className={cn(
-                "text-white px-8 py-6 text-base font-semibold",
-                nswTheme ? "bg-emerald-700 hover:opacity-90 rounded" : "bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+                "text-white text-base",
+                nswTheme ? "px-10 py-6 bg-emerald-700 hover:bg-emerald-800 font-bold" : "px-8 py-6 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold"
               )}
               disabled={submitted}
             >
