@@ -149,14 +149,26 @@ export default function CourseDetail() {
 
   const handlePurchase = async () => {
     setProcessing(true);
-    // In a real app, implement Stripe checkout here
-    // For now, just unlock the course
-    await unlockMutation.mutateAsync({
-      user_email: user.email,
-      course_id: courseId,
-      unlock_method: 'purchase'
-    });
-    setProcessing(false);
+    setError('');
+    
+    try {
+      // Create Stripe checkout session
+      const { data } = await base44.functions.invoke('createCheckout', {
+        courseId: courseId
+      });
+
+      if (data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        setError('Failed to create checkout session');
+        setProcessing(false);
+      }
+    } catch (e) {
+      console.error('Purchase error:', e);
+      setError('Failed to start checkout');
+      setProcessing(false);
+    }
   };
 
   const handleAddContent = async () => {
@@ -443,6 +455,9 @@ export default function CourseDetail() {
                   <p className="text-3xl font-bold text-indigo-600 mb-4">
                     ${course.price}
                   </p>
+                  {error && (
+                    <p className="text-sm text-red-600 mb-3">{error}</p>
+                  )}
                   <Button 
                     onClick={handlePurchase}
                     className="w-full bg-indigo-600 hover:bg-indigo-700"
