@@ -262,7 +262,7 @@ export default function TakeQuiz() {
 
       Provide a helpful first-person explanation:`;
 
-          const genAI = new GoogleGenerativeAI('AIzaSyAwbHNQirjMxfFY8g1KVKoEJJwaf74h0uo');
+          const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
           const result = await model.generateContent(prompt);
           const response = await result.response;
