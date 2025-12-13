@@ -6,7 +6,7 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, BookOpen, Sparkles } from 'lucide-react';
+import { Plus, Search, BookOpen, Sparkles, ChevronLeft } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import CategoryFilter from '@/components/quiz/CategoryFilter';
 import SortFilter from '@/components/quiz/SortFilter';
