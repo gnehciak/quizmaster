@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
