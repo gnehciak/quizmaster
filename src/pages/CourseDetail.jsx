@@ -796,6 +796,12 @@ export default function CourseDetail() {
                           alt="Embedded content"
                           className="w-full rounded-lg border border-slate-300"
                         />
+                      ) : isPdf ? (
+                        <iframe 
+                          src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                          className="w-full h-96 rounded-lg border border-slate-300 bg-white"
+                          title="PDF document"
+                        />
                       ) : (
                         <iframe 
                           src={fileUrl} 
