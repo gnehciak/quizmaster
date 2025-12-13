@@ -192,8 +192,33 @@ export default function TakeQuiz() {
   };
 
   const generateAIExplanations = async (times) => {
-    const explanations = {};
+    // Set loading state for all incorrect answers
+    const loadingExplanations = {};
+    for (let idx = 0; idx < questions.length; idx++) {
+      const q = questions[idx];
+      const answer = answers[idx];
+      let isCorrect = false;
+
+      if (q.isSubQuestion) {
+        isCorrect = answer === q.subQuestion.correctAnswer;
+      } else if (q.type === 'multiple_choice') {
+        isCorrect = answer === q.correctAnswer;
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+        isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+        isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
+      } else if (q.type === 'matching_list_dual') {
+        isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+      }
+
+      if (!isCorrect) {
+        loadingExplanations[idx] = "Explanation loading...";
+      }
+    }
+    setAiExplanations(loadingExplanations);
     
+    // Generate explanations
+    const explanations = {};
     for (let idx = 0; idx < questions.length; idx++) {
       const q = questions[idx];
       const answer = answers[idx];
@@ -214,26 +239,41 @@ export default function TakeQuiz() {
       if (!isCorrect) {
         try {
           const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
-          const prompt = `A student answered a quiz question incorrectly. Explain why their answer is wrong and how to find the correct answer. Keep it concise (2-3 sentences).
+          let passageContext = '';
+          
+          // Include passage text for reading-based questions
+          if (q.passage || q.passages?.length > 0) {
+            if (q.passages?.length > 0) {
+              passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+                `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+              ).join('\n\n');
+            } else {
+              passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+            }
+          }
+          
+          const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Keep it concise (2-3 sentences).
+${passageContext ? 'When applicable, quote the specific sentence from the passage that contains the answer.' : ''}
 
 Question: ${questionText?.replace(/<[^>]*>/g, '')}
 Student's Answer: ${JSON.stringify(answer)}
-Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}
+Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
 
-Provide a helpful explanation:`;
+Provide a helpful first-person explanation:`;
 
           const result = await base44.integrations.Core.InvokeLLM({
             prompt: prompt
           });
           
           explanations[idx] = result;
+          // Update immediately for this question
+          setAiExplanations(prev => ({...prev, [idx]: result}));
         } catch (e) {
           explanations[idx] = "Unable to generate explanation at this time.";
+          setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
         }
       }
     }
-    
-    setAiExplanations(explanations);
   };
 
   const handleTimeUp = () => {
@@ -527,6 +567,28 @@ Provide a helpful explanation:`;
                       </div>
                     </div>
                   </div>
+
+                  {(q.passage || q.passages?.length > 0) && (
+                    <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="font-semibold text-slate-700 mb-2">Reading Passage{q.passages?.length > 1 ? 's' : ''}</div>
+                      {q.passages?.length > 0 ? (
+                        <div className="space-y-3">
+                          {q.passages.map((passage, pIdx) => (
+                            <div key={pIdx}>
+                              <div className="font-medium text-sm text-slate-600 mb-1">{passage.title}</div>
+                              <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                                __html: passage.content
+                              }} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                          __html: q.passage
+                        }} />
+                      )}
+                    </div>
+                  )}
 
                   <div className="mb-4">
                     <div className="font-semibold text-slate-800 mb-3" dangerouslySetInnerHTML={{
