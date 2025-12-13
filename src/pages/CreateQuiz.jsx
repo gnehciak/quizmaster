@@ -291,9 +291,9 @@ export default function CreateQuiz() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
           <h2 className="font-semibold text-slate-800 flex items-center gap-2">
             <Clock className="w-5 h-5 text-indigo-500" />
-            Timer Settings
+            Quiz Settings
           </h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <input
@@ -307,7 +307,7 @@ export default function CreateQuiz() {
                 Enable time limit for this quiz
               </Label>
             </div>
-            
+
             {quiz.timer_enabled && (
               <div className="space-y-2 pl-7">
                 <Label>Duration (minutes)</Label>
@@ -328,6 +328,25 @@ export default function CreateQuiz() {
                 </div>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Attempts Allowed</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="text"
+                  value={quiz.attempts_allowed || 999}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    setQuiz(prev => ({ ...prev, attempts_allowed: value ? parseInt(value) : 999 }));
+                  }}
+                  placeholder="999"
+                  className="w-32"
+                />
+                <span className="text-sm text-slate-500">
+                  Set to 999 for unlimited attempts
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
