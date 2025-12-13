@@ -72,6 +72,15 @@ export default function TakeQuiz() {
     enabled: !!quizId && !!user?.email
   });
 
+  // Skip pre-start screen if in review mode
+  React.useEffect(() => {
+    if (isReviewMode && userAttempts.length > 0) {
+      setQuizStarted(true);
+      setSubmitted(true);
+      setReviewMode(true);
+    }
+  }, [isReviewMode, userAttempts]);
+
   // Flatten questions - expand comprehension questions into individual questions
   const flattenedQuestions = React.useMemo(() => {
     if (!quiz?.questions) return [];
@@ -511,19 +520,6 @@ export default function TakeQuiz() {
       </div>
     );
   }
-
-  // Skip pre-start screen if in review mode
-  React.useEffect(() => {
-    if (isReviewMode && userAttempts.length > 0) {
-      setQuizStarted(true);
-      setSubmitted(true);
-      setReviewMode(true);
-      
-      // Load the last attempt's answers
-      const lastAttempt = userAttempts[userAttempts.length - 1];
-      // Note: We don't have the actual answers stored, so user will just see correct/incorrect
-    }
-  }, [isReviewMode, userAttempts]);
 
   // Pre-start screen
   if (!quizStarted && !showResults && !isReviewMode) {
