@@ -603,13 +603,15 @@ export default function CourseDetail() {
 
                         {contentType === 'embed_youtube' && (
                           <div>
-                            <label className="text-sm font-medium mb-2 block">YouTube URL</label>
+                            <label className="text-sm font-medium mb-2 block">YouTube URL or Video ID</label>
                             <Input
                               value={youtubeUrl}
                               onChange={(e) => setYoutubeUrl(e.target.value)}
-                              placeholder="https://www.youtube.com/watch?v=..."
-                              type="url"
+                              placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                             />
+                            <p className="text-xs text-slate-500 mt-1">
+                              Paste any YouTube URL or just the video ID
+                            </p>
                           </div>
                         )}
 
@@ -729,23 +731,27 @@ export default function CourseDetail() {
                   if (block.youtube_url) {
                     const url = block.youtube_url.trim();
                     
-                    // Try different patterns - more flexible with ID length
-                    const patterns = [
+                    // First try to extract from URL patterns
+                    const urlPatterns = [
                       /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,
                       /(?:youtu\.be\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/,
-                      /^([a-zA-Z0-9_-]{11})$/  // Just the ID
+                      /[?&]v=([a-zA-Z0-9_-]+)/  // Any URL with ?v= or &v=
                     ];
                     
-                    for (const pattern of patterns) {
+                    for (const pattern of urlPatterns) {
                       const match = url.match(pattern);
                       if (match && match[1]) {
-                        // Extract just the video ID, removing any query params
                         videoId = match[1].split('&')[0].split('?')[0];
                         break;
                       }
+                    }
+                    
+                    // If no match found, assume it's just the video ID
+                    if (!videoId && /^[a-zA-Z0-9_-]{10,12}$/.test(url)) {
+                      videoId = url;
                     }
                   }
                   
