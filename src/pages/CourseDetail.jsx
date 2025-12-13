@@ -21,7 +21,8 @@ import {
   Pencil,
   Link as LinkIcon,
   FileUp,
-  Youtube
+  Youtube,
+  Download
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -57,6 +58,7 @@ export default function CourseDetail() {
   const [websiteLink, setWebsiteLink] = useState('');
   const [websiteLinkTitle, setWebsiteLinkTitle] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [fileName, setFileName] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [editCourseOpen, setEditCourseOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
@@ -158,6 +160,10 @@ export default function CourseDetail() {
           }
           else if (contentType === 'embed_file') updated.file_url = fileUrl;
           else if (contentType === 'embed_youtube') updated.youtube_url = youtubeUrl;
+          else if (contentType === 'upload_file') {
+            updated.file_url = fileUrl;
+            updated.file_name = fileName;
+          }
           return updated;
         }
         return block;
@@ -178,6 +184,10 @@ export default function CourseDetail() {
       }
       else if (contentType === 'embed_file') newBlock.file_url = fileUrl;
       else if (contentType === 'embed_youtube') newBlock.youtube_url = youtubeUrl;
+      else if (contentType === 'upload_file') {
+        newBlock.file_url = fileUrl;
+        newBlock.file_name = fileName;
+      }
 
       const updatedBlocks = [...contentBlocks, newBlock];
       await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
@@ -189,6 +199,7 @@ export default function CourseDetail() {
     setWebsiteLink('');
     setWebsiteLinkTitle('');
     setFileUrl('');
+    setFileName('');
     setYoutubeUrl('');
     setContentType('');
     setEditingBlock(null);
@@ -205,6 +216,10 @@ export default function CourseDetail() {
     }
     else if (block.type === 'embed_file') setFileUrl(block.file_url || '');
     else if (block.type === 'embed_youtube') setYoutubeUrl(block.youtube_url || '');
+    else if (block.type === 'upload_file') {
+      setFileUrl(block.file_url || '');
+      setFileName(block.file_name || '');
+    }
     setAddContentOpen(true);
   };
 
@@ -213,6 +228,7 @@ export default function CourseDetail() {
     try {
       const result = await base44.integrations.Core.UploadFile({ file });
       setFileUrl(result.file_url);
+      setFileName(file.name);
     } catch (e) {
       console.error('Upload failed:', e);
     }
@@ -445,6 +461,7 @@ export default function CourseDetail() {
                   setWebsiteLink('');
                   setWebsiteLinkTitle('');
                   setFileUrl('');
+                  setFileName('');
                   setYoutubeUrl('');
                 }
               }}>
@@ -496,6 +513,13 @@ export default function CourseDetail() {
                             <div className="text-left">
                               <div className="font-medium">YouTube Video</div>
                               <div className="text-xs text-slate-500">Embed a YouTube video</div>
+                            </div>
+                          </Button>
+                          <Button variant="outline" onClick={() => setContentType('upload_file')} className="justify-start gap-2 h-auto py-3">
+                            <Download className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Upload File</div>
+                              <div className="text-xs text-slate-500">Upload a file for download</div>
                             </div>
                           </Button>
                         </div>
@@ -615,6 +639,47 @@ export default function CourseDetail() {
                           </div>
                         )}
 
+                        {contentType === 'upload_file' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Upload File</label>
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const file = e.dataTransfer.files[0];
+                                if (file) handleFileUpload(file);
+                              }}
+                              className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer"
+                              onClick={() => document.getElementById('download-file-upload').click()}
+                            >
+                              <input
+                                id="download-file-upload"
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) handleFileUpload(file);
+                                }}
+                              />
+                              {uploadingFile ? (
+                                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto mb-2" />
+                              ) : (
+                                <Download className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                              )}
+                              <p className="text-sm text-slate-600">
+                                {uploadingFile ? 'Uploading...' : 'Drag and drop a file or click to browse'}
+                              </p>
+                              {fileUrl && fileName && (
+                                <p className="text-xs text-green-600 mt-2">✓ {fileName}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         <Button 
                           onClick={handleAddContent}
                           className="w-full"
@@ -623,7 +688,8 @@ export default function CourseDetail() {
                             (contentType === 'quiz' && !selectedQuizId) ||
                             (contentType === 'website_link' && (!websiteLink?.trim() || !websiteLinkTitle?.trim())) ||
                             (contentType === 'embed_file' && !fileUrl?.trim()) ||
-                            (contentType === 'embed_youtube' && !youtubeUrl?.trim())
+                            (contentType === 'embed_youtube' && !youtubeUrl?.trim()) ||
+                            (contentType === 'upload_file' && !fileUrl?.trim())
                           }
                         >
                           {editingBlock ? 'Update Content' : 'Add Content'}
@@ -710,17 +776,59 @@ export default function CourseDetail() {
                       </div>
                     );
                   }
+
+                  // Detect file type from URL
+                  const fileUrl = block.file_url || '';
+                  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileUrl);
+                  const isPdf = /\.pdf$/i.test(fileUrl);
+
                   return (
                     <div className="flex flex-col gap-3 flex-1">
                       <div className="flex items-center gap-3">
                         <FileUp className="w-5 h-5 text-indigo-500" />
-                        <span className="text-sm font-medium text-slate-700">Embedded Document</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          {isImage ? 'Image' : isPdf ? 'PDF Document' : 'Embedded Document'}
+                        </span>
                       </div>
-                      <iframe 
-                        src={block.file_url} 
-                        className="w-full h-96 rounded-lg border border-slate-300 bg-white"
-                        title="Embedded document"
-                      />
+                      {isImage ? (
+                        <img 
+                          src={fileUrl} 
+                          alt="Embedded content"
+                          className="w-full rounded-lg border border-slate-300"
+                        />
+                      ) : (
+                        <iframe 
+                          src={fileUrl} 
+                          className="w-full h-96 rounded-lg border border-slate-300 bg-white"
+                          title="Embedded document"
+                        />
+                      )}
+                    </div>
+                  );
+                }
+
+                if (block.type === 'upload_file') {
+                  if (!hasAccess) {
+                    return (
+                      <div className="flex items-center gap-3 flex-1 opacity-60">
+                        <Download className="w-5 h-5 text-slate-400" />
+                        <span className="text-slate-500">Download File (Locked)</span>
+                        <Lock className="w-4 h-4 text-slate-400 ml-auto" />
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center gap-3 flex-1">
+                      <Download className="w-5 h-5 text-indigo-500" />
+                      <a 
+                        href={block.file_url} 
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
+                      >
+                        {block.file_name || 'Download File'}
+                      </a>
                     </div>
                   );
                 }
