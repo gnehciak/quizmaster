@@ -726,45 +726,33 @@ export default function CourseDetail() {
                 }
 
                 if (block.type === 'embed_youtube') {
-                  // Enhanced YouTube URL parsing to handle more formats
                   let videoId = null;
-                  const youtubeUrlValue = block.youtube_url;
                   
-                  if (youtubeUrlValue) {
-                    const url = youtubeUrlValue.toString().trim();
+                  if (block.youtube_url) {
+                    const url = block.youtube_url.toString().trim();
                     
-                    console.log('Parsing YouTube URL:', url);
-                    
-                    // First try to extract from URL patterns
+                    // Try to extract from URL patterns
                     const urlPatterns = [
                       /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,
                       /(?:youtu\.be\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]+)/,
                       /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/,
-                      /[?&]v=([a-zA-Z0-9_-]+)/  // Any URL with ?v= or &v=
+                      /[?&]v=([a-zA-Z0-9_-]+)/
                     ];
                     
                     for (const pattern of urlPatterns) {
                       const match = url.match(pattern);
                       if (match && match[1]) {
                         videoId = match[1].split('&')[0].split('?')[0];
-                        console.log('Video ID extracted:', videoId);
                         break;
                       }
                     }
                     
-                    // If no match found, assume it's just the video ID
+                    // If no match, assume it's just the video ID
                     if (!videoId && /^[a-zA-Z0-9_-]{10,12}$/.test(url)) {
                       videoId = url;
-                      console.log('Using as direct video ID:', videoId);
                     }
-                    
-                    if (!videoId) {
-                      console.log('No video ID found for:', url);
-                    }
-                  } else {
-                    console.log('No youtube_url in block:', block);
                   }
                   
                   if (!hasAccess) {
