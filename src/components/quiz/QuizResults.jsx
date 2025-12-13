@@ -90,15 +90,6 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
         >
           Review Answers
         </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onRetry}
-          className="gap-2"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Try Again
-        </Button>
         
         <Link to={createPageUrl('Home')}>
           <Button size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
