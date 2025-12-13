@@ -96,18 +96,14 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
     const blankId = `blank_${blanks.length + 1}`;
     blanks.push({
       id: blankId,
-      options: ['', '', ''],
+      options: ['', '', '', ''],
       correctAnswer: ''
     });
-    
-    // Add placeholder to text
-    const text = question.textWithBlanks || '';
     
     // Update both fields at once
     onChange({
       ...question,
-      blanks: blanks,
-      textWithBlanks: text + ` {{${blankId}}}`
+      blanks: blanks
     });
   };
 
