@@ -377,7 +377,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
           </div>
 
           <div className="space-y-4">
-            <Label>Comprehension Questions</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Comprehension Questions</Label>
+            </div>
+            <Button variant="outline" onClick={addComprehensionQuestion} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Question
+            </Button>
             {question.comprehensionQuestions?.map((cq, qIdx) => (
               <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -426,10 +432,6 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 </div>
               </div>
             ))}
-            <Button variant="outline" onClick={addComprehensionQuestion} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Question
-            </Button>
           </div>
         </div>
       )}
@@ -657,10 +659,6 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 </Button>
               </div>
             ))}
-            <Button variant="outline" onClick={addDropZone} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Drop Zone
-            </Button>
           </div>
         </div>
       )}
