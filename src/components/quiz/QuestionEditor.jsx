@@ -717,7 +717,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
           <div className="space-y-4">
             <Label>Blank Options</Label>
             
-            {question.blanks?.map((blank, idx) => (
+            {(question.blanks || []).map((blank, idx) => (
               <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded font-semibold">
