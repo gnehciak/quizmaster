@@ -43,6 +43,7 @@ export default function TakeQuiz() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [questionTimes, setQuestionTimes] = useState({});
   const [aiExplanations, setAiExplanations] = useState({});
+  const [loadingExplanations, setLoadingExplanations] = useState({});
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
@@ -80,14 +81,10 @@ export default function TakeQuiz() {
       setSubmitted(true);
       setReviewMode(true);
       
-      // Load the last attempt's answers and generate AI explanations
+      // Load the last attempt's answers
       const latestAttempt = userAttempts[userAttempts.length - 1];
       if (latestAttempt && latestAttempt.answers) {
         setAnswers(latestAttempt.answers);
-        // Generate AI explanations for review mode
-        setTimeout(() => {
-          generateAIExplanations({});
-        }, 500);
       }
     }
   }, [isReviewMode, userAttempts]);
@@ -238,8 +235,6 @@ export default function TakeQuiz() {
         queryClient.invalidateQueries({ queryKey: ['allQuizAttempts'] });
       }
 
-      // Generate AI explanations for wrong answers
-      generateAIExplanations(finalQuestionTimes);
     } catch (e) {
       console.error('Failed to update attempt:', e);
     }
@@ -253,90 +248,47 @@ export default function TakeQuiz() {
     handleConfirmSubmit();
   };
 
-  const generateAIExplanations = async (times) => {
-    // Set loading state for all incorrect answers
-    const loadingExplanations = {};
-    for (let idx = 0; idx < questions.length; idx++) {
-      const q = questions[idx];
-      const answer = answers[idx];
-      let isCorrect = false;
-
-      if (q.isSubQuestion) {
-        isCorrect = answer === q.subQuestion.correctAnswer;
-      } else if (q.type === 'multiple_choice') {
-        isCorrect = answer === q.correctAnswer;
-      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-        isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
-      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-        isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
-      } else if (q.type === 'matching_list_dual') {
-        isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
-      }
-
-      if (!isCorrect) {
-        loadingExplanations[idx] = "Explanation loading...";
-      }
-    }
-    setAiExplanations(loadingExplanations);
+  const generateSingleExplanation = async (idx) => {
+    const q = questions[idx];
+    const answer = answers[idx];
     
-    // Generate explanations
-    const explanations = {};
-    for (let idx = 0; idx < questions.length; idx++) {
-      const q = questions[idx];
-      const answer = answers[idx];
-      let isCorrect = false;
+    setLoadingExplanations(prev => ({ ...prev, [idx]: true }));
+    
+    try {
+      const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
+      let passageContext = '';
 
-      if (q.isSubQuestion) {
-        isCorrect = answer === q.subQuestion.correctAnswer;
-      } else if (q.type === 'multiple_choice') {
-        isCorrect = answer === q.correctAnswer;
-      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-        isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
-      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-        isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
-      } else if (q.type === 'matching_list_dual') {
-        isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
-      }
-
-      if (!isCorrect) {
-        try {
-          const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
-          let passageContext = '';
-
-          // Include passage text for reading-based questions
-          if (q.passage || q.passages?.length > 0) {
-            if (q.passages?.length > 0) {
-              passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
-                `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
-              ).join('\n\n');
-            } else {
-              passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
-            }
-          }
-
-          const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-          ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
-
-          Question: ${questionText?.replace(/<[^>]*>/g, '')}
-          Student's Answer: ${JSON.stringify(answer)}
-          Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
-
-          Provide a helpful first-person explanation:`;
-
-          const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
-          const result = await model.generateContent(prompt);
-          const response = await result.response;
-          const text = response.text();
-
-          explanations[idx] = text;
-          // Update immediately for this question
-          setAiExplanations(prev => ({...prev, [idx]: text}));
-        } catch (e) {
-          explanations[idx] = "Unable to generate explanation at this time.";
-          setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
+      // Include passage text for reading-based questions
+      if (q.passage || q.passages?.length > 0) {
+        if (q.passages?.length > 0) {
+          passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+            `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+          ).join('\n\n');
+        } else {
+          passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
         }
       }
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+      ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+
+      Question: ${questionText?.replace(/<[^>]*>/g, '')}
+      Student's Answer: ${JSON.stringify(answer)}
+      Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
+
+      Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setAiExplanations(prev => ({...prev, [idx]: text}));
+    } catch (e) {
+      setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
+    } finally {
+      setLoadingExplanations(prev => ({ ...prev, [idx]: false }));
     }
   };
 
@@ -1028,17 +980,41 @@ export default function TakeQuiz() {
                     )}
                     </div>
 
-                  {!isCorrect && aiExplanations[idx] && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Sparkles className="w-4 h-4 text-white" />
+                  {!isCorrect && (
+                    <div className="mt-4">
+                      {aiExplanations[idx] ? (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Sparkles className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-semibold text-blue-900 mb-1">AI Explanation</div>
+                              <div className="text-sm text-blue-800 leading-relaxed">{aiExplanations[idx]}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-blue-900 mb-1">AI Explanation</div>
-                          <div className="text-sm text-blue-800 leading-relaxed">{aiExplanations[idx]}</div>
-                        </div>
-                      </div>
+                      ) : (
+                        <Button
+                          onClick={() => generateSingleExplanation(idx)}
+                          disabled={loadingExplanations[idx]}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          {loadingExplanations[idx] ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4" />
+                              Generate AI Explanation
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   )}
 
