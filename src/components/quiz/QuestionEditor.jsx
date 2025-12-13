@@ -694,10 +694,101 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
       {/* Inline Dropdown Separate */}
       {question.type === 'inline_dropdown_separate' && (
         <div className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label>Step 1: Add Blanks</Label>
+              <p className="text-xs text-slate-500 mb-2">
+                Click "Add Blank" below to create blanks, then type the options for each blank
+              </p>
+              <Button type="button" variant="outline" onClick={addBlank} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Blank
+              </Button>
+            </div>
+
+            {question.blanks && question.blanks.length > 0 && (
+              <div className="space-y-3">
+                {question.blanks.map((blank, idx) => (
+                  <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-300">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
+                          {`{{${blank.id}}}`}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-2">Add options below</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBlank(idx)}
+                        className="text-red-500 h-8"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs">Options (select correct answer with radio button)</Label>
+                      {blank.options?.map((opt, optIdx) => (
+                        <div key={optIdx} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={`correct_blank_${blank.id}`}
+                            checked={blank.correctAnswer === opt && opt !== ''}
+                            onChange={() => updateBlank(idx, 'correctAnswer', opt)}
+                            className="w-3 h-3 text-indigo-600"
+                          />
+                          <Input
+                            value={opt}
+                            onChange={(e) => {
+                              const options = [...blank.options];
+                              options[optIdx] = e.target.value;
+                              updateBlank(idx, 'options', options);
+                            }}
+                            placeholder={`Option ${optIdx + 1}`}
+                            className="text-sm h-9 flex-1"
+                          />
+                          {blank.options.length > 2 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const options = blank.options.filter((_, i) => i !== optIdx);
+                                updateBlank(idx, 'options', options);
+                              }}
+                              className="text-slate-400 hover:text-red-500 h-9 w-9"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const options = [...(blank.options || []), ''];
+                          updateBlank(idx, 'options', options);
+                        }}
+                        className="gap-2 w-full"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add Option to {blank.id}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
-            <Label>Text with Blanks</Label>
+            <Label>Step 2: Write Your Question Text</Label>
             <p className="text-xs text-slate-500">
-              Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
+              Copy and paste the blank placeholders (e.g. {"{{blank_1}}"}) from above into your text where you want the dropdowns
             </p>
             <ReactQuill
               value={question.textWithBlanks || ''}
@@ -708,81 +799,6 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
               className="bg-white rounded-lg min-h-[100px]"
             />
           </div>
-
-          <div className="space-y-4">
-            <Label>Blank Options</Label>
-            {question.blanks?.map((blank, idx) => (
-              <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">
-                    {`{{${blank.id}}}`}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeBlank(idx)}
-                    className="text-red-500 h-8"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-2">
-                  {blank.options?.map((opt, optIdx) => (
-                    <div key={optIdx} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`correct_blank_${blank.id}`}
-                        checked={blank.correctAnswer === opt && opt !== ''}
-                        onChange={() => updateBlank(idx, 'correctAnswer', opt)}
-                        className="w-3 h-3 text-indigo-600"
-                      />
-                      <Input
-                        value={opt}
-                        onChange={(e) => {
-                          const options = [...blank.options];
-                          options[optIdx] = e.target.value;
-                          updateBlank(idx, 'options', options);
-                        }}
-                        placeholder={`Option ${optIdx + 1}`}
-                        className="text-sm h-9 flex-1"
-                      />
-                      {blank.options.length > 2 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const options = blank.options.filter((_, i) => i !== optIdx);
-                            updateBlank(idx, 'options', options);
-                          }}
-                          className="text-slate-400 hover:text-red-500 h-9 w-9"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const options = [...(blank.options || []), ''];
-                      updateBlank(idx, 'options', options);
-                    }}
-                    className="gap-2 w-full"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add Option
-                  </Button>
-                </div>
-                </div>
-                ))}
-                <Button type="button" variant="outline" onClick={addBlank} className="gap-2 w-full">
-                <Plus className="w-4 h-4" />
-                Add Blank
-                </Button>
-                </div>
         </div>
       )}
 
