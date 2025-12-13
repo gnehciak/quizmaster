@@ -75,17 +75,6 @@ export default function TakeQuiz() {
             parentId: q.id
           });
         });
-      } else if (q.type === 'matching_list_dual') {
-        // Add each matching question as a separate item
-        (q.matchingQuestions || []).forEach((mq, idx) => {
-          flattened.push({
-            ...q,
-            subQuestionIndex: idx,
-            subQuestion: mq,
-            isSubQuestion: true,
-            parentId: q.id
-          });
-        });
       } else {
         flattened.push(q);
       }
@@ -193,6 +182,11 @@ export default function TakeQuiz() {
         blanks.forEach(blank => {
           if (answer?.[blank.id] === blank.correctAnswer) correct++;
         });
+      } else if (q.type === 'matching_list_dual') {
+        const matchingQuestions = q.matchingQuestions || [];
+        matchingQuestions.forEach(mq => {
+          if (answer?.[mq.id] === mq.correctAnswer) correct++;
+        });
       }
     });
     
@@ -200,7 +194,21 @@ export default function TakeQuiz() {
   };
 
   const getTotalPoints = () => {
-    return questions.length;
+    let total = 0;
+    questions.forEach(q => {
+      if (q.isSubQuestion) {
+        total++;
+      } else if (q.type === 'multiple_choice') {
+        total++;
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+        total += (q.dropZones?.length || 0);
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+        total += (q.blanks?.length || 0);
+      } else if (q.type === 'matching_list_dual') {
+        total += (q.matchingQuestions?.length || 0);
+      }
+    });
+    return total;
   };
 
   const handleRetry = () => {
@@ -245,23 +253,10 @@ export default function TakeQuiz() {
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
-    // For reading comprehension and matching list sub-questions
+    // For reading comprehension sub-questions
     if (currentQuestion.isSubQuestion && currentQuestion.type === 'reading_comprehension') {
       return (
         <ReadingComprehensionQuestion
-          question={currentQuestion}
-          selectedAnswer={answers[currentIndex]}
-          onAnswer={handleAnswer}
-          showResults={submitted || reviewMode}
-          singleQuestion={true}
-          subQuestion={currentQuestion.subQuestion}
-        />
-      );
-    }
-
-    if (currentQuestion.isSubQuestion && currentQuestion.type === 'matching_list_dual') {
-      return (
-        <MatchingListQuestion
           question={currentQuestion}
           selectedAnswer={answers[currentIndex]}
           onAnswer={handleAnswer}
@@ -313,6 +308,14 @@ export default function TakeQuiz() {
       case 'inline_dropdown_same':
         return (
           <InlineDropdownSameQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={handleAnswer}
+          />
+        );
+      case 'matching_list_dual':
+        return (
+          <MatchingListQuestion
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
