@@ -736,7 +736,32 @@ export default function CourseDetail() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
-                        <p className="text-sm text-slate-500">{quiz.questions?.length || 0} questions</p>
+                        <p className="text-sm text-slate-500">
+                          {quiz.questions?.length || 0} questions
+                          {(() => {
+                            if (!hasAccess || !user?.email) return null;
+                            const { data: attempts = [] } = useQuery({
+                              queryKey: ['quizAttempts', quiz.id, user?.email],
+                              queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quiz.id, user_email: user?.email }),
+                            });
+                            const attemptsAllowed = quiz.attempts_allowed || 999;
+                            const attemptsUsed = attempts.length;
+                            const attemptsLeft = attemptsAllowed - attemptsUsed;
+                            const isAdminUser = user?.role === 'admin';
+                            
+                            if (isAdminUser) return null;
+                            if (attemptsAllowed >= 999) return null;
+                            
+                            return (
+                              <span className={cn(
+                                "ml-2",
+                                attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
+                              )}>
+                                • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
+                              </span>
+                            );
+                          })()}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {isAdmin && (
