@@ -382,7 +382,92 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             </div>
             {question.comprehensionQuestions?.map((cq, qIdx) => (
               <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
-...
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeComprehensionQuestion(qIdx)}
+                    className="text-red-500 h-8"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">Question</Label>
+                  <ReactQuill
+                    value={cq.question}
+                    onChange={(value) => updateComprehensionQuestion(qIdx, 'question', value)}
+                    placeholder="Enter comprehension question..."
+                    modules={quillModules}
+                    formats={quillFormats}
+                    className="bg-white rounded-lg"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">Options</Label>
+                  {cq.options?.map((opt, optIdx) => (
+                    <div key={optIdx} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`correct_cq_${cq.id}`}
+                        checked={cq.correctAnswer === opt && opt !== ''}
+                        onChange={() => updateComprehensionQuestion(qIdx, 'correctAnswer', opt)}
+                        className="w-3 h-3 text-indigo-600"
+                      />
+                      <Input
+                        value={opt}
+                        onChange={(e) => {
+                          const options = [...cq.options];
+                          options[optIdx] = e.target.value;
+                          updateComprehensionQuestion(qIdx, 'options', options);
+                        }}
+                        placeholder={`Option ${optIdx + 1}`}
+                        className="text-sm h-9 flex-1"
+                      />
+                      {cq.options.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const options = cq.options.filter((_, i) => i !== optIdx);
+                            updateComprehensionQuestion(qIdx, 'options', options);
+                          }}
+                          className="text-slate-400 hover:text-red-500 h-9 w-9"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const options = [...(cq.options || []), ''];
+                      updateComprehensionQuestion(qIdx, 'options', options);
+                    }}
+                    className="gap-2 w-full"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Option
+                  </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs">Explanation (optional)</Label>
+                  <ReactQuill
+                    value={cq.explanation || ''}
+                    onChange={(value) => updateComprehensionQuestion(qIdx, 'explanation', value)}
+                    placeholder="Explain the correct answer..."
+                    modules={quillModules}
+                    formats={quillFormats}
+                    className="bg-white rounded-lg"
+                  />
+                </div>
               </div>
             ))}
             <Button variant="outline" onClick={addComprehensionQuestion} className="gap-2">
