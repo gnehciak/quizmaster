@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, Trash2, Pencil, GripVertical } from 'lucide-react';
+import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, Trash2, Pencil, GripVertical, LayoutGrid, List, ListOrdered } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CourseManageCard from '@/components/course/CourseManageCard';
 
@@ -35,6 +35,7 @@ export default function ManageCourses() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryName, setCategoryName] = useState('');
+  const [viewMode, setViewMode] = useState('card');
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -447,17 +448,45 @@ export default function ManageCourses() {
           <p className="text-sm text-slate-600">
             Showing <span className="font-semibold text-slate-800">{sortedCourses.length}</span> course{sortedCourses.length !== 1 ? 's' : ''}
           </p>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="title_asc">Title (A-Z)</SelectItem>
-              <SelectItem value="title_desc">Title (Z-A)</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              <Button
+                variant={viewMode === 'card' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('card')}
+                className="rounded-none px-3"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none border-l px-3"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'compact' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('compact')}
+                className="rounded-none border-l px-3"
+              >
+                <ListOrdered className="w-4 h-4" />
+              </Button>
+            </div>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="title_asc">Title (A-Z)</SelectItem>
+                <SelectItem value="title_desc">Title (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Courses Grid */}
@@ -473,7 +502,11 @@ export default function ManageCourses() {
             ))}
           </div>
         ) : sortedCourses.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={
+            viewMode === 'card' ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-6" :
+            viewMode === 'list' ? "space-y-4" :
+            "space-y-2"
+          }>
             {sortedCourses.map((course, idx) => (
               <CourseManageCard
                 key={course.id}
@@ -481,6 +514,7 @@ export default function ManageCourses() {
                 index={idx}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                viewMode={viewMode}
               />
             ))}
           </div>
