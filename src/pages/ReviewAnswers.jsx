@@ -15,7 +15,7 @@ export default function ReviewAnswers() {
   const attemptId = urlParams.get('attemptId');
 
   const [aiExplanations, setAiExplanations] = useState({});
-  const [loadingExplanations, setLoadingExplanations] = useState({});
+  const [loadingExplanations, setLoadingExplanations] = useState(false);
   const [performanceAnalysis, setPerformanceAnalysis] = useState(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
@@ -65,15 +65,18 @@ export default function ReviewAnswers() {
   const questions = flattenedQuestions;
   const answers = attempt?.answers || {};
 
-  // Load saved AI data on mount - always call useEffect
+  // Load saved AI data on mount and auto-generate if needed
   React.useEffect(() => {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
     }
     if (attempt?.ai_explanations) {
       setAiExplanations(attempt.ai_explanations);
+    } else if (attempt && questions.length > 0) {
+      // Auto-generate all explanations for incorrect answers
+      generateAllExplanations();
     }
-  }, [attempt]);
+  }, [attempt, questions]);
 
   // Save AI explanations before leaving page - always call useEffect
   React.useEffect(() => {
@@ -86,57 +89,84 @@ export default function ReviewAnswers() {
     };
   }, [aiExplanations, attemptId]);
 
-  const generateSingleExplanation = async (idx) => {
-    const q = questions[idx];
-    const answer = answers[idx];
+  const generateAllExplanations = async () => {
+    setLoadingExplanations(true);
+    const incorrectQuestions = [];
     
-    setLoadingExplanations(prev => ({ ...prev, [idx]: true }));
-    
-    try {
-      const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
-      let passageContext = '';
+    questions.forEach((q, idx) => {
+      const answer = answers[idx];
+      let isCorrect = false;
+      const hasAnswer = answer !== undefined && answer !== null;
 
-      if (q.passage || q.passages?.length > 0) {
-        if (q.passages?.length > 0) {
-          passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
-            `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
-          ).join('\n\n');
-        } else {
-          passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+      if (hasAnswer) {
+        if (q.isSubQuestion) {
+          isCorrect = answer === q.subQuestion.correctAnswer;
+        } else if (q.type === 'multiple_choice') {
+          isCorrect = answer === q.correctAnswer;
+        } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+          const zones = q.dropZones || [];
+          isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+        } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+          const blanks = q.blanks || [];
+          isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+        } else if (q.type === 'matching_list_dual') {
+          const matchingQs = q.matchingQuestions || [];
+          isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
         }
       }
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-      ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+      if (!isCorrect) {
+        incorrectQuestions.push({ q, idx, answer });
+      }
+    });
 
-      Question: ${questionText?.replace(/<[^>]*>/g, '')}
-      Student's Answer: ${JSON.stringify(answer)}
-      Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
+    const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const newExplanations = {};
 
-      Provide a helpful first-person explanation:`;
+    for (const { q, idx, answer } of incorrectQuestions) {
+      try {
+        const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
+        let passageContext = '';
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+        if (q.passage || q.passages?.length > 0) {
+          if (q.passages?.length > 0) {
+            passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+              `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+            ).join('\n\n');
+          } else {
+            passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+          }
+        }
 
-      // Update local state
-      setAiExplanations(prev => {
-        const newExplanations = {...prev, [idx]: text};
-        
-        // Save to attempt immediately
-        base44.entities.QuizAttempt.update(attemptId, {
-          ai_explanations: newExplanations
-        }).catch(e => console.error('Failed to save explanation:', e));
-        
-        return newExplanations;
-      });
-    } catch (e) {
-      setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
-    } finally {
-      setLoadingExplanations(prev => ({ ...prev, [idx]: false }));
+        const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+        ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+
+        Question: ${questionText?.replace(/<[^>]*>/g, '')}
+        Student's Answer: ${JSON.stringify(answer)}
+        Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
+
+        Provide a helpful first-person explanation:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        newExplanations[idx] = text;
+      } catch (e) {
+        newExplanations[idx] = "Unable to generate explanation at this time.";
+      }
     }
+
+    setAiExplanations(newExplanations);
+    
+    // Save all explanations at once
+    if (Object.keys(newExplanations).length > 0) {
+      base44.entities.QuizAttempt.update(attemptId, {
+        ai_explanations: newExplanations
+      }).catch(e => console.error('Failed to save explanations:', e));
+    }
+    
+    setLoadingExplanations(false);
   };
 
   const generatePerformanceAnalysis = async () => {
@@ -468,6 +498,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
                       {isCorrect ? "✓ Correct" : "✗ Incorrect"}
                     </div>
                   </div>
+                  {attempt?.time_taken && (
+                    <div className="text-xs text-slate-500">
+                      Time: {Math.round(attempt.time_taken / questions.length)}s avg
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -509,64 +544,87 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   {/* Drag & Drop Display */}
                   {(q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') && (
                     <div className="space-y-4">
-                      <div className="text-sm font-medium text-slate-600 mb-2">Drop Zones:</div>
-                      {q.dropZones?.map((zone) => {
-                        const userAnswer = answer?.[zone.id];
-                        const isZoneCorrect = userAnswer === zone.correctAnswer;
-                        
-                        return (
-                          <div key={zone.id} className={cn(
-                            "p-4 rounded-lg border-2",
-                            isZoneCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
-                          )}>
-                            <div className="font-medium text-slate-800 mb-2">{zone.label}</div>
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1">
-                                <div className="text-sm text-slate-600 mb-1">Your answer:</div>
-                                <div className={cn(
-                                  "font-medium",
-                                  isZoneCorrect ? "text-emerald-700" : "text-red-700"
+                      {/* Show question text if available */}
+                      {q.question && (
+                        <div className="p-4 bg-slate-50 rounded-lg">
+                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.question }} />
+                        </div>
+                      )}
+                      
+                      {/* Show right pane question for dual layout */}
+                      {q.type === 'drag_drop_dual' && q.rightPaneQuestion && (
+                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
+                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.rightPaneQuestion }} />
+                        </div>
+                      )}
+                      
+                      {/* Answers Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100">
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Drop Zone</th>
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Your Answer</th>
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Correct Answer</th>
+                              <th className="border border-slate-300 px-4 py-2 text-center text-sm font-semibold w-16">Result</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {q.dropZones?.map((zone) => {
+                              const userAnswer = answer?.[zone.id];
+                              const isZoneCorrect = userAnswer === zone.correctAnswer;
+                              
+                              return (
+                                <tr key={zone.id} className={cn(
+                                  isZoneCorrect ? "bg-emerald-50" : "bg-red-50"
                                 )}>
-                                  {userAnswer || '(not answered)'}
-                                </div>
-                              </div>
-                              {!isZoneCorrect && (
-                                <div className="flex-1">
-                                  <div className="text-sm text-slate-600 mb-1">Correct answer:</div>
-                                  <div className="font-medium text-emerald-700">{zone.correctAnswer}</div>
-                                </div>
-                              )}
-                              {isZoneCorrect ? (
-                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                              ) : (
-                                <X className="w-6 h-6 text-red-600" />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                                  <td className="border border-slate-300 px-4 py-2 font-medium text-slate-800">{zone.label}</td>
+                                  <td className={cn(
+                                    "border border-slate-300 px-4 py-2 font-medium",
+                                    isZoneCorrect ? "text-emerald-700" : "text-red-700"
+                                  )}>
+                                    {userAnswer || '(not answered)'}
+                                  </td>
+                                  <td className="border border-slate-300 px-4 py-2 font-medium text-emerald-700">
+                                    {zone.correctAnswer}
+                                  </td>
+                                  <td className="border border-slate-300 px-4 py-2 text-center">
+                                    {isZoneCorrect ? (
+                                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
+                                    ) : (
+                                      <X className="w-5 h-5 text-red-600 mx-auto" />
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
 
                   {/* Fill in the Blanks Display */}
                   {(q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && (
                     <div className="space-y-4">
-                      <div className="text-sm font-medium text-slate-600 mb-2">Fill in the blanks:</div>
-                      {/* Show text with blanks color coded */}
+                      {/* Show text with blanks inline */}
                       <div className="p-4 bg-slate-50 rounded-lg">
-                        <div className="text-slate-800 leading-relaxed">
+                        <div className="text-slate-800 leading-relaxed text-base">
                           {(() => {
                             let text = q.textWithBlanks || '';
                             const blanks = q.blanks || [];
                             
-                            // Replace each blank placeholder with colored answer
                             blanks.forEach((blank, idx) => {
                               const userAnswer = answer?.[blank.id];
                               const isBlankCorrect = userAnswer === blank.correctAnswer;
-                              const displayText = userAnswer || '___';
                               
-                              const colorClass = isBlankCorrect ? 'text-emerald-700 font-bold bg-emerald-100' : 'text-red-700 font-bold bg-red-100';
-                              const replacement = `<span class="px-2 py-1 rounded ${colorClass}">${displayText}</span>`;
+                              let replacement;
+                              if (isBlankCorrect) {
+                                replacement = `<span class="inline-flex items-center gap-1 px-3 py-1 mx-1 rounded-lg bg-emerald-100 border-2 border-emerald-400 text-emerald-800 font-semibold"><span>${userAnswer}</span><span class="text-emerald-600">✓</span></span>`;
+                              } else {
+                                const correctAnswer = blank.correctAnswer;
+                                replacement = `<span class="inline-flex items-center gap-2 px-3 py-1 mx-1 rounded-lg bg-red-100 border-2 border-red-400"><span class="text-red-700 font-semibold line-through">${userAnswer || '___'}</span><span class="text-emerald-700 font-semibold">→ ${correctAnswer}</span></span>`;
+                              }
                               
                               text = text.replace(`[blank${idx + 1}]`, replacement);
                             });
@@ -575,87 +633,71 @@ Be specific and constructive. Focus on what the student did well and what needs 
                           })()}
                         </div>
                       </div>
-                      
-                      {/* Show detailed breakdown */}
-                      <div className="space-y-2">
-                        {q.blanks?.map((blank, idx) => {
-                          const userAnswer = answer?.[blank.id];
-                          const isBlankCorrect = userAnswer === blank.correctAnswer;
-                          
-                          return (
-                            <div key={blank.id} className={cn(
-                              "p-3 rounded-lg border-2 flex items-center gap-3",
-                              isBlankCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
-                            )}>
-                              <div className="font-medium text-slate-600">Blank {idx + 1}:</div>
-                              <div className="flex-1 flex items-center gap-3">
-                                <div>
-                                  <span className="text-sm text-slate-600">Your answer: </span>
-                                  <span className={cn(
-                                    "font-medium",
-                                    isBlankCorrect ? "text-emerald-700" : "text-red-700"
-                                  )}>
-                                    {userAnswer || '(not answered)'}
-                                  </span>
-                                </div>
-                                {!isBlankCorrect && (
-                                  <div>
-                                    <span className="text-sm text-slate-600">Correct: </span>
-                                    <span className="font-medium text-emerald-700">{blank.correctAnswer}</span>
-                                  </div>
-                                )}
-                              </div>
-                              {isBlankCorrect ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                              ) : (
-                                <X className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
                     </div>
                   )}
 
                   {/* Matching List Display */}
                   {q.type === 'matching_list_dual' && (
                     <div className="space-y-4">
-                      <div className="text-sm font-medium text-slate-600 mb-2">Matching:</div>
-                      {q.matchingQuestions?.map((mq) => {
-                        const userAnswer = answer?.[mq.id];
-                        const isMatchCorrect = userAnswer === mq.correctAnswer;
-                        
-                        return (
-                          <div key={mq.id} className={cn(
-                            "p-4 rounded-lg border-2",
-                            isMatchCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
-                          )}>
-                            <div className="font-medium text-slate-800 mb-2" dangerouslySetInnerHTML={{ __html: mq.question }} />
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1">
-                                <div className="text-sm text-slate-600 mb-1">Your answer:</div>
-                                <div className={cn(
-                                  "font-medium",
-                                  isMatchCorrect ? "text-emerald-700" : "text-red-700"
+                      {/* Show question text if available */}
+                      {q.question && (
+                        <div className="p-4 bg-slate-50 rounded-lg">
+                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.question }} />
+                        </div>
+                      )}
+                      
+                      {/* Show right pane question */}
+                      {q.rightPaneQuestion && (
+                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
+                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.rightPaneQuestion }} />
+                        </div>
+                      )}
+                      
+                      {/* Answers Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100">
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Question</th>
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Your Answer</th>
+                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Correct Answer</th>
+                              <th className="border border-slate-300 px-4 py-2 text-center text-sm font-semibold w-16">Result</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {q.matchingQuestions?.map((mq) => {
+                              const userAnswer = answer?.[mq.id];
+                              const isMatchCorrect = userAnswer === mq.correctAnswer;
+                              
+                              return (
+                                <tr key={mq.id} className={cn(
+                                  isMatchCorrect ? "bg-emerald-50" : "bg-red-50"
                                 )}>
-                                  {userAnswer || '(not answered)'}
-                                </div>
-                              </div>
-                              {!isMatchCorrect && (
-                                <div className="flex-1">
-                                  <div className="text-sm text-slate-600 mb-1">Correct answer:</div>
-                                  <div className="font-medium text-emerald-700">{mq.correctAnswer}</div>
-                                </div>
-                              )}
-                              {isMatchCorrect ? (
-                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                              ) : (
-                                <X className="w-6 h-6 text-red-600" />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                                  <td className="border border-slate-300 px-4 py-2">
+                                    <div dangerouslySetInnerHTML={{ __html: mq.question }} />
+                                  </td>
+                                  <td className={cn(
+                                    "border border-slate-300 px-4 py-2 font-medium",
+                                    isMatchCorrect ? "text-emerald-700" : "text-red-700"
+                                  )}>
+                                    {userAnswer || '(not answered)'}
+                                  </td>
+                                  <td className="border border-slate-300 px-4 py-2 font-medium text-emerald-700">
+                                    {mq.correctAnswer}
+                                  </td>
+                                  <td className="border border-slate-300 px-4 py-2 text-center">
+                                    {isMatchCorrect ? (
+                                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
+                                    ) : (
+                                      <X className="w-5 h-5 text-red-600 mx-auto" />
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -663,7 +705,12 @@ Be specific and constructive. Focus on what the student did well and what needs 
                 {/* AI Explanation for Wrong Answers */}
                 {!isCorrect && (
                   <div className="mt-4">
-                    {aiExplanations[idx] ? (
+                    {loadingExplanations ? (
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                        <span className="text-sm text-slate-600">Generating AI explanations...</span>
+                      </div>
+                    ) : aiExplanations[idx] ? (
                       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -675,27 +722,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
                           </div>
                         </div>
                       </div>
-                    ) : (
-                      <Button
-                        onClick={() => generateSingleExplanation(idx)}
-                        disabled={loadingExplanations[idx]}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                      >
-                        {loadingExplanations[idx] ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            Generate AI Explanation
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    ) : null}
                   </div>
                 )}
 

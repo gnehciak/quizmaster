@@ -901,7 +901,8 @@ export default function CourseDetail() {
                   const attemptsUsed = attempts.length;
                   const attemptsLeft = attemptsAllowed - attemptsUsed;
                   const showAttempts = hasAccess && user?.email && !isAdmin && attemptsAllowed < 999;
-                  const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+                  const sortedAttempts = attempts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+                  const latestAttempt = sortedAttempts.length > 0 ? sortedAttempts[0] : null;
                   const hasCompleted = latestAttempt !== null;
                   
                   return (
