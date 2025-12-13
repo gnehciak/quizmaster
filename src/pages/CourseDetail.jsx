@@ -64,6 +64,7 @@ export default function CourseDetail() {
   const [editCourseOpen, setEditCourseOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [purchaseSuccessOpen, setPurchaseSuccessOpen] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -119,7 +120,7 @@ export default function CourseDetail() {
   React.useEffect(() => {
     const paymentStatus = urlParams.get('payment');
     if (paymentStatus === 'success') {
-      toast.success('Payment successful! You now have access to this course.');
+      setPurchaseSuccessOpen(true);
       queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
       // Clean URL
       window.history.replaceState({}, '', createPageUrl(`CourseDetail?id=${courseId}`));
@@ -336,6 +337,34 @@ export default function CourseDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
+      {/* Purchase Success Dialog */}
+      <Dialog open={purchaseSuccessOpen} onOpenChange={setPurchaseSuccessOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">🎉 Purchase Successful!</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+              </div>
+              <p className="text-lg font-semibold text-slate-800 mb-2">
+                You now have access to this course!
+              </p>
+              <p className="text-slate-600">
+                Start learning right away with all course content unlocked.
+              </p>
+            </div>
+          </div>
+          <Button 
+            onClick={() => setPurchaseSuccessOpen(false)}
+            className="w-full bg-emerald-600 hover:bg-emerald-700"
+          >
+            Start Learning
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center justify-between gap-3 mb-4">
