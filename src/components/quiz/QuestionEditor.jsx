@@ -739,7 +739,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-4 gap-3">
                     {blank.options?.map((opt, optIdx) => (
                       <div key={optIdx} className="flex items-start gap-2 bg-white rounded-lg p-3 border border-slate-200">
                         <input
