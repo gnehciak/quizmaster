@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -57,8 +58,6 @@ export default function CourseDetail() {
   const [fileUrl, setFileUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [editCourseOpen, setEditCourseOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -75,6 +74,11 @@ export default function CourseDetail() {
   const { data: quizzes = [] } = useQuery({
     queryKey: ['quizzes'],
     queryFn: () => base44.entities.Quiz.list(),
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['quizCategories'],
+    queryFn: () => base44.entities.QuizCategory.list(),
   });
 
   const { data: access } = useQuery({
@@ -162,16 +166,21 @@ export default function CourseDetail() {
   };
 
   const handleEditCourse = () => {
-    setEditTitle(course.title);
-    setEditDescription(course.description);
     setEditCourseOpen(true);
   };
 
-  const handleUpdateCourse = async () => {
-    await updateCourseMutation.mutateAsync({
-      title: editTitle,
-      description: editDescription
-    });
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      category: formData.get('category'),
+      is_locked: formData.get('is_locked') === 'true',
+      unlock_code: formData.get('unlock_code') || undefined,
+      price: formData.get('price') ? parseFloat(formData.get('price')) : undefined
+    };
+    await updateCourseMutation.mutateAsync(data);
     setEditCourseOpen(false);
   };
 
@@ -236,32 +245,64 @@ export default function CourseDetail() {
 
       {/* Edit Course Dialog */}
       <Dialog open={editCourseOpen} onOpenChange={setEditCourseOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Course</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <form onSubmit={handleUpdateCourse} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Course Title</label>
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Enter course title"
-              />
+              <Label>Title</Label>
+              <Input name="title" defaultValue={course?.title} required />
             </div>
+
             <div>
-              <label className="text-sm font-medium mb-2 block">Description</label>
-              <Textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Enter course description"
-                className="min-h-[100px]"
-              />
+              <Label>Description</Label>
+              <Textarea name="description" defaultValue={course?.description} />
             </div>
-            <Button onClick={handleUpdateCourse} className="w-full" disabled={!editTitle.trim()}>
+
+            <div>
+              <Label>Category</Label>
+              <Select name="category" defaultValue={course?.category}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Locked</Label>
+              <Select name="is_locked" defaultValue={course?.is_locked?.toString() || 'true'}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Yes - Requires unlock</SelectItem>
+                  <SelectItem value="false">No - Free access</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Unlock Code (optional)</Label>
+              <Input name="unlock_code" defaultValue={course?.unlock_code} />
+            </div>
+
+            <div>
+              <Label>Price (optional)</Label>
+              <Input name="price" type="number" step="0.01" defaultValue={course?.price} />
+            </div>
+
+            <Button type="submit" className="w-full">
               Update Course
             </Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
