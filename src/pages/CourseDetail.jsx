@@ -738,16 +738,26 @@ export default function CourseDetail() {
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
                         <p className="text-sm text-slate-500">{quiz.questions?.length || 0} questions</p>
                       </div>
-                      {hasAccess ? (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}`)}>
-                          <Button size="sm" className="gap-2">
-                            <PlayCircle className="w-4 h-4" />
-                            Start
-                          </Button>
-                        </Link>
-                      ) : (
-                        <Lock className="w-5 h-5 text-slate-400" />
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}`)}>
+                            <Button size="sm" variant="outline" className="gap-2">
+                              <Pencil className="w-4 h-4" />
+                              Edit
+                            </Button>
+                          </Link>
+                        )}
+                        {hasAccess ? (
+                          <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}`)}>
+                            <Button size="sm" className="gap-2">
+                              <PlayCircle className="w-4 h-4" />
+                              Start
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Lock className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
                     </div>
                   );
                 }
