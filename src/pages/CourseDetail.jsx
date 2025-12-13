@@ -17,7 +17,11 @@ import {
   Plus,
   FileText,
   GripVertical,
-  Trash2
+  Trash2,
+  Pencil,
+  Link as LinkIcon,
+  FileUp,
+  Youtube
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -46,9 +50,15 @@ export default function CourseDetail() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [addContentOpen, setAddContentOpen] = useState(false);
-  const [contentType, setContentType] = useState('text');
+  const [contentType, setContentType] = useState('');
   const [textContent, setTextContent] = useState('');
   const [selectedQuizId, setSelectedQuizId] = useState('');
+  const [websiteLink, setWebsiteLink] = useState('');
+  const [fileUrl, setFileUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [editCourseOpen, setEditCourseOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -130,9 +140,14 @@ export default function CourseDetail() {
   const handleAddContent = async () => {
     const newBlock = {
       id: `block_${Date.now()}`,
-      type: contentType,
-      ...(contentType === 'text' ? { text: textContent } : { quiz_id: selectedQuizId })
+      type: contentType
     };
+
+    if (contentType === 'text') newBlock.text = textContent;
+    else if (contentType === 'quiz') newBlock.quiz_id = selectedQuizId;
+    else if (contentType === 'website_link') newBlock.url = websiteLink;
+    else if (contentType === 'embed_file') newBlock.file_url = fileUrl;
+    else if (contentType === 'embed_youtube') newBlock.youtube_url = youtubeUrl;
 
     const updatedBlocks = [...contentBlocks, newBlock];
     await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
@@ -140,7 +155,31 @@ export default function CourseDetail() {
     setAddContentOpen(false);
     setTextContent('');
     setSelectedQuizId('');
-    setContentType('text');
+    setWebsiteLink('');
+    setFileUrl('');
+    setYoutubeUrl('');
+    setContentType('');
+  };
+
+  const handleEditCourse = () => {
+    setEditTitle(course.title);
+    setEditDescription(course.description);
+    setEditCourseOpen(true);
+  };
+
+  const handleUpdateCourse = async () => {
+    await updateCourseMutation.mutateAsync({
+      title: editTitle,
+      description: editDescription
+    });
+    setEditCourseOpen(false);
+  };
+
+  const handleReorderContent = async (startIndex, endIndex) => {
+    const result = Array.from(contentBlocks);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    await updateCourseMutation.mutateAsync({ content_blocks: result });
   };
 
   const handleDeleteBlock = async (blockId) => {
@@ -175,17 +214,56 @@ export default function CourseDetail() {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Link to={createPageUrl('Home')}>
-              <Button variant="ghost" size="icon">
-                <ChevronLeft className="w-5 h-5" />
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3 flex-1">
+              <Link to={createPageUrl('Home')}>
+                <Button variant="ghost" size="icon">
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
+            </div>
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={handleEditCourse} className="gap-2">
+                <Pencil className="w-4 h-4" />
+                Edit Course
               </Button>
-            </Link>
-            <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
+            )}
           </div>
           <p className="text-slate-600">{course.description}</p>
         </div>
       </div>
+
+      {/* Edit Course Dialog */}
+      <Dialog open={editCourseOpen} onOpenChange={setEditCourseOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Course</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Course Title</label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Enter course title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Description</label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Enter course description"
+                className="min-h-[100px]"
+              />
+            </div>
+            <Button onClick={handleUpdateCourse} className="w-full" disabled={!editTitle.trim()}>
+              Update Course
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Unlock Section */}
@@ -274,54 +352,134 @@ export default function CourseDetail() {
                     <DialogTitle>Add Content Block</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Content Type</label>
-                      <Select value={contentType} onValueChange={setContentType}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text Block</SelectItem>
-                          <SelectItem value="quiz">Quiz</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {contentType === 'text' ? (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Text Content</label>
-                        <Textarea
-                          value={textContent}
-                          onChange={(e) => setTextContent(e.target.value)}
-                          placeholder="Enter text content..."
-                          className="min-h-[120px]"
-                        />
+                    {!contentType ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium mb-2 block">Select Content Type</label>
+                        <div className="grid gap-2">
+                          <Button variant="outline" onClick={() => setContentType('quiz')} className="justify-start gap-2 h-auto py-3">
+                            <PlayCircle className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Quiz</div>
+                              <div className="text-xs text-slate-500">Add an interactive quiz</div>
+                            </div>
+                          </Button>
+                          <Button variant="outline" onClick={() => setContentType('text')} className="justify-start gap-2 h-auto py-3">
+                            <FileText className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Text Block</div>
+                              <div className="text-xs text-slate-500">Add rich text content</div>
+                            </div>
+                          </Button>
+                          <Button variant="outline" onClick={() => setContentType('website_link')} className="justify-start gap-2 h-auto py-3">
+                            <LinkIcon className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Website Link</div>
+                              <div className="text-xs text-slate-500">Link to external content</div>
+                            </div>
+                          </Button>
+                          <Button variant="outline" onClick={() => setContentType('embed_file')} className="justify-start gap-2 h-auto py-3">
+                            <FileUp className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">Embed File</div>
+                              <div className="text-xs text-slate-500">Embed PDF or document</div>
+                            </div>
+                          </Button>
+                          <Button variant="outline" onClick={() => setContentType('embed_youtube')} className="justify-start gap-2 h-auto py-3">
+                            <Youtube className="w-5 h-5" />
+                            <div className="text-left">
+                              <div className="font-medium">YouTube Video</div>
+                              <div className="text-xs text-slate-500">Embed a YouTube video</div>
+                            </div>
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Select Quiz</label>
-                        <Select value={selectedQuizId} onValueChange={setSelectedQuizId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a quiz..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {quizzes.map(quiz => (
-                              <SelectItem key={quiz.id} value={quiz.id}>
-                                {quiz.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                      <>
+                        <Button variant="ghost" onClick={() => setContentType('')} className="text-sm">
+                          ← Back to content types
+                        </Button>
 
-                    <Button 
-                      onClick={handleAddContent}
-                      className="w-full"
-                      disabled={contentType === 'text' ? !textContent.trim() : !selectedQuizId}
-                    >
-                      Add Content
-                    </Button>
+                        {contentType === 'text' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Text Content</label>
+                            <Textarea
+                              value={textContent}
+                              onChange={(e) => setTextContent(e.target.value)}
+                              placeholder="Enter text content..."
+                              className="min-h-[120px]"
+                            />
+                          </div>
+                        )}
+
+                        {contentType === 'quiz' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Select Quiz</label>
+                            <Select value={selectedQuizId} onValueChange={setSelectedQuizId}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose a quiz..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {quizzes.map(quiz => (
+                                  <SelectItem key={quiz.id} value={quiz.id}>
+                                    {quiz.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {contentType === 'website_link' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Website URL</label>
+                            <Input
+                              value={websiteLink}
+                              onChange={(e) => setWebsiteLink(e.target.value)}
+                              placeholder="https://example.com"
+                              type="url"
+                            />
+                          </div>
+                        )}
+
+                        {contentType === 'embed_file' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">File URL</label>
+                            <Input
+                              value={fileUrl}
+                              onChange={(e) => setFileUrl(e.target.value)}
+                              placeholder="Enter file URL..."
+                              type="url"
+                            />
+                          </div>
+                        )}
+
+                        {contentType === 'embed_youtube' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">YouTube URL</label>
+                            <Input
+                              value={youtubeUrl}
+                              onChange={(e) => setYoutubeUrl(e.target.value)}
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              type="url"
+                            />
+                          </div>
+                        )}
+
+                        <Button 
+                          onClick={handleAddContent}
+                          className="w-full"
+                          disabled={
+                            (contentType === 'text' && !textContent.trim()) ||
+                            (contentType === 'quiz' && !selectedQuizId) ||
+                            (contentType === 'website_link' && !websiteLink.trim()) ||
+                            (contentType === 'embed_file' && !fileUrl.trim()) ||
+                            (contentType === 'embed_youtube' && !youtubeUrl.trim())
+                          }
+                        >
+                          Add Content
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
@@ -330,59 +488,29 @@ export default function CourseDetail() {
 
           <div className="space-y-4">
             {contentBlocks.map((block, idx) => {
-              if (block.type === 'text') {
-                return (
-                  <div
-                    key={block.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1">
-                        <FileText className="w-5 h-5 text-slate-500 mt-0.5" />
-                        <p className="text-slate-700 whitespace-pre-wrap">{block.text}</p>
-                      </div>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteBlock(block.id)}
-                          className="text-slate-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+              const renderBlock = () => {
+                if (block.type === 'text') {
+                  return (
+                    <div className="flex items-start gap-3 flex-1">
+                      <FileText className="w-5 h-5 text-slate-500 mt-0.5" />
+                      <p className="text-slate-700 whitespace-pre-wrap">{block.text}</p>
                     </div>
-                  </div>
-                );
-              }
+                  );
+                }
 
-              if (block.type === 'quiz') {
-                const quiz = quizzes.find(q => q.id === block.quiz_id);
-                if (!quiz) return null;
-
-                return (
-                  <div
-                    key={block.id}
-                    className={cn(
-                      "flex items-center justify-between p-4 rounded-xl border-2 transition-all",
-                      hasAccess 
-                        ? "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50" 
-                        : "border-slate-200 bg-slate-50 opacity-60"
-                    )}
-                  >
+                if (block.type === 'quiz') {
+                  const quiz = quizzes.find(q => q.id === block.quiz_id);
+                  if (!quiz) return null;
+                  
+                  return (
                     <div className="flex items-center gap-4 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">
                         {idx + 1}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
-                        <p className="text-sm text-slate-500">
-                          {quiz.questions?.length || 0} questions
-                        </p>
+                        <p className="text-sm text-slate-500">{quiz.questions?.length || 0} questions</p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
                       {hasAccess ? (
                         <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}`)}>
                           <Button size="sm" className="gap-2">
@@ -393,20 +521,98 @@ export default function CourseDetail() {
                       ) : (
                         <Lock className="w-5 h-5 text-slate-400" />
                       )}
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteBlock(block.id)}
-                          className="text-slate-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                    </div>
+                  );
+                }
+
+                if (block.type === 'website_link') {
+                  return (
+                    <div className="flex items-start gap-3 flex-1">
+                      <LinkIcon className="w-5 h-5 text-slate-500 mt-0.5" />
+                      <div>
+                        <a href={block.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                          {block.url}
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (block.type === 'embed_file') {
+                  return (
+                    <div className="flex flex-col gap-3 flex-1">
+                      <div className="flex items-center gap-3">
+                        <FileUp className="w-5 h-5 text-slate-500" />
+                        <span className="text-sm text-slate-600">Embedded File</span>
+                      </div>
+                      <iframe src={block.file_url} className="w-full h-96 rounded-lg border" />
+                    </div>
+                  );
+                }
+
+                if (block.type === 'embed_youtube') {
+                  const videoId = block.youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
+                  return (
+                    <div className="flex flex-col gap-3 flex-1">
+                      <div className="flex items-center gap-3">
+                        <Youtube className="w-5 h-5 text-slate-500" />
+                        <span className="text-sm text-slate-600">YouTube Video</span>
+                      </div>
+                      {videoId && (
+                        <iframe 
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          className="w-full aspect-video rounded-lg"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
                       )}
                     </div>
+                  );
+                }
+              };
+
+              return (
+                <div
+                  key={block.id}
+                  className={cn(
+                    "p-4 rounded-xl border border-slate-200 transition-all",
+                    block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300"
+                  )}
+                  draggable={isAdmin}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", idx.toString());
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const startIndex = parseInt(e.dataTransfer.getData("text/plain"));
+                    handleReorderContent(startIndex, idx);
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    {isAdmin && (
+                      <div className="cursor-grab active:cursor-grabbing pt-1">
+                        <GripVertical className="w-5 h-5 text-slate-400" />
+                      </div>
+                    )}
+                    {renderBlock()}
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteBlock(block.id)}
+                        className="text-slate-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                );
-              }
+                </div>
+              );
             })}
 
             {contentBlocks.length === 0 && (

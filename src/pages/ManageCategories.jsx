@@ -13,12 +13,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, ChevronLeft } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Pencil } from 'lucide-react';
 
 export default function ManageCategories() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryName, setCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState('');
 
   const { data: categories = [] } = useQuery({
     queryKey: ['quizCategories'],
@@ -34,6 +37,16 @@ export default function ManageCategories() {
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.QuizCategory.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+      setEditDialogOpen(false);
+      setEditingCategory(null);
+      setEditName('');
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.QuizCategory.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizCategories'] })
@@ -42,6 +55,17 @@ export default function ManageCategories() {
   const handleCreate = () => {
     if (!categoryName.trim()) return;
     createMutation.mutate({ name: categoryName });
+  };
+
+  const handleEdit = (category) => {
+    setEditingCategory(category);
+    setEditName(category.name);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!editName.trim()) return;
+    updateMutation.mutate({ id: editingCategory.id, data: { name: editName } });
   };
 
   return (
@@ -93,18 +117,28 @@ export default function ManageCategories() {
           {categories.map(category => (
             <div key={category.id} className="bg-white rounded-xl border p-4 flex items-center justify-between">
               <span className="font-medium text-slate-800">{category.name}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (confirm(`Delete category "${category.name}"?`)) {
-                    deleteMutation.mutate(category.id);
-                  }
-                }}
-                className="text-slate-400 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEdit(category)}
+                  className="text-slate-400 hover:text-indigo-600"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (confirm(`Delete category "${category.name}"?`)) {
+                      deleteMutation.mutate(category.id);
+                    }
+                  }}
+                  className="text-slate-400 hover:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
           {categories.length === 0 && (
@@ -113,6 +147,27 @@ export default function ManageCategories() {
             </p>
           )}
         </div>
+
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Category</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Category Name</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Mathematics"
+                />
+              </div>
+              <Button onClick={handleUpdate} className="w-full" disabled={!editName.trim()}>
+                Update Category
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
