@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
+import { Toaster } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Toaster position="top-right" />
       {/* Navigation */}
       {currentPageName !== 'TakeQuiz' && (
         <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
