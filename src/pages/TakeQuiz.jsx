@@ -45,6 +45,7 @@ export default function TakeQuiz() {
   const [aiExplanations, setAiExplanations] = useState({});
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const isReviewMode = urlParams.get('review') === 'true';
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -511,8 +512,21 @@ export default function TakeQuiz() {
     );
   }
 
+  // Skip pre-start screen if in review mode
+  React.useEffect(() => {
+    if (isReviewMode && userAttempts.length > 0) {
+      setQuizStarted(true);
+      setSubmitted(true);
+      setReviewMode(true);
+      
+      // Load the last attempt's answers
+      const lastAttempt = userAttempts[userAttempts.length - 1];
+      // Note: We don't have the actual answers stored, so user will just see correct/incorrect
+    }
+  }, [isReviewMode, userAttempts]);
+
   // Pre-start screen
-  if (!quizStarted && !showResults) {
+  if (!quizStarted && !showResults && !isReviewMode) {
     const attemptsAllowed = quiz.attempts_allowed || 999;
     const attemptsUsed = userAttempts.length;
     const attemptsLeft = attemptsAllowed - attemptsUsed;

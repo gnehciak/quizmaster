@@ -740,6 +740,8 @@ export default function CourseDetail() {
                   const attemptsUsed = attempts.length;
                   const attemptsLeft = attemptsAllowed - attemptsUsed;
                   const showAttempts = hasAccess && user?.email && !isAdmin && attemptsAllowed < 999;
+                  const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+                  const hasCompleted = latestAttempt !== null;
                   
                   return (
                     <div className="flex items-center gap-4 flex-1">
@@ -750,6 +752,9 @@ export default function CourseDetail() {
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
                         <p className="text-sm text-slate-500">
                           {quiz.questions?.length || 0} questions
+                          {quiz.timer_enabled && quiz.timer_duration && (
+                            <span className="ml-2">• {quiz.timer_duration} min</span>
+                          )}
                           {showAttempts && (
                             <span className={cn(
                               "ml-2",
@@ -759,6 +764,11 @@ export default function CourseDetail() {
                             </span>
                           )}
                         </p>
+                        {hasCompleted && hasAccess && (
+                          <p className="text-sm font-medium text-emerald-600 mt-1">
+                            Score: {latestAttempt.score}/{latestAttempt.total} ({latestAttempt.percentage}%)
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         {isAdmin && (
@@ -766,6 +776,14 @@ export default function CourseDetail() {
                             <Button size="sm" variant="outline" className="gap-2">
                               <Pencil className="w-4 h-4" />
                               Edit
+                            </Button>
+                          </Link>
+                        )}
+                        {hasAccess && hasCompleted && (
+                          <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${courseId}&review=true`)}>
+                            <Button size="sm" variant="outline" className="gap-2">
+                              <PlayCircle className="w-4 h-4" />
+                              Review
                             </Button>
                           </Link>
                         )}
