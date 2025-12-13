@@ -43,7 +43,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
-import React from 'react';
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
