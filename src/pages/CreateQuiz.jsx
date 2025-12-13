@@ -361,7 +361,7 @@ export default function CreateQuiz() {
                               Question {idx + 1}
                             </span>
                             <span className="text-sm text-slate-500 flex-1 truncate">
-                              {question.question || 'Untitled question'}
+                              {(question.question || 'Untitled question').replace(/<[^>]*>/g, '')}
                             </span>
                             <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
                               {question.type?.replace('_', ' ')}
