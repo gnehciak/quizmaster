@@ -658,7 +658,84 @@ export default function TakeQuiz() {
                         })}
                       </div>
                     )}
-                  </div>
+
+                    {(q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && (
+                      <div className="space-y-3">
+                        <div className="text-sm text-slate-700 leading-relaxed">
+                          {(() => {
+                            const text = q.textWithBlanks || '';
+                            const parts = [];
+                            let lastIndex = 0;
+
+                            const blankRegex = /\{\{(blank_\d+)\}\}/g;
+                            let match;
+
+                            while ((match = blankRegex.exec(text)) !== null) {
+                              if (match.index > lastIndex) {
+                                parts.push({
+                                  type: 'text',
+                                  content: text.substring(lastIndex, match.index)
+                                });
+                              }
+
+                              const blankId = match[1];
+                              const blank = q.blanks?.find(b => b.id === blankId);
+                              const userAnswer = answer?.[blankId];
+                              const correctAnswer = blank?.correctAnswer;
+                              const isCorrectBlank = userAnswer === correctAnswer;
+
+                              parts.push({
+                                type: 'blank',
+                                blankId,
+                                blank,
+                                userAnswer,
+                                correctAnswer,
+                                isCorrect: isCorrectBlank
+                              });
+
+                              lastIndex = match.index + match[0].length;
+                            }
+
+                            if (lastIndex < text.length) {
+                              parts.push({
+                                type: 'text',
+                                content: text.substring(lastIndex)
+                              });
+                            }
+
+                            return (
+                              <div className="inline">
+                                {parts.map((part, i) => {
+                                  if (part.type === 'text') {
+                                    return <span key={i} dangerouslySetInnerHTML={{ __html: part.content }} />;
+                                  } else {
+                                    return (
+                                      <span key={i} className="inline-flex items-center gap-2 mx-1">
+                                        <span className={cn(
+                                          "px-3 py-1 rounded border-2 font-medium",
+                                          part.isCorrect ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "bg-red-50 border-red-300 text-red-700"
+                                        )}>
+                                          {part.userAnswer || '(not answered)'}
+                                        </span>
+                                        {part.isCorrect ? (
+                                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                        ) : (
+                                          <>
+                                            <X className="w-5 h-5 text-red-600" />
+                                            <span className="text-emerald-700 font-medium">→ {part.correctAnswer}</span>
+                                          </>
+                                        )}
+                                      </span>
+                                    );
+                                  }
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    </div>
 
                   {!isCorrect && aiExplanations[idx] && (
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
