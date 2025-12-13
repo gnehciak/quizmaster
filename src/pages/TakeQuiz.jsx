@@ -221,6 +221,10 @@ export default function TakeQuiz() {
           percentage,
           time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
         });
+
+        // Invalidate queries to refresh data across all pages
+        queryClient.invalidateQueries({ queryKey: ['quizAttempts'] });
+        queryClient.invalidateQueries({ queryKey: ['allQuizAttempts'] });
       }
 
       // Generate AI explanations for wrong answers
