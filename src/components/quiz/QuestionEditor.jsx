@@ -117,13 +117,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   };
 
   const removeBlank = (index) => {
-    const blank = question.blanks[index];
     const blanks = question.blanks.filter((_, i) => i !== index);
     updateField('blanks', blanks);
-    
-    // Remove placeholder from text
-    const text = question.textWithBlanks?.replace(`{{${blank.id}}}`, '') || '';
-    updateField('textWithBlanks', text);
   };
 
   const typeLabels = {
