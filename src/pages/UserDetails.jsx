@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ChevronLeft, User, Loader2, Save, BookOpen, Award, Target, Plus, X } from 'lucide-react';
+import { ChevronLeft, User, Loader2, Save, BookOpen, Award, Target, Plus, X, Trash2, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,12 @@ export default function UserDetails() {
     enabled: !!targetUser?.email
   });
 
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => base44.entities.Quiz.list(),
+    enabled: !!currentUser
+  });
+
   React.useEffect(() => {
     if (targetUser?.role) {
       setSelectedRole(targetUser.role);
@@ -132,6 +139,19 @@ export default function UserDetails() {
     }
   });
 
+  const deleteAttemptMutation = useMutation({
+    mutationFn: async (attemptId) => {
+      return await base44.entities.QuizAttempt.delete(attemptId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userAttempts'] });
+      toast.success('Quiz attempt deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete quiz attempt');
+    }
+  });
+
   const handleSaveRole = () => {
     if (selectedRole !== targetUser?.role) {
       updateRoleMutation.mutate(selectedRole);
@@ -147,6 +167,12 @@ export default function UserDetails() {
   const handleUnenroll = (accessId) => {
     if (confirm('Are you sure you want to unenroll this user from the course?')) {
       unenrollMutation.mutate(accessId);
+    }
+  };
+
+  const handleDeleteAttempt = (attemptId) => {
+    if (confirm('Are you sure you want to delete this quiz attempt?')) {
+      deleteAttemptMutation.mutate(attemptId);
     }
   };
 
@@ -183,6 +209,31 @@ export default function UserDetails() {
   const averageScore = attempts.length > 0 
     ? Math.round(attempts.reduce((sum, a) => sum + a.percentage, 0) / attempts.length)
     : 0;
+
+  // Group attempts by course
+  const attemptsByCourse = React.useMemo(() => {
+    const grouped = {};
+    
+    enrolledCourses.forEach(course => {
+      const courseAttempts = attempts.filter(a => a.course_id === course.id);
+      
+      if (courseAttempts.length > 0) {
+        grouped[course.id] = {
+          course,
+          attempts: courseAttempts.sort((a, b) => 
+            new Date(a.created_date) - new Date(b.created_date)
+          ),
+          average: Math.round(
+            courseAttempts.reduce((sum, a) => sum + a.percentage, 0) / courseAttempts.length
+          ),
+          best: Math.max(...courseAttempts.map(a => a.percentage)),
+          latest: courseAttempts[courseAttempts.length - 1]
+        };
+      }
+    });
+    
+    return grouped;
+  }, [enrolledCourses, attempts]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -389,46 +440,196 @@ export default function UserDetails() {
               </CardContent>
             </Card>
 
-            {/* Recent Quiz Attempts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Quiz Attempts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {attempts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Award className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-600 text-sm">No quiz attempts yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {attempts.slice(0, 10).map((attempt, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-800">Quiz Attempt</p>
-                          <p className="text-xs text-slate-500">
-                            {attempt.created_date 
-                              ? format(new Date(attempt.created_date), 'MMM d, yyyy h:mm a')
-                              : 'N/A'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className={cn(
-                            "text-lg font-bold",
-                            attempt.percentage >= 80 ? "text-emerald-600" :
-                            attempt.percentage >= 60 ? "text-amber-600" :
-                            "text-red-600"
-                          )}>
-                            {attempt.percentage}%
+            {/* Results by Course */}
+            {Object.keys(attemptsByCourse).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-indigo-500" />
+                    Results by Course
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {Object.values(attemptsByCourse).map(({ course, attempts: courseAttempts, average, best, latest }) => {
+                    const chartData = courseAttempts.map((attempt, idx) => ({
+                      attempt: idx + 1,
+                      score: attempt.percentage,
+                      date: format(new Date(attempt.created_date), 'MMM d')
+                    }));
+
+                    return (
+                      <div key={course.id} className="border border-slate-200 rounded-xl p-4 space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="font-semibold text-slate-800 mb-1">{course.title}</h4>
+                            <div className="flex items-center gap-4 text-xs text-slate-600">
+                              <span className="flex items-center gap-1">
+                                <Target className="w-3 h-3" />
+                                {courseAttempts.length} attempts
+                              </span>
+                              <span className="text-emerald-600 font-medium">
+                                Avg: {average}%
+                              </span>
+                              <span className="text-indigo-600 font-medium">
+                                Best: {best}%
+                              </span>
+                            </div>
                           </div>
-                          <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
+                        </div>
+
+                        {/* Progress Chart */}
+                        {courseAttempts.length > 1 && (
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis 
+                                  dataKey="attempt" 
+                                  label={{ value: 'Attempt #', position: 'insideBottom', offset: -5 }}
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis 
+                                  domain={[0, 100]}
+                                  label={{ value: 'Score %', angle: -90, position: 'insideLeft' }}
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <Tooltip 
+                                  content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                      return (
+                                        <div className="bg-white p-2 border border-slate-200 rounded-lg shadow-lg">
+                                          <p className="text-xs text-slate-600">
+                                            Attempt #{payload[0].payload.attempt}
+                                          </p>
+                                          <p className="text-sm font-semibold text-indigo-600">
+                                            {payload[0].value}%
+                                          </p>
+                                          <p className="text-xs text-slate-500">
+                                            {payload[0].payload.date}
+                                          </p>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="score" 
+                                  stroke="#6366f1" 
+                                  strokeWidth={2}
+                                  dot={{ fill: '#6366f1', r: 4 }}
+                                  activeDot={{ r: 6 }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+
+                        {/* Recent Attempts List */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-slate-600 mb-2">Recent Attempts</p>
+                          {courseAttempts.slice(-5).reverse().map((attempt) => {
+                            const quiz = quizzes.find(q => q.id === attempt.quiz_id);
+                            return (
+                              <div key={attempt.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-800 truncate">
+                                    {quiz?.title || 'Quiz'}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    {format(new Date(attempt.created_date), 'MMM d, yyyy h:mm a')}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <div className={cn(
+                                      "text-sm font-bold",
+                                      attempt.percentage >= 80 ? "text-emerald-600" :
+                                      attempt.percentage >= 60 ? "text-amber-600" :
+                                      "text-red-600"
+                                    )}>
+                                      {attempt.percentage}%
+                                    </div>
+                                    <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
+                                  </div>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteAttempt(attempt.id)}
+                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* All Quiz Attempts */}
+            {attempts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Quiz Attempts ({attempts.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {attempts.slice().reverse().map((attempt) => {
+                      const quiz = quizzes.find(q => q.id === attempt.quiz_id);
+                      const course = courses.find(c => c.id === attempt.course_id);
+                      
+                      return (
+                        <div key={attempt.id} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:border-indigo-300 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">
+                              {quiz?.title || 'Quiz'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {course && (
+                                <Badge variant="outline" className="text-xs">
+                                  {course.title}
+                                </Badge>
+                              )}
+                              <span className="text-xs text-slate-500">
+                                {format(new Date(attempt.created_date), 'MMM d, yyyy h:mm a')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className={cn(
+                                "text-lg font-bold",
+                                attempt.percentage >= 80 ? "text-emerald-600" :
+                                attempt.percentage >= 60 ? "text-amber-600" :
+                                "text-red-600"
+                              )}>
+                                {attempt.percentage}%
+                              </div>
+                              <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteAttempt(attempt.id)}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
