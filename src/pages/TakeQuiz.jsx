@@ -524,8 +524,8 @@ export default function TakeQuiz() {
             </div>
             </div>
 
-            {/* Reading Passages - shown once at top */}
-            {(quiz.questions?.[0]?.passage || quiz.questions?.[0]?.passages?.length > 0) && (
+            {/* Reading Passages - shown once at top for reading comprehension */}
+            {quiz.questions?.[0]?.type === 'reading_comprehension' && (
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
               <div className="font-semibold text-slate-800 text-lg mb-4">Reading Passage{quiz.questions[0].passages?.length > 1 ? 's' : ''}</div>
               {quiz.questions[0].passages?.length > 0 ? (
@@ -539,7 +539,7 @@ export default function TakeQuiz() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : quiz.questions[0].passage && (
                 <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
                   __html: quiz.questions[0].passage
                 }} />
@@ -732,6 +732,146 @@ export default function TakeQuiz() {
                               </div>
                             );
                           })()}
+                        </div>
+                      </div>
+                    )}
+
+                    {(q.type === 'drag_drop_dual') && (
+                      <div className="space-y-4">
+                        {/* Left Pane - Passage */}
+                        <div className="bg-slate-50 rounded-lg p-4">
+                          <div className="font-semibold text-slate-700 mb-2">Reading Passage</div>
+                          {q.passages?.length > 0 ? (
+                            <div className="space-y-3">
+                              {q.passages.map((passage, pIdx) => (
+                                <div key={pIdx}>
+                                  <div className="font-medium text-slate-600 text-sm mb-1">{passage.title}</div>
+                                  <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                                    __html: passage.content
+                                  }} />
+                                </div>
+                              ))}
+                            </div>
+                          ) : q.passage && (
+                            <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                              __html: q.passage
+                            }} />
+                          )}
+                        </div>
+
+                        {/* Right Pane - Drop Zones Table */}
+                        <div>
+                          <div className="font-semibold text-slate-700 mb-2">Your Answers</div>
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-slate-100">
+                                <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold text-slate-700">Drop Zone</th>
+                                <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold text-slate-700">Selected Answer</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {q.dropZones?.map((zone, zIdx) => {
+                                const userAnswer = answer?.[zone.id];
+                                const isCorrectZone = userAnswer === zone.correctAnswer;
+                                return (
+                                  <tr key={zIdx} className={cn(
+                                    isCorrectZone ? "bg-emerald-50" : "bg-red-50"
+                                  )}>
+                                    <td className="border border-slate-300 px-4 py-2 text-sm text-slate-700">{zone.label}</td>
+                                    <td className="border border-slate-300 px-4 py-2 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "font-medium",
+                                          isCorrectZone ? "text-emerald-700" : "text-red-700"
+                                        )}>
+                                          {userAnswer || '(not answered)'}
+                                        </span>
+                                        {isCorrectZone ? (
+                                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                        ) : (
+                                          <>
+                                            <X className="w-5 h-5 text-red-600" />
+                                            <span className="text-emerald-700 font-medium">→ {zone.correctAnswer}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {q.type === 'matching_list_dual' && (
+                      <div className="space-y-4">
+                        {/* Left Pane - Passages */}
+                        <div className="bg-slate-50 rounded-lg p-4">
+                          <div className="font-semibold text-slate-700 mb-2">Reading Passage{q.passages?.length > 1 ? 's' : ''}</div>
+                          {q.passages?.length > 0 ? (
+                            <div className="space-y-3">
+                              {q.passages.map((passage, pIdx) => (
+                                <div key={pIdx}>
+                                  <div className="font-medium text-slate-600 text-sm mb-1">{passage.title}</div>
+                                  <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                                    __html: passage.content
+                                  }} />
+                                </div>
+                              ))}
+                            </div>
+                          ) : q.passage && (
+                            <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                              __html: q.passage
+                            }} />
+                          )}
+                        </div>
+
+                        {/* Right Pane - Matching Questions Table */}
+                        <div>
+                          <div className="font-semibold text-slate-700 mb-2">Your Answers</div>
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-slate-100">
+                                <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold text-slate-700">Question</th>
+                                <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold text-slate-700">Selected Answer</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {q.matchingQuestions?.map((mq, mqIdx) => {
+                                const userAnswer = answer?.[mq.id];
+                                const isCorrectMatch = userAnswer === mq.correctAnswer;
+                                return (
+                                  <tr key={mqIdx} className={cn(
+                                    isCorrectMatch ? "bg-emerald-50" : "bg-red-50"
+                                  )}>
+                                    <td className="border border-slate-300 px-4 py-2 text-sm text-slate-700" dangerouslySetInnerHTML={{
+                                      __html: mq.question
+                                    }} />
+                                    <td className="border border-slate-300 px-4 py-2 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "font-medium",
+                                          isCorrectMatch ? "text-emerald-700" : "text-red-700"
+                                        )}>
+                                          {userAnswer || '(not answered)'}
+                                        </span>
+                                        {isCorrectMatch ? (
+                                          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                        ) : (
+                                          <>
+                                            <X className="w-5 h-5 text-red-600" />
+                                            <span className="text-emerald-700 font-medium">→ {mq.correctAnswer}</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}
