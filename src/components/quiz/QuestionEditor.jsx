@@ -724,7 +724,9 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
             {question.blanks && question.blanks.length > 0 && (
               <div className="space-y-3">
-                {question.blanks.map((blank, idx) => (
+                {question.blanks.map((blank, idx) => {
+                  console.log('Rendering blank:', blank);
+                  return (
                   <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-300">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
@@ -795,7 +797,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                       </Button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
