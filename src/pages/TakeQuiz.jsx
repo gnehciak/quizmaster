@@ -38,6 +38,7 @@ export default function TakeQuiz() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [reviewMode, setReviewMode] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -131,7 +132,12 @@ export default function TakeQuiz() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitClick = () => {
+    setConfirmSubmitOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setConfirmSubmitOpen(false);
     setSubmitted(true);
     setShowResults(true);
 
@@ -157,7 +163,7 @@ export default function TakeQuiz() {
 
   const handleTimeUp = () => {
     if (!submitted) {
-      handleSubmit();
+      handleConfirmSubmit();
     }
   };
 
@@ -585,7 +591,7 @@ export default function TakeQuiz() {
             </Button>
           ) : (
             <Button
-              onClick={handleSubmit}
+              onClick={handleSubmitClick}
               className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
               disabled={submitted}
             >
