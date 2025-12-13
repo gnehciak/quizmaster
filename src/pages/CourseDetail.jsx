@@ -502,9 +502,11 @@ export default function CourseDetail() {
                       </div>
                     ) : (
                       <>
-                        <Button variant="ghost" onClick={() => setContentType('')} className="text-sm">
-                          ← Back to content types
-                        </Button>
+                        {!editingBlock && (
+                          <Button variant="ghost" onClick={() => setContentType('')} className="text-sm">
+                            ← Back to content types
+                          </Button>
+                        )}
 
                         {contentType === 'text' && (
                           <div>
