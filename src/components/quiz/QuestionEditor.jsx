@@ -745,8 +745,11 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
                     <div className="space-y-2">
                       <Label className="text-xs">Options (select correct answer)</Label>
+                      {console.log('Options for', blank.id, ':', blank.options)}
                       <div className="grid grid-cols-2 gap-2">
-                        {blank.options?.map((opt, optIdx) => (
+                        {blank.options?.map((opt, optIdx) => {
+                          console.log(`Rendering option ${optIdx}:`, opt);
+                          return (
                           <div key={optIdx} className="flex items-center gap-2">
                             <input
                               type="radio"
@@ -780,7 +783,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                               </Button>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <Button
                         type="button"
