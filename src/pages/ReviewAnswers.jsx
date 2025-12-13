@@ -75,6 +75,17 @@ export default function ReviewAnswers() {
     }
   }, [attempt]);
 
+  // Save AI explanations before leaving page
+  React.useEffect(() => {
+    return () => {
+      if (Object.keys(aiExplanations).length > 0) {
+        base44.entities.QuizAttempt.update(attemptId, {
+          ai_explanations: aiExplanations
+        }).catch(e => console.error('Failed to save explanations on unmount:', e));
+      }
+    };
+  }, [aiExplanations, attemptId]);
+
   const generateSingleExplanation = async (idx) => {
     const q = questions[idx];
     const answer = answers[idx];
@@ -110,12 +121,16 @@ export default function ReviewAnswers() {
       const response = await result.response;
       const text = response.text();
 
-      const newExplanations = {...(attempt.ai_explanations || {}), [idx]: text};
-      setAiExplanations(prev => ({...prev, [idx]: text}));
-      
-      // Save to attempt
-      await base44.entities.QuizAttempt.update(attemptId, {
-        ai_explanations: newExplanations
+      // Update local state
+      setAiExplanations(prev => {
+        const newExplanations = {...prev, [idx]: text};
+        
+        // Save to attempt immediately
+        base44.entities.QuizAttempt.update(attemptId, {
+          ai_explanations: newExplanations
+        }).catch(e => console.error('Failed to save explanation:', e));
+        
+        return newExplanations;
       });
     } catch (e) {
       setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
@@ -408,17 +423,25 @@ Be specific and constructive. Focus on what the student did well and what needs 
           {questions.map((q, idx) => {
             const answer = answers[idx];
             let isCorrect = false;
+            
+            // Check if answer exists
+            const hasAnswer = answer !== undefined && answer !== null;
 
-            if (q.isSubQuestion) {
-              isCorrect = answer === q.subQuestion.correctAnswer;
-            } else if (q.type === 'multiple_choice') {
-              isCorrect = answer === q.correctAnswer;
-            } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-              isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
-            } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-              isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
-            } else if (q.type === 'matching_list_dual') {
-              isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+            if (hasAnswer) {
+              if (q.isSubQuestion) {
+                isCorrect = answer === q.subQuestion.correctAnswer;
+              } else if (q.type === 'multiple_choice') {
+                isCorrect = answer === q.correctAnswer;
+              } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                const zones = q.dropZones || [];
+                isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+              } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                const blanks = q.blanks || [];
+                isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+              } else if (q.type === 'matching_list_dual') {
+                const matchingQs = q.matchingQuestions || [];
+                isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+              }
             }
 
             return (
