@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function QuizResults({ score, total, onRetry, quizTitle, onReview }) {
+export default function QuizResults({ score, total, onRetry, quizTitle, onReview, courseId }) {
   const percentage = Math.round((score / total) * 100);
   
   const getGrade = () => {
@@ -91,10 +91,10 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
           Review Answers
         </Button>
         
-        <Link to={createPageUrl('Home')}>
+        <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
           <Button size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             <BookOpen className="w-4 h-4" />
-            Back to Courses
+            {courseId ? 'Back to Course' : 'Back to Courses'}
           </Button>
         </Link>
       </motion.div>

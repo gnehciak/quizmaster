@@ -611,18 +611,19 @@ export default function TakeQuiz() {
   }
 
   if (showResults && submitted && !reviewMode) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 py-12 px-4">
-        <QuizResults
-          score={calculateScore()}
-          total={getTotalPoints()}
-          onRetry={handleRetry}
-          onReview={handleReview}
-          quizTitle={quiz.title}
-        />
-      </div>
-    );
-  }
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 py-12 px-4">
+          <QuizResults
+            score={calculateScore()}
+            total={getTotalPoints()}
+            onRetry={handleRetry}
+            onReview={handleReview}
+            quizTitle={quiz.title}
+            courseId={urlParams.get('courseId')}
+          />
+        </div>
+      );
+    }
 
   if (reviewMode) {
     return (
