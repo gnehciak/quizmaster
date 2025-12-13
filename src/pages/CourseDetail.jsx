@@ -567,45 +567,85 @@ export default function CourseDetail() {
                 }
 
                 if (block.type === 'website_link') {
-                  return (
-                    <div className="flex items-start gap-3 flex-1">
-                      <LinkIcon className="w-5 h-5 text-slate-500 mt-0.5" />
-                      <div>
-                        <a href={block.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
-                          {block.url}
-                        </a>
+                  if (!hasAccess) {
+                    return (
+                      <div className="flex items-center gap-3 flex-1 opacity-60">
+                        <LinkIcon className="w-5 h-5 text-slate-400" />
+                        <span className="text-slate-500">Website Link (Locked)</span>
+                        <Lock className="w-4 h-4 text-slate-400 ml-auto" />
                       </div>
+                    );
+                  }
+                  return (
+                    <div className="flex flex-col gap-3 flex-1">
+                      <div className="flex items-center gap-3">
+                        <LinkIcon className="w-5 h-5 text-indigo-500" />
+                        <span className="text-sm font-medium text-slate-700">External Link</span>
+                      </div>
+                      <a 
+                        href={block.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-indigo-600 hover:text-indigo-700 hover:underline break-all"
+                      >
+                        {block.url}
+                      </a>
                     </div>
                   );
                 }
 
                 if (block.type === 'embed_file') {
+                  if (!hasAccess) {
+                    return (
+                      <div className="flex items-center gap-3 flex-1 opacity-60">
+                        <FileUp className="w-5 h-5 text-slate-400" />
+                        <span className="text-slate-500">Embedded File (Locked)</span>
+                        <Lock className="w-4 h-4 text-slate-400 ml-auto" />
+                      </div>
+                    );
+                  }
                   return (
                     <div className="flex flex-col gap-3 flex-1">
                       <div className="flex items-center gap-3">
-                        <FileUp className="w-5 h-5 text-slate-500" />
-                        <span className="text-sm text-slate-600">Embedded File</span>
+                        <FileUp className="w-5 h-5 text-indigo-500" />
+                        <span className="text-sm font-medium text-slate-700">Embedded Document</span>
                       </div>
-                      <iframe src={block.file_url} className="w-full h-96 rounded-lg border" />
+                      <iframe 
+                        src={block.file_url} 
+                        className="w-full h-96 rounded-lg border border-slate-300 bg-white"
+                        title="Embedded document"
+                      />
                     </div>
                   );
                 }
 
                 if (block.type === 'embed_youtube') {
-                  const videoId = block.youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
+                  const videoId = block.youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/)?.[1];
+                  if (!hasAccess) {
+                    return (
+                      <div className="flex items-center gap-3 flex-1 opacity-60">
+                        <Youtube className="w-5 h-5 text-slate-400" />
+                        <span className="text-slate-500">YouTube Video (Locked)</span>
+                        <Lock className="w-4 h-4 text-slate-400 ml-auto" />
+                      </div>
+                    );
+                  }
                   return (
                     <div className="flex flex-col gap-3 flex-1">
                       <div className="flex items-center gap-3">
-                        <Youtube className="w-5 h-5 text-slate-500" />
-                        <span className="text-sm text-slate-600">YouTube Video</span>
+                        <Youtube className="w-5 h-5 text-red-500" />
+                        <span className="text-sm font-medium text-slate-700">YouTube Video</span>
                       </div>
-                      {videoId && (
+                      {videoId ? (
                         <iframe 
                           src={`https://www.youtube.com/embed/${videoId}`}
-                          className="w-full aspect-video rounded-lg"
+                          className="w-full aspect-video rounded-lg border border-slate-300"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
+                          title="YouTube video"
                         />
+                      ) : (
+                        <p className="text-sm text-slate-500">Invalid YouTube URL</p>
                       )}
                     </div>
                   );
