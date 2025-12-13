@@ -519,9 +519,32 @@ Provide a helpful first-person explanation:`;
                 </div>
               </div>
             </div>
-          </div>
+            </div>
 
-          <div className="space-y-6">
+            {/* Reading Passages - shown once at top */}
+            {(quiz.questions?.[0]?.passage || quiz.questions?.[0]?.passages?.length > 0) && (
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
+              <div className="font-semibold text-slate-800 text-lg mb-4">Reading Passage{quiz.questions[0].passages?.length > 1 ? 's' : ''}</div>
+              {quiz.questions[0].passages?.length > 0 ? (
+                <div className="space-y-4">
+                  {quiz.questions[0].passages.map((passage, pIdx) => (
+                    <div key={pIdx}>
+                      <div className="font-medium text-slate-700 mb-2">{passage.title}</div>
+                      <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                        __html: passage.content
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
+                  __html: quiz.questions[0].passage
+                }} />
+              )}
+            </div>
+            )}
+
+            <div className="space-y-6">
             {questions.map((q, idx) => {
               const answer = answers[idx];
               let isCorrect = false;
@@ -567,28 +590,6 @@ Provide a helpful first-person explanation:`;
                       </div>
                     </div>
                   </div>
-
-                  {(q.passage || q.passages?.length > 0) && (
-                    <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                      <div className="font-semibold text-slate-700 mb-2">Reading Passage{q.passages?.length > 1 ? 's' : ''}</div>
-                      {q.passages?.length > 0 ? (
-                        <div className="space-y-3">
-                          {q.passages.map((passage, pIdx) => (
-                            <div key={pIdx}>
-                              <div className="font-medium text-sm text-slate-600 mb-1">{passage.title}</div>
-                              <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
-                                __html: passage.content
-                              }} />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
-                          __html: q.passage
-                        }} />
-                      )}
-                    </div>
-                  )}
 
                   <div className="mb-4">
                     <div className="font-semibold text-slate-800 mb-3" dangerouslySetInnerHTML={{
