@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, BookOpen, Search, Sparkles, ChevronLeft } from 'lucide-react';
+import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, Trash2, Pencil, GripVertical } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CourseManageCard from '@/components/course/CourseManageCard';
 
@@ -32,6 +32,9 @@ export default function ManageCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryName, setCategoryName] = useState('');
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -72,6 +75,28 @@ export default function ManageCourses() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Course.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courses'] })
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (data) => base44.entities.QuizCategory.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+      setCategoryName('');
+    }
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.QuizCategory.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+      setEditingCategory(null);
+      setCategoryName('');
+    }
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id) => base44.entities.QuizCategory.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizCategories'] })
   });
 
   // Filter courses
@@ -130,6 +155,27 @@ export default function ManageCourses() {
     setDialogOpen(true);
   };
 
+  const handleCreateCategory = () => {
+    if (!categoryName.trim()) return;
+    createCategoryMutation.mutate({ name: categoryName });
+  };
+
+  const handleEditCategory = (category) => {
+    setEditingCategory(category);
+    setCategoryName(category.name);
+  };
+
+  const handleUpdateCategory = () => {
+    if (!editingCategory || !categoryName.trim()) return;
+    updateCategoryMutation.mutate({ id: editingCategory.id, data: { name: categoryName } });
+  };
+
+  const handleDeleteCategory = (id) => {
+    if (window.confirm('Delete this category?')) {
+      deleteCategoryMutation.mutate(id);
+    }
+  };
+
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -165,16 +211,129 @@ export default function ManageCourses() {
               </div>
             </div>
 
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) setEditingCourse(null);
-            }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-                  <Plus className="w-4 h-4" />
-                  Create Course
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Dialog open={categoryDialogOpen} onOpenChange={(open) => {
+                setCategoryDialogOpen(open);
+                if (!open) {
+                  setEditingCategory(null);
+                  setCategoryName('');
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <FolderEdit className="w-4 h-4" />
+                    Edit Categories
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Manage Course Categories</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-6">
+                    {/* Add New Category */}
+                    <div className="space-y-3">
+                      <Label>Add New Category</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={categoryName}
+                          onChange={(e) => setCategoryName(e.target.value)}
+                          placeholder="e.g. Programming"
+                          disabled={!!editingCategory}
+                        />
+                        <Button 
+                          onClick={handleCreateCategory} 
+                          disabled={!categoryName.trim() || !!editingCategory}
+                          className="gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Existing Categories */}
+                    <div className="space-y-3">
+                      <Label>Existing Categories</Label>
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {categories.map((category) => (
+                          <div
+                            key={category.id}
+                            className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                          >
+                            <GripVertical className="w-4 h-4 text-slate-400" />
+                            
+                            {editingCategory?.id === category.id ? (
+                              <>
+                                <Input
+                                  value={categoryName}
+                                  onChange={(e) => setCategoryName(e.target.value)}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={handleUpdateCategory}
+                                  disabled={!categoryName.trim()}
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingCategory(null);
+                                    setCategoryName('');
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <span className="flex-1 font-medium text-slate-800">
+                                  {category.name}
+                                </span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleEditCategory(category)}
+                                  className="text-slate-400 hover:text-indigo-600"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteCategory(category.id)}
+                                  className="text-slate-400 hover:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                        {categories.length === 0 && (
+                          <p className="text-center text-slate-500 py-4">
+                            No categories yet. Add one to get started.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={dialogOpen} onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) setEditingCourse(null);
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                    <Plus className="w-4 h-4" />
+                    Create Course
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -238,7 +397,8 @@ export default function ManageCourses() {
                   </Button>
                 </form>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </div>
       </div>

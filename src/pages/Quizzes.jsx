@@ -97,7 +97,7 @@ export default function Quizzes() {
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-800">Quiz Editor</h1>
+                <h1 className="text-2xl font-bold text-slate-800">Manage Quizzes</h1>
                 <p className="text-sm text-slate-500">Create and manage quizzes</p>
               </div>
             </div>

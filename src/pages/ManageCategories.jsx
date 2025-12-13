@@ -105,7 +105,7 @@ export default function ManageCategories() {
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
               </Link>
-              <h1 className="text-2xl font-bold text-slate-800">Manage Categories</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Manage Quiz Categories</h1>
             </div>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
