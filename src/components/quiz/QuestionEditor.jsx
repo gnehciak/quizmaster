@@ -711,9 +711,22 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             {(question.blanks || []).map((blank, idx) => (
               <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded font-semibold">
-                    {`{{${blank.id}}}`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded font-semibold">
+                      {`{{${blank.id}}}`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`{{${blank.id}}}`);
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
