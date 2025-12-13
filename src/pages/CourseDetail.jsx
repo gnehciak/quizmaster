@@ -615,11 +615,11 @@ export default function CourseDetail() {
                           onClick={handleAddContent}
                           className="w-full"
                           disabled={
-                            (contentType === 'text' && !textContent.trim()) ||
+                            (contentType === 'text' && !textContent?.trim()) ||
                             (contentType === 'quiz' && !selectedQuizId) ||
-                            (contentType === 'website_link' && (!websiteLink.trim() || !websiteLinkTitle.trim())) ||
-                            (contentType === 'embed_file' && !fileUrl.trim()) ||
-                            (contentType === 'embed_youtube' && !youtubeUrl.trim())
+                            (contentType === 'website_link' && (!websiteLink?.trim() || !websiteLinkTitle?.trim())) ||
+                            (contentType === 'embed_file' && !fileUrl?.trim()) ||
+                            (contentType === 'embed_youtube' && !youtubeUrl?.trim())
                           }
                         >
                           Add Content
