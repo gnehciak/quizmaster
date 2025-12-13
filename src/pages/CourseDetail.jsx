@@ -727,19 +727,23 @@ export default function CourseDetail() {
                   // Enhanced YouTube URL parsing to handle more formats
                   let videoId = null;
                   if (block.youtube_url) {
-                    // Try different patterns
+                    const url = block.youtube_url.trim();
+                    
+                    // Try different patterns - more flexible with ID length
                     const patterns = [
-                      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-                      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-                      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-                      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+                      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,
+                      /(?:youtu\.be\/)([a-zA-Z0-9_-]+)/,
+                      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/,
+                      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]+)/,
+                      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/,
                       /^([a-zA-Z0-9_-]{11})$/  // Just the ID
                     ];
                     
                     for (const pattern of patterns) {
-                      const match = block.youtube_url.match(pattern);
-                      if (match) {
-                        videoId = match[1];
+                      const match = url.match(pattern);
+                      if (match && match[1]) {
+                        // Extract just the video ID, removing any query params
+                        videoId = match[1].split('&')[0].split('?')[0];
                         break;
                       }
                     }
