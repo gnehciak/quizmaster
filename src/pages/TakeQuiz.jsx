@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Palette } from 'lucide-react';
 
 import MultipleChoiceQuestion from '@/components/quiz/MultipleChoiceQuestion';
 import ReadingComprehensionQuestion from '@/components/quiz/ReadingComprehensionQuestion';
@@ -46,6 +47,7 @@ export default function TakeQuiz() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
+  const [nswTheme, setNswTheme] = useState(false);
   const isReviewMode = urlParams.get('review') === 'true';
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -1057,21 +1059,24 @@ export default function TakeQuiz() {
   const time = formatTime(timeLeft);
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className={cn("h-screen flex flex-col", nswTheme ? "bg-white" : "bg-white")}>
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+      <div className={cn("flex items-center justify-between px-6 py-4 border-b bg-white", nswTheme ? "border-slate-300" : "border-slate-200")}>
         <div className="flex items-center gap-4">
           {/* Close Button */}
           <button
             onClick={handleExitQuiz}
-            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors"
+            className={cn(
+              "w-10 h-10 text-white flex items-center justify-center hover:opacity-90 transition-colors",
+              nswTheme ? "rounded bg-[#002664]" : "rounded-full bg-slate-800 hover:bg-slate-700"
+            )}
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Timer */}
           {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
-            <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg">
+            <div className={cn("flex items-center gap-3 px-4 py-2 border border-slate-300", nswTheme ? "rounded" : "rounded-lg")}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-800 tabular-nums">{time.hours}:{time.minutes}</div>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
@@ -1081,7 +1086,10 @@ export default function TakeQuiz() {
               </div>
               <button
                 onClick={() => setTimerVisible(false)}
-                className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
+                className={cn(
+                  "px-3 py-1 text-white text-sm transition-colors",
+                  nswTheme ? "bg-[#002664] rounded hover:opacity-90" : "bg-slate-800 rounded-full hover:bg-slate-700"
+                )}
               >
                 Hide timer
               </button>
@@ -1106,7 +1114,7 @@ export default function TakeQuiz() {
           </h2>
           <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className={cn("gap-2", nswTheme && "rounded")}>
                 <List className="w-4 h-4" />
                 Overview
               </Button>
@@ -1177,9 +1185,21 @@ export default function TakeQuiz() {
           </Dialog>
         </div>
 
-        {/* Logo/Brand Space */}
-        <div className="w-20"></div>
-      </div>
+        {/* Theme Toggle & Logo/Brand Space */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setNswTheme(!nswTheme)}
+            className={cn(
+              "p-2 transition-colors",
+              nswTheme ? "text-[#002664] hover:bg-blue-50" : "text-slate-600 hover:bg-slate-100",
+              nswTheme ? "rounded" : "rounded-lg"
+            )}
+            title="Toggle theme"
+          >
+            <Palette className="w-5 h-5" />
+          </button>
+        </div>
+        </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
@@ -1203,15 +1223,16 @@ export default function TakeQuiz() {
 
       {/* Bottom Navigation */}
       {(!showResults || reviewMode) && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div className={cn("flex items-center justify-between px-6 py-4 border-t", nswTheme ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-slate-50")}>
           <Button
             onClick={handlePrev}
             disabled={currentIndex === 0}
             className={cn(
               "px-8 py-6 text-base font-semibold",
+              nswTheme ? "rounded" : "rounded-lg",
               currentIndex === 0 
                 ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                : "bg-slate-800 text-white hover:bg-slate-700"
+                : nswTheme ? "bg-[#002664] text-white hover:opacity-90" : "bg-slate-800 text-white hover:bg-slate-700"
             )}
           >
             <ChevronLeft className="w-5 h-5 mr-2" />
@@ -1233,7 +1254,8 @@ export default function TakeQuiz() {
             <button
               onClick={toggleFlag}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 rounded-lg border-2 transition-all",
+                "flex items-center gap-2 px-6 py-3 border-2 transition-all",
+                nswTheme ? "rounded" : "rounded-lg",
                 flaggedQuestions.has(currentIndex)
                   ? "bg-amber-50 border-amber-400 text-amber-700"
                   : "bg-white border-slate-300 text-slate-600 hover:border-slate-400"
@@ -1247,7 +1269,10 @@ export default function TakeQuiz() {
           {currentIndex < totalQuestions - 1 ? (
             <Button
               onClick={handleNext}
-              className="bg-slate-800 text-white hover:bg-slate-700 px-8 py-6 text-base font-semibold"
+              className={cn(
+                "text-white px-8 py-6 text-base font-semibold",
+                nswTheme ? "bg-[#002664] hover:opacity-90 rounded" : "bg-slate-800 hover:bg-slate-700 rounded-lg"
+              )}
             >
               Next
               <ChevronRight className="w-5 h-5 ml-2" />
@@ -1258,7 +1283,10 @@ export default function TakeQuiz() {
                 setReviewMode(false);
                 setShowResults(true);
               }}
-              className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
+              className={cn(
+                "text-white px-8 py-6 text-base font-semibold",
+                nswTheme ? "bg-emerald-700 hover:opacity-90 rounded" : "bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              )}
             >
               Finish Review
               <ChevronRight className="w-5 h-5 ml-2" />
@@ -1266,7 +1294,10 @@ export default function TakeQuiz() {
           ) : (
             <Button
               onClick={handleSubmitClick}
-              className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold"
+              className={cn(
+                "text-white px-8 py-6 text-base font-semibold",
+                nswTheme ? "bg-emerald-700 hover:opacity-90 rounded" : "bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              )}
               disabled={submitted}
             >
               Submit
