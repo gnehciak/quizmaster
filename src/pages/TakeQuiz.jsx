@@ -1108,7 +1108,7 @@ export default function TakeQuiz() {
         </div>
 
         {/* Question Counter */}
-        <div className="text-center flex items-center justify-center gap-3">
+        <div className="flex-1 flex items-center justify-center gap-3">
           <h2 className={cn("text-xl font-semibold", nswTheme ? "text-black" : "text-slate-800")}>
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
@@ -1185,22 +1185,20 @@ export default function TakeQuiz() {
           </Dialog>
         </div>
 
-        {/* Theme Toggle & Logo/Brand Space */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setNswTheme(!nswTheme)}
-            variant="outline"
-            size="sm"
-            className={cn(
-              "gap-2",
-              nswTheme ? "border-[#002664] text-[#002664]" : ""
-            )}
-          >
-            <Palette className="w-4 h-4" />
-            {nswTheme ? 'Default Theme' : 'NSW Theme'}
-          </Button>
-        </div>
-        </div>
+        {/* Theme Toggle */}
+        <Button
+          onClick={() => setNswTheme(!nswTheme)}
+          variant="outline"
+          size="sm"
+          className={cn(
+            "gap-2",
+            nswTheme ? "border-[#002664] text-[#002664]" : ""
+          )}
+        >
+          <Palette className="w-4 h-4" />
+          {nswTheme ? 'Default Theme' : 'NSW Theme'}
+        </Button>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
