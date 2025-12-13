@@ -183,6 +183,7 @@ export default function UserManagement() {
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="teacher">Teacher</SelectItem>
                 <SelectItem value="user">User</SelectItem>
               </SelectContent>
             </Select>
@@ -266,9 +267,11 @@ export default function UserManagement() {
                             "px-2.5 py-1 rounded-full text-xs font-medium",
                             u.role === 'admin' 
                               ? "bg-purple-100 text-purple-700"
+                              : u.role === 'teacher'
+                              ? "bg-indigo-100 text-indigo-700"
                               : "bg-blue-100 text-blue-700"
                           )}>
-                            {u.role === 'admin' ? 'Admin' : 'User'}
+                            {u.role === 'admin' ? 'Admin' : u.role === 'teacher' ? 'Teacher' : 'User'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-slate-600 text-sm">

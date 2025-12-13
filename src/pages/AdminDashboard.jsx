@@ -128,6 +128,12 @@ export default function AdminDashboard() {
                   Manage Quizzes
                 </Button>
               </Link>
+              <Link to={createPageUrl('UserManagement')}>
+                <Button className="w-full gap-2" variant="outline">
+                  <Users className="w-4 h-4" />
+                  Manage Users
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

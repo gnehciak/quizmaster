@@ -1,32 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import {
-  ChevronLeft,
-  Mail,
-  Calendar,
-  Award,
-  TrendingUp,
-  Loader2,
-  BookOpen,
-  CheckCircle2,
-  Trash2,
-  UserMinus,
-  UserPlus,
-  X
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -34,23 +13,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChevronLeft, User, Loader2, Save } from 'lucide-react';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 export default function UserDetails() {
   const urlParams = new URLSearchParams(window.location.search);
   const userId = urlParams.get('id');
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [deleteUserOpen, setDeleteUserOpen] = useState(false);
-  const [enrolCourseOpen, setEnrolCourseOpen] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedRole, setSelectedRole] = React.useState('');
 
-  const { data: currentUser, isLoading: currentUserLoading } = useQuery({
+  const { data: currentUser } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       try {
-        return await base44.auth.me();
+        const user = await base44.auth.me();
+        if (!user || user.role !== 'admin') {
+          window.location.href = createPageUrl('Home');
+          return null;
+        }
+        return user;
       } catch (e) {
         base44.auth.redirectToLogin(window.location.pathname + window.location.search);
         return null;
@@ -58,85 +41,43 @@ export default function UserDetails() {
     },
   });
 
-  const { data: users = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['allUsers'],
-    queryFn: () => base44.entities.User.list(),
-    enabled: currentUser?.role === 'admin'
-  });
-
-  const { data: quizAttempts = [] } = useQuery({
-    queryKey: ['userAttempts', userId],
-    queryFn: () => base44.entities.QuizAttempt.list(),
-    enabled: !!userId && currentUser?.role === 'admin'
-  });
-
-  const { data: courses = [] } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => base44.entities.Course.list(),
-    enabled: currentUser?.role === 'admin'
-  });
-
-  const { data: quizzes = [] } = useQuery({
-    queryKey: ['quizzes'],
-    queryFn: () => base44.entities.Quiz.list(),
-    enabled: currentUser?.role === 'admin'
-  });
-
-  const { data: courseAccess = [] } = useQuery({
-    queryKey: ['allCourseAccess'],
-    queryFn: () => base44.entities.CourseAccess.list(),
-    enabled: currentUser?.role === 'admin'
-  });
-
-  // Mutations
-  const deleteUserMutation = useMutation({
-    mutationFn: (id) => base44.entities.User.delete(id),
-    onSuccess: () => {
-      toast.success('User deleted successfully');
-      navigate(createPageUrl('UserManagement'));
+  const { data: targetUser, isLoading } = useQuery({
+    queryKey: ['targetUser', userId],
+    queryFn: async () => {
+      const users = await base44.entities.User.filter({ id: userId });
+      return users[0];
     },
-    onError: () => {
-      toast.error('Failed to delete user');
+    enabled: !!userId && !!currentUser
+  });
+
+  React.useEffect(() => {
+    if (targetUser?.role) {
+      setSelectedRole(targetUser.role);
+    }
+  }, [targetUser]);
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async (newRole) => {
+      return await base44.entities.User.update(userId, { role: newRole });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['targetUser', userId] });
+      queryClient.invalidateQueries({ queryKey: ['allUsers'] });
+      toast.success('User role updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update user role');
+      console.error(error);
     }
   });
 
-  const enrolCourseMutation = useMutation({
-    mutationFn: (data) => base44.entities.CourseAccess.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allCourseAccess'] });
-      toast.success('User enrolled successfully');
-      setEnrolCourseOpen(false);
-      setSelectedCourseId('');
-    },
-    onError: () => {
-      toast.error('Failed to enrol user');
+  const handleSaveRole = () => {
+    if (selectedRole !== targetUser?.role) {
+      updateRoleMutation.mutate(selectedRole);
     }
-  });
+  };
 
-  const unenrolCourseMutation = useMutation({
-    mutationFn: (id) => base44.entities.CourseAccess.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allCourseAccess'] });
-      toast.success('User unenrolled successfully');
-    },
-    onError: () => {
-      toast.error('Failed to unenrol user');
-    }
-  });
-
-  const deleteAttemptMutation = useMutation({
-    mutationFn: (id) => base44.entities.QuizAttempt.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userAttempts'] });
-      toast.success('Quiz attempt deleted');
-    },
-    onError: () => {
-      toast.error('Failed to delete attempt');
-    }
-  });
-
-  // Access control
-  if (currentUserLoading || usersLoading) {
+  if (isLoading || !currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
@@ -144,366 +85,121 @@ export default function UserDetails() {
     );
   }
 
-  if (!currentUser || currentUser.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Access Denied</h2>
-          <p className="text-slate-600 mb-6">Only administrators can view user details.</p>
-          <Link to={createPageUrl('Home')}>
-            <Button>Back to Home</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const user = users.find(u => u.id === userId);
-
-  if (!user) {
+  if (!targetUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">User not found</h2>
           <Link to={createPageUrl('UserManagement')}>
-            <Button>Back to User Management</Button>
+            <Button>Back to Users</Button>
           </Link>
         </div>
       </div>
     );
   }
 
-  // Filter attempts for this user
-  const userAttempts = quizAttempts.filter(a => a.user_email === user.email);
-  const userCourseAccess = courseAccess.filter(a => a.user_email === user.email);
-  
-  // Available courses for enrollment
-  const enrolledCourseIds = userCourseAccess.map(a => a.course_id);
-  const availableCourses = courses.filter(c => !enrolledCourseIds.includes(c.id));
-
-  // Calculate stats
-  const totalAttempts = userAttempts.length;
-  const averageScore = userAttempts.length > 0 
-    ? Math.round(userAttempts.reduce((acc, a) => acc + a.percentage, 0) / userAttempts.length)
-    : 0;
-  const coursesEnrolled = userCourseAccess.length;
-
-  // Group attempts by course
-  const attemptsByCourse = {};
-  userAttempts.forEach(attempt => {
-    if (!attemptsByCourse[attempt.course_id]) {
-      attemptsByCourse[attempt.course_id] = [];
-    }
-    attemptsByCourse[attempt.course_id].push(attempt);
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex items-center gap-3">
             <Link to={createPageUrl('UserManagement')}>
               <Button variant="ghost" size="icon">
                 <ChevronLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-slate-800">User Details</h1>
+            <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg shadow-indigo-200">
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">User Details</h1>
+              <p className="text-sm text-slate-500">Manage user information</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* User Profile Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-6">
-          <div className="flex items-start gap-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl flex-shrink-0">
-              {user.full_name?.charAt(0) || 'U'}
-            </div>
-            <div className="flex-1">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-1">{user.full_name || 'Unnamed User'}</h2>
-                <div className="flex items-center gap-4 text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    <span>{user.email}</span>
-                  </div>
-                  {user.created_date && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Joined {format(new Date(user.created_date), 'MMM d, yyyy')}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "px-3 py-1 rounded-full text-sm font-medium",
-                  user.role === 'admin' 
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-blue-100 text-blue-700"
-                )}>
-                  {user.role === 'admin' ? 'Admin' : 'User'}
-                </span>
-                <Dialog open={deleteUserOpen} onOpenChange={setDeleteUserOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Delete User</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <p className="text-slate-700">
-                        Are you sure you want to delete <strong>{user.full_name || user.email}</strong>?
-                      </p>
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800">
-                          ⚠️ <strong>Warning:</strong> This action cannot be undone. All user data, quiz attempts, and course access will be permanently deleted.
-                        </p>
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setDeleteUserOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => deleteUserMutation.mutate(user.id)}
-                          disabled={deleteUserMutation.isPending}
-                        >
-                          {deleteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                          Delete User
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-                <Award className="w-6 h-6 text-indigo-600" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {/* User Info Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>User Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4 pb-4 border-b">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                {targetUser.full_name?.charAt(0) || 'U'}
               </div>
               <div>
-                <p className="text-sm text-slate-600">Quiz Attempts</p>
-                <p className="text-2xl font-bold text-slate-800">{totalAttempts}</p>
+                <h3 className="text-xl font-semibold text-slate-800">
+                  {targetUser.full_name || 'Unnamed User'}
+                </h3>
+                <p className="text-slate-600">{targetUser.email}</p>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
-              </div>
+            <div className="grid gap-4">
               <div>
-                <p className="text-sm text-slate-600">Average Score</p>
-                <p className="text-2xl font-bold text-slate-800">{averageScore}%</p>
+                <Label className="text-slate-600 text-sm">User ID</Label>
+                <p className="text-slate-800 font-medium mt-1">{targetUser.id}</p>
               </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-amber-600" />
-              </div>
               <div>
-                <p className="text-sm text-slate-600">Courses Enrolled</p>
-                <p className="text-2xl font-bold text-slate-800">{coursesEnrolled}</p>
+                <Label className="text-slate-600 text-sm">Created Date</Label>
+                <p className="text-slate-800 font-medium mt-1">
+                  {targetUser.created_date 
+                    ? format(new Date(targetUser.created_date), 'MMMM d, yyyy h:mm a')
+                    : 'N/A'}
+                </p>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Course Performance */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Course Performance</h3>
-          
-          {Object.keys(attemptsByCourse).length === 0 ? (
-            <p className="text-slate-500 text-center py-8">No quiz attempts yet</p>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(attemptsByCourse).map(([courseId, attempts]) => {
-                const course = courses.find(c => c.id === courseId);
-                if (!course) return null;
-
-                const courseAverage = Math.round(
-                  attempts.reduce((acc, a) => acc + a.percentage, 0) / attempts.length
-                );
-
-                return (
-                  <div key={courseId} className="border border-slate-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold text-slate-800">{course.title}</h4>
-                        <p className="text-sm text-slate-500">{attempts.length} attempt{attempts.length !== 1 ? 's' : ''}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-800">{courseAverage}%</div>
-                        <p className="text-xs text-slate-500">Average</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {attempts.slice(0, 5).map((attempt, idx) => {
-                        const quiz = quizzes.find(q => q.id === attempt.quiz_id);
-                        return (
-                          <div key={idx} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className={cn(
-                                "w-4 h-4",
-                                attempt.percentage >= 70 ? "text-emerald-500" : "text-slate-400"
-                              )} />
-                              <span className="text-slate-700">{quiz?.title || 'Unknown Quiz'}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className={cn(
-                                "font-medium",
-                                attempt.percentage >= 70 ? "text-emerald-600" : "text-slate-600"
-                              )}>
-                                {attempt.score}/{attempt.total} ({attempt.percentage}%)
-                              </span>
-                              <span className="text-slate-500 text-xs">
-                                {format(new Date(attempt.created_date), 'MMM d, yyyy')}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => {
-                                  if (confirm('Delete this quiz attempt?')) {
-                                    deleteAttemptMutation.mutate(attempt.id);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Enrolled Courses */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Enrolled Courses</h3>
-            <Dialog open={enrolCourseOpen} onOpenChange={setEnrolCourseOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
-                  <UserPlus className="w-4 h-4" />
-                  Enrol in Course
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enrol User in Course</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Select Course</label>
-                    <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a course..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCourses.map(course => (
-                          <SelectItem key={course.id} value={course.id}>
-                            {course.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {availableCourses.length === 0 && (
-                    <p className="text-sm text-slate-500">User is already enrolled in all courses</p>
-                  )}
-                  <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => setEnrolCourseOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        enrolCourseMutation.mutate({
-                          user_email: user.email,
-                          course_id: selectedCourseId,
-                          unlock_method: 'admin'
-                        });
-                      }}
-                      disabled={!selectedCourseId || enrolCourseMutation.isPending}
+              <div>
+                <Label className="text-slate-600 text-sm mb-2 block">Role</Label>
+                <div className="flex items-center gap-3">
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {selectedRole !== targetUser.role && (
+                    <Button 
+                      onClick={handleSaveRole}
+                      disabled={updateRoleMutation.isPending}
+                      className="gap-2"
                     >
-                      {enrolCourseMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                      Enrol
+                      {updateRoleMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Save Changes
                     </Button>
-                  </div>
+                  )}
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          {userCourseAccess.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">Not enrolled in any courses</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userCourseAccess.map((access) => {
-                const course = courses.find(c => c.id === access.course_id);
-                if (!course) return null;
-
-                return (
-                  <div key={access.id} className="border border-slate-200 rounded-xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-slate-800">{course.title}</h4>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => {
-                          if (confirm(`Unenrol ${user.full_name || user.email} from ${course.title}?`)) {
-                            unenrolCourseMutation.mutate(access.id);
-                          }
-                        }}
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <p className="text-sm text-slate-500 mb-2">{course.description}</p>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={cn(
-                        "px-2 py-1 rounded-full font-medium",
-                        access.unlock_method === 'admin' && "bg-purple-100 text-purple-700",
-                        access.unlock_method === 'code' && "bg-blue-100 text-blue-700",
-                        access.unlock_method === 'purchase' && "bg-emerald-100 text-emerald-700"
-                      )}>
-                        {access.unlock_method === 'admin' ? 'Admin Access' : 
-                         access.unlock_method === 'code' ? 'Code Unlocked' : 'Purchased'}
-                      </span>
-                      <span className="text-slate-500">
-                        {format(new Date(access.created_date), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                <p className="text-xs text-slate-500 mt-2">
+                  {selectedRole === 'admin' && 'Full access to all features including user management'}
+                  {selectedRole === 'teacher' && 'Can create and manage courses and quizzes'}
+                  {selectedRole === 'user' && 'Standard user access to enrolled courses'}
+                </p>
+              </div>
             </div>
-          )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-between">
+          <Link to={createPageUrl('UserManagement')}>
+            <Button variant="outline">
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back to Users
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
