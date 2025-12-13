@@ -505,6 +505,159 @@ Be specific and constructive. Focus on what the student did well and what needs 
                       })}
                     </div>
                   )}
+
+                  {/* Drag & Drop Display */}
+                  {(q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') && (
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-slate-600 mb-2">Drop Zones:</div>
+                      {q.dropZones?.map((zone) => {
+                        const userAnswer = answer?.[zone.id];
+                        const isZoneCorrect = userAnswer === zone.correctAnswer;
+                        
+                        return (
+                          <div key={zone.id} className={cn(
+                            "p-4 rounded-lg border-2",
+                            isZoneCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
+                          )}>
+                            <div className="font-medium text-slate-800 mb-2">{zone.label}</div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm text-slate-600 mb-1">Your answer:</div>
+                                <div className={cn(
+                                  "font-medium",
+                                  isZoneCorrect ? "text-emerald-700" : "text-red-700"
+                                )}>
+                                  {userAnswer || '(not answered)'}
+                                </div>
+                              </div>
+                              {!isZoneCorrect && (
+                                <div className="flex-1">
+                                  <div className="text-sm text-slate-600 mb-1">Correct answer:</div>
+                                  <div className="font-medium text-emerald-700">{zone.correctAnswer}</div>
+                                </div>
+                              )}
+                              {isZoneCorrect ? (
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                              ) : (
+                                <X className="w-6 h-6 text-red-600" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Fill in the Blanks Display */}
+                  {(q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && (
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-slate-600 mb-2">Fill in the blanks:</div>
+                      {/* Show text with blanks color coded */}
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="text-slate-800 leading-relaxed">
+                          {(() => {
+                            let text = q.textWithBlanks || '';
+                            const blanks = q.blanks || [];
+                            
+                            // Replace each blank placeholder with colored answer
+                            blanks.forEach((blank, idx) => {
+                              const userAnswer = answer?.[blank.id];
+                              const isBlankCorrect = userAnswer === blank.correctAnswer;
+                              const displayText = userAnswer || '___';
+                              
+                              const colorClass = isBlankCorrect ? 'text-emerald-700 font-bold bg-emerald-100' : 'text-red-700 font-bold bg-red-100';
+                              const replacement = `<span class="px-2 py-1 rounded ${colorClass}">${displayText}</span>`;
+                              
+                              text = text.replace(`[blank${idx + 1}]`, replacement);
+                            });
+                            
+                            return <div dangerouslySetInnerHTML={{ __html: text }} />;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      {/* Show detailed breakdown */}
+                      <div className="space-y-2">
+                        {q.blanks?.map((blank, idx) => {
+                          const userAnswer = answer?.[blank.id];
+                          const isBlankCorrect = userAnswer === blank.correctAnswer;
+                          
+                          return (
+                            <div key={blank.id} className={cn(
+                              "p-3 rounded-lg border-2 flex items-center gap-3",
+                              isBlankCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
+                            )}>
+                              <div className="font-medium text-slate-600">Blank {idx + 1}:</div>
+                              <div className="flex-1 flex items-center gap-3">
+                                <div>
+                                  <span className="text-sm text-slate-600">Your answer: </span>
+                                  <span className={cn(
+                                    "font-medium",
+                                    isBlankCorrect ? "text-emerald-700" : "text-red-700"
+                                  )}>
+                                    {userAnswer || '(not answered)'}
+                                  </span>
+                                </div>
+                                {!isBlankCorrect && (
+                                  <div>
+                                    <span className="text-sm text-slate-600">Correct: </span>
+                                    <span className="font-medium text-emerald-700">{blank.correctAnswer}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {isBlankCorrect ? (
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                              ) : (
+                                <X className="w-5 h-5 text-red-600" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching List Display */}
+                  {q.type === 'matching_list_dual' && (
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-slate-600 mb-2">Matching:</div>
+                      {q.matchingQuestions?.map((mq) => {
+                        const userAnswer = answer?.[mq.id];
+                        const isMatchCorrect = userAnswer === mq.correctAnswer;
+                        
+                        return (
+                          <div key={mq.id} className={cn(
+                            "p-4 rounded-lg border-2",
+                            isMatchCorrect ? "bg-emerald-50 border-emerald-400" : "bg-red-50 border-red-400"
+                          )}>
+                            <div className="font-medium text-slate-800 mb-2" dangerouslySetInnerHTML={{ __html: mq.question }} />
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm text-slate-600 mb-1">Your answer:</div>
+                                <div className={cn(
+                                  "font-medium",
+                                  isMatchCorrect ? "text-emerald-700" : "text-red-700"
+                                )}>
+                                  {userAnswer || '(not answered)'}
+                                </div>
+                              </div>
+                              {!isMatchCorrect && (
+                                <div className="flex-1">
+                                  <div className="text-sm text-slate-600 mb-1">Correct answer:</div>
+                                  <div className="font-medium text-emerald-700">{mq.correctAnswer}</div>
+                                </div>
+                              )}
+                              {isMatchCorrect ? (
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                              ) : (
+                                <X className="w-6 h-6 text-red-600" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* AI Explanation for Wrong Answers */}
