@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                   Manage Courses
                 </Button>
               </Link>
-              <Link to={createPageUrl('Quizzes')}>
+              <Link to={createPageUrl('ManageQuizzes')}>
                 <Button className="w-full gap-2" variant="outline">
                   <Edit className="w-4 h-4" />
                   Manage Quizzes

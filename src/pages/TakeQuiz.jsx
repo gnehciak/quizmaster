@@ -299,7 +299,7 @@ export default function TakeQuiz() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">Quiz not found</h2>
-          <Link to={createPageUrl('Quizzes')}>
+          <Link to={createPageUrl('ManageQuizzes')}>
             <Button>Back to Quizzes</Button>
           </Link>
         </div>
@@ -329,7 +329,7 @@ export default function TakeQuiz() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-4">
           {/* Close Button */}
-          <Link to={createPageUrl('Quizzes')}>
+          <Link to={createPageUrl('ManageQuizzes')}>
             <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
               <X className="w-5 h-5" />
             </button>

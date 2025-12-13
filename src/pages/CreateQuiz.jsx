@@ -89,7 +89,7 @@ export default function CreateQuiz() {
     setSaving(false);
     
     if (!quizId) {
-      window.location.href = createPageUrl('Quizzes');
+      window.location.href = createPageUrl('ManageQuizzes');
     }
   };
 
@@ -156,7 +156,7 @@ export default function CreateQuiz() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link to={createPageUrl('Quizzes')}>
+              <Link to={createPageUrl('ManageQuizzes')}>
                 <Button variant="ghost" size="icon" className="hover:bg-slate-100">
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
