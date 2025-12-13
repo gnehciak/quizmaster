@@ -11,6 +11,7 @@ import QuizCard from '@/components/quiz/QuizCard';
 import CategoryFilter from '@/components/quiz/CategoryFilter';
 import SortFilter from '@/components/quiz/SortFilter';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function ManageQuizzes() {
   const [searchTerm, setSearchTerm] = useState('');
