@@ -544,10 +544,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   {/* Drag & Drop Display */}
                   {(q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') && (
                     <div className="space-y-4">
-                      {/* Show question text if available */}
-                      {q.question && (
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.question }} />
+                      {/* Show passage if available */}
+                      {q.passage && (
+                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
+                          <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: q.passage }} />
                         </div>
                       )}
                       
@@ -605,31 +605,103 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   )}
 
                   {/* Fill in the Blanks Display */}
-                  {(q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && (
+                  {q.type === 'inline_dropdown_separate' && (
                     <div className="space-y-4">
-                      {/* Show text with blanks inline */}
-                      <div className="p-4 bg-slate-50 rounded-lg">
-                        <div className="text-slate-800 leading-relaxed text-base">
+                      {/* Show question text if available */}
+                      {q.question && (
+                        <div className="text-base font-medium text-slate-800 mb-3" dangerouslySetInnerHTML={{ __html: q.question }} />
+                      )}
+                      
+                      {/* Show text with blanks as dropdowns */}
+                      <div className="p-6 bg-slate-50 rounded-lg">
+                        <div className="text-lg leading-loose text-slate-800">
                           {(() => {
-                            let text = q.textWithBlanks || '';
-                            const blanks = q.blanks || [];
+                            const text = q.textWithBlanks || '';
+                            const parts = text.split(/(\{\{[^}]+\}\})/g);
                             
-                            blanks.forEach((blank, idx) => {
-                              const userAnswer = answer?.[blank.id];
-                              const isBlankCorrect = userAnswer === blank.correctAnswer;
+                            return parts.map((part, idx) => {
+                              const blankMatch = part.match(/\{\{([^}]+)\}\}/);
                               
-                              let replacement;
-                              if (isBlankCorrect) {
-                                replacement = `<span class="inline-flex items-center gap-1 px-3 py-1 mx-1 rounded-lg bg-emerald-100 border-2 border-emerald-400 text-emerald-800 font-semibold"><span>${userAnswer}</span><span class="text-emerald-600">✓</span></span>`;
-                              } else {
-                                const correctAnswer = blank.correctAnswer;
-                                replacement = `<span class="inline-flex items-center gap-2 px-3 py-1 mx-1 rounded-lg bg-red-100 border-2 border-red-400"><span class="text-red-700 font-semibold line-through">${userAnswer || '___'}</span><span class="text-emerald-700 font-semibold">→ ${correctAnswer}</span></span>`;
+                              if (blankMatch) {
+                                const blankId = blankMatch[1];
+                                const blank = q.blanks?.find(b => b.id === blankId);
+                                if (!blank) return null;
+                                
+                                const userAnswer = answer?.[blankId];
+                                const isCorrect = userAnswer === blank.correctAnswer;
+                                
+                                return (
+                                  <span key={idx} className="inline-flex items-center gap-2 mx-1 align-middle">
+                                    <span className={cn(
+                                      "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-semibold min-w-[140px] justify-center",
+                                      isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700"
+                                    )}>
+                                      {userAnswer || '(not answered)'}
+                                      {isCorrect ? (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                      ) : (
+                                        <X className="w-4 h-4 text-red-600" />
+                                      )}
+                                    </span>
+                                    {!isCorrect && (
+                                      <span className="text-sm font-medium text-emerald-700">
+                                        → {blank.correctAnswer}
+                                      </span>
+                                    )}
+                                  </span>
+                                );
                               }
                               
-                              text = text.replace(`[blank${idx + 1}]`, replacement);
+                              return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
                             });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {q.type === 'inline_dropdown_same' && (
+                    <div className="space-y-4">
+                      {/* Show text with blanks as dropdowns */}
+                      <div className="p-6 bg-slate-50 rounded-lg">
+                        <div className="text-lg leading-loose text-slate-800">
+                          {(() => {
+                            const text = q.textWithBlanks || '';
+                            const parts = text.split(/(\{\{blank_\d+\}\})/g);
                             
-                            return <div dangerouslySetInnerHTML={{ __html: text }} />;
+                            return parts.map((part, idx) => {
+                              const blankMatch = part.match(/\{\{(blank_\d+)\}\}/);
+                              
+                              if (blankMatch) {
+                                const blankId = blankMatch[1];
+                                const blank = q.blanks?.find(b => b.id === blankId);
+                                const userAnswer = answer?.[blankId];
+                                const isCorrect = userAnswer === blank?.correctAnswer;
+                                
+                                return (
+                                  <span key={idx} className="inline-flex items-center gap-2 mx-1 align-middle">
+                                    <span className={cn(
+                                      "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-semibold min-w-[140px] justify-center",
+                                      isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700"
+                                    )}>
+                                      {userAnswer || '(not answered)'}
+                                      {isCorrect ? (
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                      ) : (
+                                        <X className="w-4 h-4 text-red-600" />
+                                      )}
+                                    </span>
+                                    {!isCorrect && blank?.correctAnswer && (
+                                      <span className="text-sm font-medium text-emerald-700">
+                                        → {blank.correctAnswer}
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              }
+                              
+                              return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
+                            });
                           })()}
                         </div>
                       </div>
@@ -639,10 +711,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   {/* Matching List Display */}
                   {q.type === 'matching_list_dual' && (
                     <div className="space-y-4">
-                      {/* Show question text if available */}
-                      {q.question && (
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.question }} />
+                      {/* Show passage if available */}
+                      {q.passage && (
+                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
+                          <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: q.passage }} />
                         </div>
                       )}
                       
