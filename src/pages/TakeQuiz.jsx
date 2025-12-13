@@ -45,6 +45,7 @@ export default function TakeQuiz() {
   const [aiExplanations, setAiExplanations] = useState({});
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const [currentAttemptId, setCurrentAttemptId] = useState(null);
   const isReviewMode = urlParams.get('review') === 'true';
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -179,7 +180,7 @@ export default function TakeQuiz() {
     
     // Create attempt record when quiz starts
     try {
-      await base44.entities.QuizAttempt.create({
+      const newAttempt = await base44.entities.QuizAttempt.create({
         user_email: user.email,
         quiz_id: quizId,
         course_id: urlParams.get('courseId'),
@@ -188,6 +189,7 @@ export default function TakeQuiz() {
         percentage: 0,
         time_taken: 0
       });
+      setCurrentAttemptId(newAttempt.id);
     } catch (e) {
       console.error('Failed to create attempt:', e);
     }
@@ -206,16 +208,14 @@ export default function TakeQuiz() {
     setSubmitted(true);
     setShowResults(true);
 
-    // Update the most recent attempt with final score
+    // Update the current attempt with final score
     try {
       const score = calculateScore();
       const total = getTotalPoints();
       const percentage = Math.round((score / total) * 100);
 
-      // Get the most recent attempt
-      const recentAttempt = userAttempts[userAttempts.length - 1];
-      if (recentAttempt) {
-        await base44.entities.QuizAttempt.update(recentAttempt.id, {
+      if (currentAttemptId) {
+        await base44.entities.QuizAttempt.update(currentAttemptId, {
           score,
           total,
           percentage,
