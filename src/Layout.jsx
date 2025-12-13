@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, BarChart3, Users } from 'lucide-react';
+import { User, LogOut, Settings, BarChart3, Users, BookOpen, FileQuestion } from 'lucide-react';
 
 export default function Layout({ children, currentPageName }) {
   const { data: user } = useQuery({
@@ -56,27 +56,42 @@ export default function Layout({ children, currentPageName }) {
 
                 {user ? (
                   <>
+                    <Link to={createPageUrl('MyCourses')}>
+                      <Button variant="ghost" size="sm">
+                        My Courses
+                      </Button>
+                    </Link>
+
                     <Link to={createPageUrl('Profile')}>
                       <Button variant="ghost" size="sm">
                         My Progress
                       </Button>
                     </Link>
 
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'teacher') && (
                       <>
-                        <Link to={createPageUrl('AdminDashboard')}>
+                        <Link to={createPageUrl('ManageCourses')}>
                           <Button variant="ghost" size="sm" className="gap-2">
-                            <Settings className="w-4 h-4" />
-                            Admin
+                            <BookOpen className="w-4 h-4" />
+                            Manage Courses
                           </Button>
                         </Link>
-                        <Link to={createPageUrl('UserManagement')}>
+                        <Link to={createPageUrl('ManageQuizzes')}>
                           <Button variant="ghost" size="sm" className="gap-2">
-                            <User className="w-4 h-4" />
-                            Users
+                            <FileQuestion className="w-4 h-4" />
+                            Manage Quizzes
                           </Button>
                         </Link>
                       </>
+                    )}
+
+                    {user.role === 'admin' && (
+                      <Link to={createPageUrl('AdminDashboard')}>
+                        <Button variant="ghost" size="sm" className="gap-2">
+                          <Settings className="w-4 h-4" />
+                          Admin
+                        </Button>
+                      </Link>
                     )}
 
                     <DropdownMenu>
@@ -94,18 +109,32 @@ export default function Layout({ children, currentPageName }) {
                         </div>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
+                          <Link to={createPageUrl('MyCourses')} className="cursor-pointer">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            My Courses
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link to={createPageUrl('Profile')} className="cursor-pointer">
                             <User className="w-4 h-4 mr-2" />
                             Profile
                           </Link>
                         </DropdownMenuItem>
                         {user.role === 'admin' && (
-                          <DropdownMenuItem asChild>
-                            <Link to={createPageUrl('AdminDashboard')} className="cursor-pointer">
-                              <BarChart3 className="w-4 h-4 mr-2" />
-                              Admin Dashboard
-                            </Link>
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link to={createPageUrl('AdminDashboard')} className="cursor-pointer">
+                                <BarChart3 className="w-4 h-4 mr-2" />
+                                Admin Dashboard
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to={createPageUrl('UserManagement')} className="cursor-pointer">
+                                <Users className="w-4 h-4 mr-2" />
+                                Users
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">

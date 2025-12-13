@@ -92,6 +92,18 @@ export default function CourseDetail() {
     },
   });
 
+  // Check visibility permissions
+  const canViewCourse = React.useMemo(() => {
+    if (!course || !user) return false;
+    
+    if (user.role === 'admin') return true;
+    if (course.visibility === 'admin') return false;
+    if (course.visibility === 'private') {
+      return course.created_by === user.email || user.role === 'admin';
+    }
+    return true;
+  }, [course, user]);
+
   const { data: course, isLoading } = useQuery({
     queryKey: ['course', courseId],
     queryFn: () => base44.entities.Course.filter({ id: courseId }),
@@ -125,9 +137,9 @@ export default function CourseDetail() {
     enabled: !!user?.email
   });
 
-  const hasAccess = !course?.is_locked || !!access || user?.role === 'admin';
+  const hasAccess = !course?.is_locked || !!access || user?.role === 'admin' || user?.role === 'teacher';
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'teacher';
   const contentBlocks = course?.content_blocks || [];
 
   // Handle payment status from URL
@@ -342,6 +354,21 @@ export default function CourseDetail() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">Course not found</h2>
+          <Link to={createPageUrl('Home')}>
+            <Button>Back to Courses</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canViewCourse) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <Lock className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Access Denied</h2>
+          <p className="text-slate-600 mb-4">You don't have permission to view this course</p>
           <Link to={createPageUrl('Home')}>
             <Button>Back to Courses</Button>
           </Link>

@@ -10,6 +10,7 @@ import ManageQuizzes from './pages/ManageQuizzes';
 import QuizAnalytics from './pages/QuizAnalytics';
 import UserManagement from './pages/UserManagement';
 import UserDetails from './pages/UserDetails';
+import MyCourses from './pages/MyCourses';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "QuizAnalytics": QuizAnalytics,
     "UserManagement": UserManagement,
     "UserDetails": UserDetails,
+    "MyCourses": MyCourses,
 }
 
 export const pagesConfig = {

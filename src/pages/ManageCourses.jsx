@@ -45,7 +45,12 @@ export default function ManageCourses() {
     queryKey: ['user'],
     queryFn: async () => {
       try {
-        return await base44.auth.me();
+        const currentUser = await base44.auth.me();
+        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'teacher')) {
+          window.location.href = createPageUrl('Home');
+          return null;
+        }
+        return currentUser;
       } catch (e) {
         base44.auth.redirectToLogin(window.location.pathname);
         return null;
@@ -142,6 +147,7 @@ export default function ManageCourses() {
       title: formData.get('title'),
       description: formData.get('description'),
       category: formData.get('category'),
+      visibility: formData.get('visibility') || 'public',
       is_locked: formData.get('is_locked') === 'true',
       unlock_code: formData.get('unlock_code') || undefined,
       price: formData.get('price') ? parseFloat(formData.get('price')) : undefined,
@@ -452,6 +458,21 @@ export default function ManageCourses() {
                             {cat.name}
                           </SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Visibility</Label>
+                    <Select name="visibility" defaultValue={editingCourse?.visibility || 'public'}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Public - Shown on home page</SelectItem>
+                        <SelectItem value="unlisted">Unlisted - Link only, show in My Courses</SelectItem>
+                        <SelectItem value="private">Private - Creator & admin only</SelectItem>
+                        <SelectItem value="admin">Admin - Admin only</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

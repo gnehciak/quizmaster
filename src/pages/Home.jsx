@@ -33,10 +33,20 @@ export default function Home() {
     return acc;
   }, {});
 
-  const filteredCourses = courses.filter((course) =>
-  course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  course.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch = course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Filter by visibility
+    if (user?.role === 'admin') {
+      return matchesSearch; // Admin sees all
+    }
+    if (user?.role === 'teacher') {
+      return matchesSearch && course.visibility !== 'admin'; // Teacher sees all except admin-only
+    }
+    // Regular users only see public courses
+    return matchesSearch && (course.visibility === 'public' || !course.visibility);
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">

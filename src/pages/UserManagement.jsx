@@ -36,7 +36,12 @@ export default function UserManagement() {
     queryKey: ['user'],
     queryFn: async () => {
       try {
-        return await base44.auth.me();
+        const currentUser = await base44.auth.me();
+        if (!currentUser || currentUser.role !== 'admin') {
+          window.location.href = createPageUrl('Home');
+          return null;
+        }
+        return currentUser;
       } catch (e) {
         base44.auth.redirectToLogin(window.location.pathname);
         return null;
