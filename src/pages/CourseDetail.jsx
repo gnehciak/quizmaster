@@ -197,14 +197,14 @@ export default function CourseDetail() {
   const handleEditBlock = (block) => {
     setEditingBlock(block);
     setContentType(block.type);
-    if (block.type === 'text') setTextContent(block.text);
-    else if (block.type === 'quiz') setSelectedQuizId(block.quiz_id);
+    if (block.type === 'text') setTextContent(block.text || '');
+    else if (block.type === 'quiz') setSelectedQuizId(block.quiz_id || '');
     else if (block.type === 'website_link') {
-      setWebsiteLink(block.url);
+      setWebsiteLink(block.url || '');
       setWebsiteLinkTitle(block.title || '');
     }
-    else if (block.type === 'embed_file') setFileUrl(block.file_url);
-    else if (block.type === 'embed_youtube') setYoutubeUrl(block.youtube_url);
+    else if (block.type === 'embed_file') setFileUrl(block.file_url || '');
+    else if (block.type === 'embed_youtube') setYoutubeUrl(block.youtube_url || '');
     setAddContentOpen(true);
   };
 
@@ -459,7 +459,7 @@ export default function CourseDetail() {
                     <DialogTitle>{editingBlock ? 'Edit Content Block' : 'Add Content Block'}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    {!contentType ? (
+                    {!contentType && !editingBlock ? (
                       <div className="space-y-2">
                         <label className="text-sm font-medium mb-2 block">Select Content Type</label>
                         <div className="grid gap-2">
@@ -622,7 +622,7 @@ export default function CourseDetail() {
                             (contentType === 'embed_youtube' && !youtubeUrl?.trim())
                           }
                         >
-                          Add Content
+                          {editingBlock ? 'Update Content' : 'Add Content'}
                         </Button>
                       </>
                     )}
