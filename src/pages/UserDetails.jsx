@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,14 +12,39 @@ import {
   TrendingUp,
   Loader2,
   BookOpen,
-  CheckCircle2
+  CheckCircle2,
+  Trash2,
+  UserMinus,
+  UserPlus,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from 'sonner';
 
 export default function UserDetails() {
   const urlParams = new URLSearchParams(window.location.search);
   const userId = urlParams.get('id');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [deleteUserOpen, setDeleteUserOpen] = useState(false);
+  const [enrolCourseOpen, setEnrolCourseOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
 
   const { data: currentUser, isLoading: currentUserLoading } = useQuery({
     queryKey: ['user'],
@@ -63,6 +88,53 @@ export default function UserDetails() {
     enabled: currentUser?.role === 'admin'
   });
 
+  // Mutations
+  const deleteUserMutation = useMutation({
+    mutationFn: (id) => base44.entities.User.delete(id),
+    onSuccess: () => {
+      toast.success('User deleted successfully');
+      navigate(createPageUrl('UserManagement'));
+    },
+    onError: () => {
+      toast.error('Failed to delete user');
+    }
+  });
+
+  const enrolCourseMutation = useMutation({
+    mutationFn: (data) => base44.entities.CourseAccess.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCourseAccess'] });
+      toast.success('User enrolled successfully');
+      setEnrolCourseOpen(false);
+      setSelectedCourseId('');
+    },
+    onError: () => {
+      toast.error('Failed to enrol user');
+    }
+  });
+
+  const unenrolCourseMutation = useMutation({
+    mutationFn: (id) => base44.entities.CourseAccess.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCourseAccess'] });
+      toast.success('User unenrolled successfully');
+    },
+    onError: () => {
+      toast.error('Failed to unenrol user');
+    }
+  });
+
+  const deleteAttemptMutation = useMutation({
+    mutationFn: (id) => base44.entities.QuizAttempt.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userAttempts'] });
+      toast.success('Quiz attempt deleted');
+    },
+    onError: () => {
+      toast.error('Failed to delete attempt');
+    }
+  });
+
   // Access control
   if (currentUserLoading || usersLoading) {
     return (
@@ -104,6 +176,10 @@ export default function UserDetails() {
   // Filter attempts for this user
   const userAttempts = quizAttempts.filter(a => a.user_email === user.email);
   const userCourseAccess = courseAccess.filter(a => a.user_email === user.email);
+  
+  // Available courses for enrollment
+  const enrolledCourseIds = userCourseAccess.map(a => a.course_id);
+  const availableCourses = courses.filter(c => !enrolledCourseIds.includes(c.id));
 
   // Calculate stats
   const totalAttempts = userAttempts.length;
@@ -145,22 +221,23 @@ export default function UserDetails() {
               {user.full_name?.charAt(0) || 'U'}
             </div>
             <div className="flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-1">{user.full_name || 'Unnamed User'}</h2>
-                  <div className="flex items-center gap-4 text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      <span>{user.email}</span>
-                    </div>
-                    {user.created_date && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Joined {format(new Date(user.created_date), 'MMM d, yyyy')}</span>
-                      </div>
-                    )}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-1">{user.full_name || 'Unnamed User'}</h2>
+                <div className="flex items-center gap-4 text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    <span>{user.email}</span>
                   </div>
+                  {user.created_date && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Joined {format(new Date(user.created_date), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
                 <span className={cn(
                   "px-3 py-1 rounded-full text-sm font-medium",
                   user.role === 'admin' 
@@ -169,7 +246,44 @@ export default function UserDetails() {
                 )}>
                   {user.role === 'admin' ? 'Admin' : 'User'}
                 </span>
+                <Dialog open={deleteUserOpen} onOpenChange={setDeleteUserOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete User
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete User</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-slate-700">
+                        Are you sure you want to delete <strong>{user.full_name || user.email}</strong>?
+                      </p>
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800">
+                          ⚠️ <strong>Warning:</strong> This action cannot be undone. All user data, quiz attempts, and course access will be permanently deleted.
+                        </p>
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setDeleteUserOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => deleteUserMutation.mutate(user.id)}
+                          disabled={deleteUserMutation.isPending}
+                        >
+                          {deleteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          Delete User
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -264,6 +378,18 @@ export default function UserDetails() {
                               <span className="text-slate-500 text-xs">
                                 {format(new Date(attempt.created_date), 'MMM d, yyyy')}
                               </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  if (confirm('Delete this quiz attempt?')) {
+                                    deleteAttemptMutation.mutate(attempt.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
                             </div>
                           </div>
                         );
@@ -278,7 +404,60 @@ export default function UserDetails() {
 
         {/* Enrolled Courses */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Enrolled Courses</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Enrolled Courses</h3>
+            <Dialog open={enrolCourseOpen} onOpenChange={setEnrolCourseOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Enrol in Course
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Enrol User in Course</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Select Course</label>
+                    <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a course..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCourses.map(course => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {availableCourses.length === 0 && (
+                    <p className="text-sm text-slate-500">User is already enrolled in all courses</p>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => setEnrolCourseOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        enrolCourseMutation.mutate({
+                          user_email: user.email,
+                          course_id: selectedCourseId,
+                          unlock_method: 'admin'
+                        });
+                      }}
+                      disabled={!selectedCourseId || enrolCourseMutation.isPending}
+                    >
+                      {enrolCourseMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Enrol
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           
           {userCourseAccess.length === 0 ? (
             <p className="text-slate-500 text-center py-8">Not enrolled in any courses</p>
@@ -290,7 +469,21 @@ export default function UserDetails() {
 
                 return (
                   <div key={access.id} className="border border-slate-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-slate-800 mb-1">{course.title}</h4>
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-semibold text-slate-800">{course.title}</h4>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          if (confirm(`Unenrol ${user.full_name || user.email} from ${course.title}?`)) {
+                            unenrolCourseMutation.mutate(access.id);
+                          }
+                        }}
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </Button>
+                    </div>
                     <p className="text-sm text-slate-500 mb-2">{course.description}</p>
                     <div className="flex items-center justify-between text-xs">
                       <span className={cn(
