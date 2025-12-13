@@ -27,6 +27,7 @@ import {
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import React from 'react';
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -113,6 +115,21 @@ export default function CourseDetail() {
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
   const isAdmin = user?.role === 'admin';
   const contentBlocks = course?.content_blocks || [];
+
+  // Handle payment status from URL
+  React.useEffect(() => {
+    const paymentStatus = urlParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast.success('Payment successful! You now have access to this course.');
+      queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
+      // Clean URL
+      window.history.replaceState({}, '', createPageUrl(`CourseDetail?id=${courseId}`));
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled. Please try again.');
+      // Clean URL
+      window.history.replaceState({}, '', createPageUrl(`CourseDetail?id=${courseId}`));
+    }
+  }, []);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
