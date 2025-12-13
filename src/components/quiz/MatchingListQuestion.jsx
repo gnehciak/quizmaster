@@ -10,10 +10,13 @@ import {
 } from "@/components/ui/select";
 
 export default function MatchingListQuestion({ 
-  question, 
+  question,
+  selectedAnswer,
   selectedAnswers = {}, 
   onAnswer, 
-  showResults 
+  showResults,
+  singleQuestion = false,
+  subQuestion = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -26,10 +29,14 @@ export default function MatchingListQuestion({
 
   const handleAnswer = (questionId, answer) => {
     if (showResults) return;
-    onAnswer({
-      ...selectedAnswers,
-      [questionId]: answer
-    });
+    if (singleQuestion) {
+      onAnswer(answer);
+    } else {
+      onAnswer({
+        ...selectedAnswers,
+        [questionId]: answer
+      });
+    }
   };
 
   const handleMouseDown = (e) => {
@@ -133,60 +140,108 @@ export default function MatchingListQuestion({
           )}
 
           <div className="space-y-3">
-            {question.matchingQuestions?.map((q, qIdx) => {
-              const selectedAnswer = selectedAnswers[q.id];
-              const isCorrect = showResults && selectedAnswer === q.correctAnswer;
-              const isWrong = showResults && selectedAnswer && selectedAnswer !== q.correctAnswer;
-
-              return (
-                <div
-                  key={q.id}
-                  className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
-                    !showResults && "border-slate-200 bg-white",
-                    isCorrect && "border-emerald-500 bg-emerald-50",
-                    isWrong && "border-red-400 bg-red-50"
-                  )}
-                >
-                  <div 
-                    className="flex-1 text-sm text-slate-800 prose prose-slate max-w-none prose-p:my-0"
-                    dangerouslySetInnerHTML={{ __html: q.question }}
-                  />
-                  
-                  <div className="flex items-center gap-3 min-w-[200px]">
-                    <Select
-                      value={selectedAnswer || ''}
-                      onValueChange={(value) => handleAnswer(q.id, value)}
-                      disabled={showResults}
+            {singleQuestion && subQuestion ? (
+              <div
+                className={cn(
+                  "flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
+                  !showResults && "border-slate-200 bg-white",
+                  showResults && selectedAnswer === subQuestion.correctAnswer && "border-emerald-500 bg-emerald-50",
+                  showResults && selectedAnswer && selectedAnswer !== subQuestion.correctAnswer && "border-red-400 bg-red-50"
+                )}
+              >
+                <div 
+                  className="flex-1 text-sm text-slate-800 prose prose-slate max-w-none prose-p:my-0"
+                  dangerouslySetInnerHTML={{ __html: subQuestion.question }}
+                />
+                
+                <div className="flex items-center gap-3 min-w-[200px]">
+                  <Select
+                    value={selectedAnswer || ''}
+                    onValueChange={(value) => handleAnswer(subQuestion.id, value)}
+                    disabled={showResults}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "w-full",
+                        showResults && selectedAnswer === subQuestion.correctAnswer && "border-emerald-500 bg-emerald-50",
+                        showResults && selectedAnswer && selectedAnswer !== subQuestion.correctAnswer && "border-red-400 bg-red-50"
+                      )}
                     >
-                      <SelectTrigger
-                        className={cn(
-                          "w-full",
-                          isCorrect && "border-emerald-500 bg-emerald-50",
-                          isWrong && "border-red-400 bg-red-50"
-                        )}
-                      >
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {question.options?.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {question.options?.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                    {showResults && isCorrect && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                    )}
-                    {showResults && isWrong && (
-                      <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                    )}
-                  </div>
+                  {showResults && selectedAnswer === subQuestion.correctAnswer && (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                  )}
+                  {showResults && selectedAnswer && selectedAnswer !== subQuestion.correctAnswer && (
+                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            ) : (
+              question.matchingQuestions?.map((q, qIdx) => {
+                const selectedAnswerItem = selectedAnswers[q.id];
+                const isCorrect = showResults && selectedAnswerItem === q.correctAnswer;
+                const isWrong = showResults && selectedAnswerItem && selectedAnswerItem !== q.correctAnswer;
+
+                return (
+                  <div
+                    key={q.id}
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
+                      !showResults && "border-slate-200 bg-white",
+                      isCorrect && "border-emerald-500 bg-emerald-50",
+                      isWrong && "border-red-400 bg-red-50"
+                    )}
+                  >
+                    <div 
+                      className="flex-1 text-sm text-slate-800 prose prose-slate max-w-none prose-p:my-0"
+                      dangerouslySetInnerHTML={{ __html: q.question }}
+                    />
+                    
+                    <div className="flex items-center gap-3 min-w-[200px]">
+                      <Select
+                        value={selectedAnswerItem || ''}
+                        onValueChange={(value) => handleAnswer(q.id, value)}
+                        disabled={showResults}
+                      >
+                        <SelectTrigger
+                          className={cn(
+                            "w-full",
+                            isCorrect && "border-emerald-500 bg-emerald-50",
+                            isWrong && "border-red-400 bg-red-50"
+                          )}
+                        >
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {question.options?.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {showResults && isCorrect && (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                      )}
+                      {showResults && isWrong && (
+                        <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

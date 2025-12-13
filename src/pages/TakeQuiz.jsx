@@ -16,6 +16,14 @@ import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { List } from 'lucide-react';
 
 export default function TakeQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -29,6 +37,7 @@ export default function TakeQuiz() {
   const [timerVisible, setTimerVisible] = useState(true);
   const [timeLeft, setTimeLeft] = useState(0);
   const [reviewMode, setReviewMode] = useState(false);
+  const [overviewOpen, setOverviewOpen] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -49,7 +58,43 @@ export default function TakeQuiz() {
     select: (data) => data[0]
   });
 
-  const questions = quiz?.questions || [];
+  // Flatten questions - expand comprehension questions into individual questions
+  const flattenedQuestions = React.useMemo(() => {
+    if (!quiz?.questions) return [];
+    
+    const flattened = [];
+    quiz.questions.forEach((q) => {
+      if (q.type === 'reading_comprehension') {
+        // Add each comprehension question as a separate item
+        (q.comprehensionQuestions || []).forEach((cq, idx) => {
+          flattened.push({
+            ...q,
+            subQuestionIndex: idx,
+            subQuestion: cq,
+            isSubQuestion: true,
+            parentId: q.id
+          });
+        });
+      } else if (q.type === 'matching_list_dual') {
+        // Add each matching question as a separate item
+        (q.matchingQuestions || []).forEach((mq, idx) => {
+          flattened.push({
+            ...q,
+            subQuestionIndex: idx,
+            subQuestion: mq,
+            isSubQuestion: true,
+            parentId: q.id
+          });
+        });
+      } else {
+        flattened.push(q);
+      }
+    });
+    
+    return flattened;
+  }, [quiz?.questions]);
+
+  const questions = flattenedQuestions;
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
@@ -133,13 +178,11 @@ export default function TakeQuiz() {
     questions.forEach((q, idx) => {
       const answer = answers[idx];
 
-      if (q.type === 'multiple_choice') {
+      if (q.isSubQuestion) {
+        // For flattened sub-questions
+        if (answer === q.subQuestion.correctAnswer) correct++;
+      } else if (q.type === 'multiple_choice') {
         if (answer === q.correctAnswer) correct++;
-      } else if (q.type === 'reading_comprehension') {
-        const compQuestions = q.comprehensionQuestions || [];
-        compQuestions.forEach(cq => {
-          if (answer?.[cq.id] === cq.correctAnswer) correct++;
-        });
       } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
         const zones = q.dropZones || [];
         zones.forEach(zone => {
@@ -150,11 +193,6 @@ export default function TakeQuiz() {
         blanks.forEach(blank => {
           if (answer?.[blank.id] === blank.correctAnswer) correct++;
         });
-      } else if (q.type === 'matching_list_dual') {
-        const matchingQuestions = q.matchingQuestions || [];
-        matchingQuestions.forEach(mq => {
-          if (answer?.[mq.id] === mq.correctAnswer) correct++;
-        });
       }
     });
     
@@ -162,15 +200,7 @@ export default function TakeQuiz() {
   };
 
   const getTotalPoints = () => {
-    let total = 0;
-    questions.forEach(q => {
-      if (q.type === 'multiple_choice') total++;
-      else if (q.type === 'reading_comprehension') total += (q.comprehensionQuestions?.length || 0);
-      else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') total += (q.dropZones?.length || 0);
-      else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') total += (q.blanks?.length || 0);
-      else if (q.type === 'matching_list_dual') total += (q.matchingQuestions?.length || 0);
-    });
-    return total;
+    return questions.length;
   };
 
   const handleRetry = () => {
@@ -215,6 +245,33 @@ export default function TakeQuiz() {
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
+    // For reading comprehension and matching list sub-questions
+    if (currentQuestion.isSubQuestion && currentQuestion.type === 'reading_comprehension') {
+      return (
+        <ReadingComprehensionQuestion
+          question={currentQuestion}
+          selectedAnswer={answers[currentIndex]}
+          onAnswer={handleAnswer}
+          showResults={submitted || reviewMode}
+          singleQuestion={true}
+          subQuestion={currentQuestion.subQuestion}
+        />
+      );
+    }
+
+    if (currentQuestion.isSubQuestion && currentQuestion.type === 'matching_list_dual') {
+      return (
+        <MatchingListQuestion
+          question={currentQuestion}
+          selectedAnswer={answers[currentIndex]}
+          onAnswer={handleAnswer}
+          showResults={submitted || reviewMode}
+          singleQuestion={true}
+          subQuestion={currentQuestion.subQuestion}
+        />
+      );
+    }
+
     const commonProps = {
       question: currentQuestion,
       showResults: submitted || reviewMode,
@@ -226,14 +283,6 @@ export default function TakeQuiz() {
           <MultipleChoiceQuestion
             {...commonProps}
             selectedAnswer={answers[currentIndex]}
-            onAnswer={handleAnswer}
-          />
-        );
-      case 'reading_comprehension':
-        return (
-          <ReadingComprehensionQuestion
-            {...commonProps}
-            selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
           />
         );
@@ -264,14 +313,6 @@ export default function TakeQuiz() {
       case 'inline_dropdown_same':
         return (
           <InlineDropdownSameQuestion
-            {...commonProps}
-            selectedAnswers={answers[currentIndex] || {}}
-            onAnswer={handleAnswer}
-          />
-        );
-      case 'matching_list_dual':
-        return (
-          <MatchingListQuestion
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
@@ -366,10 +407,81 @@ export default function TakeQuiz() {
         </div>
 
         {/* Question Counter */}
-        <div className="text-center">
+        <div className="text-center flex items-center justify-center gap-3">
           <h2 className="text-xl font-semibold text-slate-800">
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
+          <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <List className="w-4 h-4" />
+                Overview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Quiz Overview</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 mt-4">
+                {questions.map((q, idx) => {
+                  const isAnswered = answers[idx] !== undefined;
+                  const isFlagged = flaggedQuestions.has(idx);
+                  const isCurrent = idx === currentIndex;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setCurrentIndex(idx);
+                        setOverviewOpen(false);
+                      }}
+                      className={cn(
+                        "w-full p-4 rounded-lg border-2 text-left transition-all flex items-center justify-between group",
+                        isCurrent && "border-indigo-500 bg-indigo-50",
+                        !isCurrent && isAnswered && "border-emerald-200 bg-emerald-50/50 hover:border-emerald-300",
+                        !isCurrent && !isAnswered && "border-slate-200 hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm",
+                          isCurrent && "bg-indigo-600 text-white",
+                          !isCurrent && isAnswered && "bg-emerald-500 text-white",
+                          !isCurrent && !isAnswered && "bg-slate-200 text-slate-600"
+                        )}>
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-slate-800 text-sm line-clamp-1">
+                            {q.isSubQuestion 
+                              ? q.subQuestion.question?.replace(/<[^>]*>/g, '').substring(0, 60) + '...'
+                              : q.question?.replace(/<[^>]*>/g, '').substring(0, 60) + '...'}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {q.type === 'reading_comprehension' && 'Reading Comprehension'}
+                            {q.type === 'multiple_choice' && 'Multiple Choice'}
+                            {q.type === 'drag_drop_single' && 'Drag & Drop'}
+                            {q.type === 'drag_drop_dual' && 'Drag & Drop (Dual Pane)'}
+                            {q.type === 'inline_dropdown_separate' && 'Fill in the Blanks'}
+                            {q.type === 'inline_dropdown_same' && 'Fill in the Blanks'}
+                            {q.type === 'matching_list_dual' && 'Matching List'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isFlagged && (
+                          <Flag className="w-5 h-5 text-amber-500 fill-current" />
+                        )}
+                        {isAnswered && !isCurrent && (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Logo/Brand Space */}

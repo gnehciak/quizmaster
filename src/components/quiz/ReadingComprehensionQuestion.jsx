@@ -5,9 +5,12 @@ import { CheckCircle2, XCircle, GripVertical } from 'lucide-react';
 
 export default function ReadingComprehensionQuestion({ 
   question, 
+  selectedAnswer,
   selectedAnswers = {}, 
   onAnswer, 
-  showResults 
+  showResults,
+  singleQuestion = false,
+  subQuestion = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -20,10 +23,14 @@ export default function ReadingComprehensionQuestion({
 
   const handleAnswer = (questionId, answer) => {
     if (showResults) return;
-    onAnswer({
-      ...selectedAnswers,
-      [questionId]: answer
-    });
+    if (singleQuestion) {
+      onAnswer(answer);
+    } else {
+      onAnswer({
+        ...selectedAnswers,
+        [questionId]: answer
+      });
+    }
   };
 
   const handleMouseDown = (e) => {
@@ -120,23 +127,23 @@ export default function ReadingComprehensionQuestion({
       {/* Right Pane - Questions */}
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-2xl space-y-8">
-          {question.comprehensionQuestions?.map((q, qIdx) => (
-            <div key={q.id} className="space-y-3">
+          {singleQuestion && subQuestion ? (
+            <div className="space-y-3">
               <div 
                 className="font-medium text-slate-800 text-base prose prose-slate max-w-none prose-p:my-0"
-                dangerouslySetInnerHTML={{ __html: q.question }}
+                dangerouslySetInnerHTML={{ __html: subQuestion.question }}
               />
               
               <div className="space-y-2">
-                {q.options.map((option, optIdx) => {
-                  const isSelected = selectedAnswers[q.id] === option;
-                  const isCorrect = showResults && option === q.correctAnswer;
-                  const isWrong = showResults && isSelected && option !== q.correctAnswer;
+                {subQuestion.options.map((option, optIdx) => {
+                  const isSelected = selectedAnswer === option;
+                  const isCorrect = showResults && option === subQuestion.correctAnswer;
+                  const isWrong = showResults && isSelected && option !== subQuestion.correctAnswer;
                   
                   return (
                     <button
                       key={optIdx}
-                      onClick={() => handleAnswer(q.id, option)}
+                      onClick={() => handleAnswer(subQuestion.id, option)}
                       disabled={showResults}
                       className={cn(
                         "w-full p-4 rounded-lg text-left transition-all",
@@ -178,8 +185,79 @@ export default function ReadingComprehensionQuestion({
                   );
                 })}
               </div>
+
+              {showResults && subQuestion.explanation && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900 mb-1">Explanation:</p>
+                  <div 
+                    className="text-sm text-blue-800 prose prose-slate max-w-none prose-p:my-0"
+                    dangerouslySetInnerHTML={{ __html: subQuestion.explanation }}
+                  />
+                </div>
+              )}
             </div>
-          ))}
+          ) : (
+            question.comprehensionQuestions?.map((q, qIdx) => (
+              <div key={q.id} className="space-y-3">
+                <div 
+                  className="font-medium text-slate-800 text-base prose prose-slate max-w-none prose-p:my-0"
+                  dangerouslySetInnerHTML={{ __html: q.question }}
+                />
+                
+                <div className="space-y-2">
+                  {q.options.map((option, optIdx) => {
+                    const isSelected = selectedAnswers[q.id] === option;
+                    const isCorrect = showResults && option === q.correctAnswer;
+                    const isWrong = showResults && isSelected && option !== q.correctAnswer;
+                    
+                    return (
+                      <button
+                        key={optIdx}
+                        onClick={() => handleAnswer(q.id, option)}
+                        disabled={showResults}
+                        className={cn(
+                          "w-full p-4 rounded-lg text-left transition-all",
+                          "border-2 flex items-center gap-3 group",
+                          !showResults && !isSelected && "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                          !showResults && isSelected && "border-slate-800 bg-slate-50",
+                          isCorrect && "border-emerald-500 bg-emerald-50",
+                          isWrong && "border-red-400 bg-red-50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                          !showResults && !isSelected && "border-slate-300 group-hover:border-slate-400",
+                          !showResults && isSelected && "border-slate-800 bg-slate-800",
+                          isCorrect && "border-emerald-500 bg-emerald-500",
+                          isWrong && "border-red-500 bg-red-500"
+                        )}>
+                          {(isSelected || isCorrect || isWrong) && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                        
+                        <span className={cn(
+                          "text-sm",
+                          isCorrect && "text-emerald-700 font-medium",
+                          isWrong && "text-red-600",
+                          !showResults && isSelected && "text-slate-800 font-medium"
+                        )}>
+                          {option}
+                        </span>
+                        
+                        {showResults && isCorrect && (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 ml-auto" />
+                        )}
+                        {showResults && isWrong && (
+                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 ml-auto" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
