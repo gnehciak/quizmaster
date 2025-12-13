@@ -23,6 +23,18 @@ export default function ManageCategories() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return null;
+      }
+    },
+  });
+
   const { data: categories = [] } = useQuery({
     queryKey: ['quizCategories'],
     queryFn: () => base44.entities.QuizCategory.list(),
@@ -67,6 +79,20 @@ export default function ManageCategories() {
     if (!editName.trim()) return;
     updateMutation.mutate({ id: editingCategory.id, data: { name: editName } });
   };
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
