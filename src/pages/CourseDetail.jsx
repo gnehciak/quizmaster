@@ -122,14 +122,16 @@ export default function CourseDetail() {
     if (paymentStatus === 'success') {
       setPurchaseSuccessOpen(true);
       queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
-      // Clean URL
-      window.history.replaceState({}, '', createPageUrl(`CourseDetail?id=${courseId}`));
+      // Clean URL after a short delay to ensure dialog is visible
+      setTimeout(() => {
+        window.history.replaceState({}, '', window.location.pathname + '?id=' + courseId);
+      }, 100);
     } else if (paymentStatus === 'cancelled') {
       toast.error('Payment was cancelled. Please try again.');
       // Clean URL
-      window.history.replaceState({}, '', createPageUrl(`CourseDetail?id=${courseId}`));
+      window.history.replaceState({}, '', window.location.pathname + '?id=' + courseId);
     }
-  }, []);
+  }, [courseId, queryClient]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
