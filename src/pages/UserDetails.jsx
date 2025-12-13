@@ -176,34 +176,21 @@ export default function UserDetails() {
     }
   };
 
-  if (isLoading || !currentUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
-  }
+  // Always call useMemo before any early returns
+  const accessMap = React.useMemo(() => {
+    return accessList.reduce((acc, access) => {
+      acc[access.course_id] = access;
+      return acc;
+    }, {});
+  }, [accessList]);
 
-  if (!targetUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">User not found</h2>
-          <Link to={createPageUrl('UserManagement')}>
-            <Button>Back to Users</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const enrolledCourses = React.useMemo(() => {
+    return courses.filter(c => accessMap[c.id]);
+  }, [courses, accessMap]);
 
-  const accessMap = accessList.reduce((acc, access) => {
-    acc[access.course_id] = access;
-    return acc;
-  }, {});
-
-  const enrolledCourses = courses.filter(c => accessMap[c.id]);
-  const availableCourses = courses.filter(c => !accessMap[c.id]);
+  const availableCourses = React.useMemo(() => {
+    return courses.filter(c => !accessMap[c.id]);
+  }, [courses, accessMap]);
 
   const totalAttempts = attempts.length;
   const averageScore = attempts.length > 0 
@@ -234,6 +221,27 @@ export default function UserDetails() {
     
     return grouped;
   }, [enrolledCourses, attempts]);
+
+  if (isLoading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!targetUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800 mb-4">User not found</h2>
+          <Link to={createPageUrl('UserManagement')}>
+            <Button>Back to Users</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
