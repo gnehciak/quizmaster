@@ -18,6 +18,18 @@ export default function Quizzes() {
   const [sortBy, setSortBy] = useState('newest');
   const queryClient = useQueryClient();
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return null;
+      }
+    },
+  });
+
   const { data: quizzes = [], isLoading } = useQuery({
     queryKey: ['quizzes'],
     queryFn: () => base44.entities.Quiz.list('-created_date')
@@ -133,7 +145,7 @@ export default function Quizzes() {
         </div>
 
         {/* Quiz Grid */}
-        {isLoading ?
+        {(isLoading || userLoading) ?
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) =>
           <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200">

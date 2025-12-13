@@ -19,7 +19,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 export default function Profile() {
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return null;
+      }
+    },
   });
 
   const { data: attempts = [], isLoading: attemptsLoading } = useQuery({

@@ -64,9 +64,16 @@ export default function CourseDetail() {
   const [editingBlock, setEditingBlock] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        return null;
+      }
+    },
   });
 
   const { data: course, isLoading } = useQuery({
@@ -267,12 +274,16 @@ export default function CourseDetail() {
     await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
   };
 
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (!course) {

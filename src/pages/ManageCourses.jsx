@@ -28,6 +28,18 @@ export default function ManageCourses() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return null;
+      }
+    },
+  });
+
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
     queryFn: () => base44.entities.Course.list('-created_date'),

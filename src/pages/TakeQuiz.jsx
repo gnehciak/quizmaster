@@ -30,6 +30,18 @@ export default function TakeQuiz() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [reviewMode, setReviewMode] = useState(false);
 
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        return null;
+      }
+    },
+  });
+
   const { data: quiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
     queryFn: () => base44.entities.Quiz.filter({ id: quizId }),
@@ -91,7 +103,6 @@ export default function TakeQuiz() {
 
     // Save quiz attempt
     try {
-      const user = await base44.auth.me();
       const score = calculateScore();
       const total = getTotalPoints();
       const percentage = Math.round((score / total) * 100);
@@ -271,12 +282,16 @@ export default function TakeQuiz() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (!quiz) {

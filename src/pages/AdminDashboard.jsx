@@ -15,9 +15,16 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      try {
+        return await base44.auth.me();
+      } catch (e) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return null;
+      }
+    },
   });
 
   const { data: courses = [] } = useQuery({
@@ -35,7 +42,17 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.QuizAttempt.list('-created_date', 100),
   });
 
-  if (user?.role !== 'admin') {
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
         <div className="text-center">
