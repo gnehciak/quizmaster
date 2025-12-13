@@ -55,9 +55,12 @@ export default function CourseDetail() {
   const [textContent, setTextContent] = useState('');
   const [selectedQuizId, setSelectedQuizId] = useState('');
   const [websiteLink, setWebsiteLink] = useState('');
+  const [websiteLinkTitle, setWebsiteLinkTitle] = useState('');
   const [fileUrl, setFileUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [editCourseOpen, setEditCourseOpen] = useState(false);
+  const [editingBlock, setEditingBlock] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -142,27 +145,78 @@ export default function CourseDetail() {
   };
 
   const handleAddContent = async () => {
-    const newBlock = {
-      id: `block_${Date.now()}`,
-      type: contentType
-    };
+    if (editingBlock) {
+      // Update existing block
+      const updatedBlocks = contentBlocks.map(block => {
+        if (block.id === editingBlock.id) {
+          const updated = { ...block };
+          if (contentType === 'text') updated.text = textContent;
+          else if (contentType === 'quiz') updated.quiz_id = selectedQuizId;
+          else if (contentType === 'website_link') {
+            updated.url = websiteLink;
+            updated.title = websiteLinkTitle;
+          }
+          else if (contentType === 'embed_file') updated.file_url = fileUrl;
+          else if (contentType === 'embed_youtube') updated.youtube_url = youtubeUrl;
+          return updated;
+        }
+        return block;
+      });
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    } else {
+      // Add new block
+      const newBlock = {
+        id: `block_${Date.now()}`,
+        type: contentType
+      };
 
-    if (contentType === 'text') newBlock.text = textContent;
-    else if (contentType === 'quiz') newBlock.quiz_id = selectedQuizId;
-    else if (contentType === 'website_link') newBlock.url = websiteLink;
-    else if (contentType === 'embed_file') newBlock.file_url = fileUrl;
-    else if (contentType === 'embed_youtube') newBlock.youtube_url = youtubeUrl;
+      if (contentType === 'text') newBlock.text = textContent;
+      else if (contentType === 'quiz') newBlock.quiz_id = selectedQuizId;
+      else if (contentType === 'website_link') {
+        newBlock.url = websiteLink;
+        newBlock.title = websiteLinkTitle;
+      }
+      else if (contentType === 'embed_file') newBlock.file_url = fileUrl;
+      else if (contentType === 'embed_youtube') newBlock.youtube_url = youtubeUrl;
 
-    const updatedBlocks = [...contentBlocks, newBlock];
-    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+      const updatedBlocks = [...contentBlocks, newBlock];
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    }
     
     setAddContentOpen(false);
     setTextContent('');
     setSelectedQuizId('');
     setWebsiteLink('');
+    setWebsiteLinkTitle('');
     setFileUrl('');
     setYoutubeUrl('');
     setContentType('');
+    setEditingBlock(null);
+  };
+
+  const handleEditBlock = (block) => {
+    setEditingBlock(block);
+    setContentType(block.type);
+    if (block.type === 'text') setTextContent(block.text);
+    else if (block.type === 'quiz') setSelectedQuizId(block.quiz_id);
+    else if (block.type === 'website_link') {
+      setWebsiteLink(block.url);
+      setWebsiteLinkTitle(block.title || '');
+    }
+    else if (block.type === 'embed_file') setFileUrl(block.file_url);
+    else if (block.type === 'embed_youtube') setYoutubeUrl(block.youtube_url);
+    setAddContentOpen(true);
+  };
+
+  const handleFileUpload = async (file) => {
+    setUploadingFile(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      setFileUrl(result.file_url);
+    } catch (e) {
+      console.error('Upload failed:', e);
+    }
+    setUploadingFile(false);
   };
 
   const handleEditCourse = () => {
@@ -381,7 +435,19 @@ export default function CourseDetail() {
               Course Content
             </h2>
             {isAdmin && (
-              <Dialog open={addContentOpen} onOpenChange={setAddContentOpen}>
+              <Dialog open={addContentOpen} onOpenChange={(open) => {
+                setAddContentOpen(open);
+                if (!open) {
+                  setEditingBlock(null);
+                  setContentType('');
+                  setTextContent('');
+                  setSelectedQuizId('');
+                  setWebsiteLink('');
+                  setWebsiteLinkTitle('');
+                  setFileUrl('');
+                  setYoutubeUrl('');
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button size="sm" className="gap-2">
                     <Plus className="w-4 h-4" />
@@ -390,7 +456,7 @@ export default function CourseDetail() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Content Block</DialogTitle>
+                    <DialogTitle>{editingBlock ? 'Edit Content Block' : 'Add Content Block'}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     {!contentType ? (
@@ -471,26 +537,65 @@ export default function CourseDetail() {
                         )}
 
                         {contentType === 'website_link' && (
-                          <div>
-                            <label className="text-sm font-medium mb-2 block">Website URL</label>
-                            <Input
-                              value={websiteLink}
-                              onChange={(e) => setWebsiteLink(e.target.value)}
-                              placeholder="https://example.com"
-                              type="url"
-                            />
-                          </div>
+                          <>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Link Title</label>
+                              <Input
+                                value={websiteLinkTitle}
+                                onChange={(e) => setWebsiteLinkTitle(e.target.value)}
+                                placeholder="e.g. Read the documentation"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Website URL</label>
+                              <Input
+                                value={websiteLink}
+                                onChange={(e) => setWebsiteLink(e.target.value)}
+                                placeholder="https://example.com"
+                                type="url"
+                              />
+                            </div>
+                          </>
                         )}
 
                         {contentType === 'embed_file' && (
                           <div>
-                            <label className="text-sm font-medium mb-2 block">File URL</label>
-                            <Input
-                              value={fileUrl}
-                              onChange={(e) => setFileUrl(e.target.value)}
-                              placeholder="Enter file URL..."
-                              type="url"
-                            />
+                            <label className="text-sm font-medium mb-2 block">Upload File</label>
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const file = e.dataTransfer.files[0];
+                                if (file) handleFileUpload(file);
+                              }}
+                              className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer"
+                              onClick={() => document.getElementById('file-upload').click()}
+                            >
+                              <input
+                                id="file-upload"
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) handleFileUpload(file);
+                                }}
+                              />
+                              {uploadingFile ? (
+                                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto mb-2" />
+                              ) : (
+                                <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                              )}
+                              <p className="text-sm text-slate-600">
+                                {uploadingFile ? 'Uploading...' : 'Drag and drop a file or click to browse'}
+                              </p>
+                              {fileUrl && (
+                                <p className="text-xs text-green-600 mt-2">✓ File uploaded</p>
+                              )}
+                            </div>
                           </div>
                         )}
 
@@ -512,7 +617,7 @@ export default function CourseDetail() {
                           disabled={
                             (contentType === 'text' && !textContent.trim()) ||
                             (contentType === 'quiz' && !selectedQuizId) ||
-                            (contentType === 'website_link' && !websiteLink.trim()) ||
+                            (contentType === 'website_link' && (!websiteLink.trim() || !websiteLinkTitle.trim())) ||
                             (contentType === 'embed_file' && !fileUrl.trim()) ||
                             (contentType === 'embed_youtube' && !youtubeUrl.trim())
                           }
@@ -571,24 +676,21 @@ export default function CourseDetail() {
                     return (
                       <div className="flex items-center gap-3 flex-1 opacity-60">
                         <LinkIcon className="w-5 h-5 text-slate-400" />
-                        <span className="text-slate-500">Website Link (Locked)</span>
+                        <span className="text-slate-500">{block.title || 'Website Link'} (Locked)</span>
                         <Lock className="w-4 h-4 text-slate-400 ml-auto" />
                       </div>
                     );
                   }
                   return (
-                    <div className="flex flex-col gap-3 flex-1">
-                      <div className="flex items-center gap-3">
-                        <LinkIcon className="w-5 h-5 text-indigo-500" />
-                        <span className="text-sm font-medium text-slate-700">External Link</span>
-                      </div>
+                    <div className="flex items-center gap-3 flex-1">
+                      <LinkIcon className="w-5 h-5 text-indigo-500" />
                       <a 
                         href={block.url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-indigo-600 hover:text-indigo-700 hover:underline break-all"
+                        className="text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
                       >
-                        {block.url}
+                        {block.title || block.url}
                       </a>
                     </div>
                   );
@@ -620,7 +722,27 @@ export default function CourseDetail() {
                 }
 
                 if (block.type === 'embed_youtube') {
-                  const videoId = block.youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/)?.[1];
+                  // Enhanced YouTube URL parsing to handle more formats
+                  let videoId = null;
+                  if (block.youtube_url) {
+                    // Try different patterns
+                    const patterns = [
+                      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+                      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+                      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+                      /^([a-zA-Z0-9_-]{11})$/  // Just the ID
+                    ];
+                    
+                    for (const pattern of patterns) {
+                      const match = block.youtube_url.match(pattern);
+                      if (match) {
+                        videoId = match[1];
+                        break;
+                      }
+                    }
+                  }
+                  
                   if (!hasAccess) {
                     return (
                       <div className="flex items-center gap-3 flex-1 opacity-60">
@@ -682,14 +804,24 @@ export default function CourseDetail() {
                     )}
                     {renderBlock()}
                     {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteBlock(block.id)}
-                        className="text-slate-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditBlock(block)}
+                          className="text-slate-400 hover:text-indigo-600"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteBlock(block.id)}
+                          className="text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
