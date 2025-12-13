@@ -711,17 +711,21 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   {/* Matching List Display */}
                   {q.type === 'matching_list_dual' && (
                     <div className="space-y-4">
-                      {/* Show passage if available */}
-                      {q.passage && (
+                      {/* Show passages if available */}
+                      {q.passages?.length > 0 ? (
+                        <div className="space-y-3">
+                          {q.passages.map((passage) => (
+                            <div key={passage.id} className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
+                              {passage.title && (
+                                <div className="font-semibold text-slate-800 mb-2">{passage.title}</div>
+                              )}
+                              <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: passage.content }} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : q.passage && (
                         <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
                           <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: q.passage }} />
-                        </div>
-                      )}
-                      
-                      {/* Show right pane question */}
-                      {q.rightPaneQuestion && (
-                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
-                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.rightPaneQuestion }} />
                         </div>
                       )}
                       
