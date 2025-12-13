@@ -43,8 +43,8 @@ Deno.serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/course?id=${courseId}&payment=success`,
-      cancel_url: `${req.headers.get('origin')}/course?id=${courseId}&payment=cancelled`,
+      success_url: `${req.headers.get('origin')}/?page=CourseDetail&id=${courseId}&payment=success`,
+      cancel_url: `${req.headers.get('origin')}/?page=CourseDetail&id=${courseId}&payment=cancelled`,
       metadata: {
         courseId: courseId,
         userEmail: user.email,
