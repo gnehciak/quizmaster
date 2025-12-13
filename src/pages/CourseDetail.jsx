@@ -103,6 +103,12 @@ export default function CourseDetail() {
     select: (data) => data[0]
   });
 
+  const { data: allQuizAttempts = [] } = useQuery({
+    queryKey: ['allQuizAttempts', user?.email],
+    queryFn: () => base44.entities.QuizAttempt.filter({ user_email: user?.email }),
+    enabled: !!user?.email
+  });
+
   const hasAccess = !course?.is_locked || !!access || user?.role === 'admin';
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
   const isAdmin = user?.role === 'admin';
@@ -729,6 +735,12 @@ export default function CourseDetail() {
                   const quiz = quizzes.find(q => q.id === block.quiz_id);
                   if (!quiz) return null;
                   
+                  const attempts = allQuizAttempts.filter(a => a.quiz_id === quiz.id);
+                  const attemptsAllowed = quiz.attempts_allowed || 999;
+                  const attemptsUsed = attempts.length;
+                  const attemptsLeft = attemptsAllowed - attemptsUsed;
+                  const showAttempts = hasAccess && user?.email && !isAdmin && attemptsAllowed < 999;
+                  
                   return (
                     <div className="flex items-center gap-4 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">
@@ -738,29 +750,14 @@ export default function CourseDetail() {
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
                         <p className="text-sm text-slate-500">
                           {quiz.questions?.length || 0} questions
-                          {(() => {
-                            if (!hasAccess || !user?.email) return null;
-                            const { data: attempts = [] } = useQuery({
-                              queryKey: ['quizAttempts', quiz.id, user?.email],
-                              queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quiz.id, user_email: user?.email }),
-                            });
-                            const attemptsAllowed = quiz.attempts_allowed || 999;
-                            const attemptsUsed = attempts.length;
-                            const attemptsLeft = attemptsAllowed - attemptsUsed;
-                            const isAdminUser = user?.role === 'admin';
-                            
-                            if (isAdminUser) return null;
-                            if (attemptsAllowed >= 999) return null;
-                            
-                            return (
-                              <span className={cn(
-                                "ml-2",
-                                attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
-                              )}>
-                                • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
-                              </span>
-                            );
-                          })()}
+                          {showAttempts && (
+                            <span className={cn(
+                              "ml-2",
+                              attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
+                            )}>
+                              • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
+                            </span>
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
