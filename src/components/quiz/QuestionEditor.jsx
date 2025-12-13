@@ -380,58 +380,15 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             <div className="flex items-center justify-between mb-2">
               <Label>Comprehension Questions</Label>
             </div>
+            {question.comprehensionQuestions?.map((cq, qIdx) => (
+              <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
+...
+              </div>
+            ))}
             <Button variant="outline" onClick={addComprehensionQuestion} className="gap-2">
               <Plus className="w-4 h-4" />
               Add Question
             </Button>
-            {question.comprehensionQuestions?.map((cq, qIdx) => (
-              <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeComprehensionQuestion(qIdx)}
-                    className="text-red-500 h-8"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-                
-                <ReactQuill
-                  value={cq.question}
-                  onChange={(value) => updateComprehensionQuestion(qIdx, 'question', value)}
-                  placeholder="Enter question..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg"
-                />
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {cq.options?.map((opt, optIdx) => (
-                    <div key={optIdx} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`correct_${cq.id}`}
-                        checked={cq.correctAnswer === opt && opt !== ''}
-                        onChange={() => updateComprehensionQuestion(qIdx, 'correctAnswer', opt)}
-                        className="w-3 h-3 text-indigo-600"
-                      />
-                      <Input
-                        value={opt}
-                        onChange={(e) => {
-                          const options = [...cq.options];
-                          options[optIdx] = e.target.value;
-                          updateComprehensionQuestion(qIdx, 'options', options);
-                        }}
-                        placeholder={`Option ${optIdx + 1}`}
-                        className="text-sm h-9"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}
