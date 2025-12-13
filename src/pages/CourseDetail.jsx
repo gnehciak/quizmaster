@@ -92,18 +92,6 @@ export default function CourseDetail() {
     },
   });
 
-  // Check visibility permissions
-  const canViewCourse = React.useMemo(() => {
-    if (!course || !user) return false;
-    
-    if (user.role === 'admin') return true;
-    if (course.visibility === 'admin') return false;
-    if (course.visibility === 'private') {
-      return course.created_by === user.email || user.role === 'admin';
-    }
-    return true;
-  }, [course, user]);
-
   const { data: course, isLoading } = useQuery({
     queryKey: ['course', courseId],
     queryFn: () => base44.entities.Course.filter({ id: courseId }),
@@ -136,6 +124,18 @@ export default function CourseDetail() {
     queryFn: () => base44.entities.QuizAttempt.filter({ user_email: user?.email }),
     enabled: !!user?.email
   });
+
+  // Check visibility permissions
+  const canViewCourse = React.useMemo(() => {
+    if (!course || !user) return false;
+    
+    if (user.role === 'admin') return true;
+    if (course.visibility === 'admin') return false;
+    if (course.visibility === 'private') {
+      return course.created_by === user.email || user.role === 'admin';
+    }
+    return true;
+  }, [course, user]);
 
   const hasAccess = !course?.is_locked || !!access || user?.role === 'admin' || user?.role === 'teacher';
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
