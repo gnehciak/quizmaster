@@ -77,13 +77,19 @@ export default function TakeQuiz() {
   // Skip pre-start screen if in review mode
   React.useEffect(() => {
     if (isReviewMode && userAttempts.length > 0) {
+      // Sort attempts by date and get the most recent
+      const sortedAttempts = [...userAttempts].sort((a, b) => 
+        new Date(b.created_date) - new Date(a.created_date)
+      );
+      const latestAttempt = sortedAttempts[0];
+      
       setQuizStarted(true);
       setSubmitted(true);
       setReviewMode(true);
+      setShowResults(false);
       
-      // Load the last attempt's answers
-      const latestAttempt = userAttempts[userAttempts.length - 1];
-      if (latestAttempt && latestAttempt.answers) {
+      // Load the last attempt's answers if they exist
+      if (latestAttempt?.answers) {
         setAnswers(latestAttempt.answers);
       }
     }
