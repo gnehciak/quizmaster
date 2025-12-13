@@ -93,7 +93,14 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   // Inline Dropdown handlers
   const addBlank = () => {
     const blanks = [...(question.blanks || [])];
-    const blankId = `blank_${blanks.length + 1}`;
+    // Find the next available blank number
+    const existingNumbers = blanks.map(b => {
+      const match = b.id.match(/blank_(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const blankId = `blank_${nextNumber}`;
+    
     blanks.push({
       id: blankId,
       options: ['', '', '', ''],
@@ -724,10 +731,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
             {question.blanks && question.blanks.length > 0 && (
               <div className="space-y-3">
-                {question.blanks.map((blank, idx) => {
-                  console.log('Rendering blank:', blank);
-                  return (
-                  <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-300">
+                {question.blanks.map((blank, idx) => (
+                  <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
                         {`{{${blank.id}}}`}
@@ -745,11 +750,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
                     <div className="space-y-2">
                       <Label className="text-xs">Options (select correct answer)</Label>
-                      {console.log('Options for', blank.id, ':', blank.options)}
                       <div className="grid grid-cols-2 gap-2">
-                        {blank.options?.map((opt, optIdx) => {
-                          console.log(`Rendering option ${optIdx}:`, opt);
-                          return (
+                        {blank.options?.map((opt, optIdx) => (
                           <div key={optIdx} className="flex items-center gap-2">
                             <input
                               type="radio"
@@ -766,7 +768,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                                 updateBlank(idx, 'options', options);
                               }}
                               placeholder={`Option ${optIdx + 1}`}
-                              className="text-sm h-9 flex-1"
+                              className="text-sm h-9 flex-1 border-2"
                             />
                             {blank.options.length > 2 && (
                               <Button
@@ -783,8 +785,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                               </Button>
                             )}
                           </div>
-                          );
-                        })}
+                        ))}
                       </div>
                       <Button
                         type="button"
@@ -801,8 +802,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                       </Button>
                     </div>
                   </div>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>
