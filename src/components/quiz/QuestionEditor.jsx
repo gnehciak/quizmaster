@@ -12,8 +12,19 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse }) {
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ 'background': [] }]
+    ]
+  };
+
+  const quillFormats = ['bold', 'italic', 'underline', 'background'];
+
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
   };
@@ -208,21 +219,25 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
           <div className="space-y-2">
             <Label>Question</Label>
-            <Textarea
+            <ReactQuill
               value={question.question || ''}
-              onChange={(e) => updateField('question', e.target.value)}
+              onChange={(value) => updateField('question', value)}
               placeholder="Enter your question..."
-              className="min-h-[80px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Explanation (shown when answer is wrong)</Label>
-            <Textarea
+            <ReactQuill
               value={question.explanation || ''}
-              onChange={(e) => updateField('explanation', e.target.value)}
+              onChange={(value) => updateField('explanation', value)}
               placeholder="Explain the correct answer..."
-              className="min-h-[60px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
         </div>
@@ -250,12 +265,16 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                 onChange={() => updateField('correctAnswer', option)}
                 className="w-4 h-4 text-indigo-600"
               />
-              <Textarea
-                value={option}
-                onChange={(e) => updateOption(idx, e.target.value)}
-                placeholder={`Option ${idx + 1}`}
-                className="flex-1 min-h-[60px]"
-              />
+              <div className="flex-1">
+                <ReactQuill
+                  value={option}
+                  onChange={(value) => updateOption(idx, value)}
+                  placeholder={`Option ${idx + 1}`}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg"
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -369,10 +388,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   </Button>
                 </div>
                 
-                <Input
+                <ReactQuill
                   value={cq.question}
-                  onChange={(e) => updateComprehensionQuestion(qIdx, 'question', e.target.value)}
+                  onChange={(value) => updateComprehensionQuestion(qIdx, 'question', value)}
                   placeholder="Enter question..."
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg"
                 />
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -484,21 +506,25 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Left Pane Question (shown with passage)</Label>
-            <Textarea
+            <ReactQuill
               value={question.question || ''}
-              onChange={(e) => updateField('question', e.target.value)}
+              onChange={(value) => updateField('question', value)}
               placeholder="Enter question text for left pane..."
-              className="min-h-[60px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Right Pane Question (shown above drag & drop activity)</Label>
-            <Textarea
+            <ReactQuill
               value={question.rightPaneQuestion || ''}
-              onChange={(e) => updateField('rightPaneQuestion', e.target.value)}
+              onChange={(value) => updateField('rightPaneQuestion', value)}
               placeholder="Enter question text for right pane..."
-              className="min-h-[60px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
 
@@ -515,11 +541,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   disabled
                   className="font-medium text-sm"
                 />
-                <Textarea
+                <ReactQuill
                   value={question.passage || ''}
-                  onChange={(e) => updateField('passage', e.target.value)}
+                  onChange={(value) => updateField('passage', value)}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[150px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[150px]"
                 />
               </div>
             )}
@@ -549,15 +577,17 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <Textarea
+                <ReactQuill
                   value={passage.content || ''}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     const updated = [...question.passages];
-                    updated[idx] = { ...passage, content: e.target.value };
+                    updated[idx] = { ...passage, content: value };
                     updateField('passages', updated);
                   }}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[120px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[120px]"
                 />
               </div>
             ))}
@@ -731,21 +761,25 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Left Pane Question (shown with passage)</Label>
-            <Textarea
+            <ReactQuill
               value={question.question || ''}
-              onChange={(e) => updateField('question', e.target.value)}
+              onChange={(value) => updateField('question', value)}
               placeholder="Enter question text for left pane..."
-              className="min-h-[60px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Right Pane Question (shown above matching list)</Label>
-            <Textarea
+            <ReactQuill
               value={question.rightPaneQuestion || ''}
-              onChange={(e) => updateField('rightPaneQuestion', e.target.value)}
+              onChange={(value) => updateField('rightPaneQuestion', value)}
               placeholder="Enter question text for right pane..."
-              className="min-h-[60px]"
+              modules={quillModules}
+              formats={quillFormats}
+              className="bg-white rounded-lg"
             />
           </div>
 
@@ -778,11 +812,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   disabled
                   className="font-medium text-sm"
                 />
-                <Textarea
+                <ReactQuill
                   value={question.passage || ''}
-                  onChange={(e) => updateField('passage', e.target.value)}
+                  onChange={(value) => updateField('passage', value)}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[150px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[150px]"
                 />
               </div>
             )}
@@ -812,15 +848,17 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <Textarea
+                <ReactQuill
                   value={passage.content || ''}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     const updated = [...question.passages];
-                    updated[idx] = { ...passage, content: e.target.value };
+                    updated[idx] = { ...passage, content: value };
                     updateField('passages', updated);
                   }}
                   placeholder="Enter the reading passage..."
-                  className="min-h-[120px]"
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg min-h-[120px]"
                 />
               </div>
             ))}
@@ -868,10 +906,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   </Button>
                 </div>
                 
-                <Input
+                <ReactQuill
                   value={mq.question}
-                  onChange={(e) => updateMatchingQuestion(qIdx, 'question', e.target.value)}
+                  onChange={(value) => updateMatchingQuestion(qIdx, 'question', value)}
                   placeholder="Enter matching question..."
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-lg"
                 />
                 
                 <div className="flex items-center gap-2">

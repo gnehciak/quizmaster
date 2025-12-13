@@ -313,11 +313,13 @@ export default function CreateQuiz() {
                 <Label>Duration (minutes)</Label>
                 <div className="flex items-center gap-3">
                   <Input
-                    type="number"
-                    min="1"
-                    max="180"
+                    type="text"
                     value={quiz.timer_duration || 30}
-                    onChange={(e) => setQuiz(prev => ({ ...prev, timer_duration: parseInt(e.target.value) || 30 }))}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setQuiz(prev => ({ ...prev, timer_duration: value ? parseInt(value) : 30 }));
+                    }}
+                    placeholder="30"
                     className="w-32"
                   />
                   <span className="text-sm text-slate-500">
