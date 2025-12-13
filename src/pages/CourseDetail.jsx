@@ -728,8 +728,12 @@ export default function CourseDetail() {
                 if (block.type === 'embed_youtube') {
                   // Enhanced YouTube URL parsing to handle more formats
                   let videoId = null;
-                  if (block.youtube_url) {
-                    const url = block.youtube_url.trim();
+                  const youtubeUrlValue = block.youtube_url;
+                  
+                  if (youtubeUrlValue) {
+                    const url = youtubeUrlValue.toString().trim();
+                    
+                    console.log('Parsing YouTube URL:', url);
                     
                     // First try to extract from URL patterns
                     const urlPatterns = [
@@ -745,6 +749,7 @@ export default function CourseDetail() {
                       const match = url.match(pattern);
                       if (match && match[1]) {
                         videoId = match[1].split('&')[0].split('?')[0];
+                        console.log('Video ID extracted:', videoId);
                         break;
                       }
                     }
@@ -752,7 +757,14 @@ export default function CourseDetail() {
                     // If no match found, assume it's just the video ID
                     if (!videoId && /^[a-zA-Z0-9_-]{10,12}$/.test(url)) {
                       videoId = url;
+                      console.log('Using as direct video ID:', videoId);
                     }
+                    
+                    if (!videoId) {
+                      console.log('No video ID found for:', url);
+                    }
+                  } else {
+                    console.log('No youtube_url in block:', block);
                   }
                   
                   if (!hasAccess) {
