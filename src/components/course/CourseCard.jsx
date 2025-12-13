@@ -5,8 +5,9 @@ import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Lock, ChevronRight, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { base44 } from '@/api/base44Client';
 
-export default function CourseCard({ course, index, hasAccess }) {
+export default function CourseCard({ course, index, hasAccess, user }) {
 
   return (
     <motion.div
@@ -56,15 +57,25 @@ export default function CourseCard({ course, index, hasAccess }) {
             </span>
           )}
           
-          <Link 
-            to={createPageUrl(`CourseDetail?id=${course.id}`)}
-            className="ml-auto"
-          >
-            <Button className="gap-2">
+          {user ? (
+            <Link 
+              to={createPageUrl(`CourseDetail?id=${course.id}`)}
+              className="ml-auto"
+            >
+              <Button className="gap-2">
+                {hasAccess ? 'View Course' : 'Unlock'}
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
+              className="gap-2 ml-auto"
+            >
               {hasAccess ? 'View Course' : 'Unlock'}
               <ChevronRight className="w-4 h-4" />
             </Button>
-          </Link>
+          )}
         </div>
       </div>
     </motion.div>
