@@ -38,7 +38,7 @@ export default function ReviewAnswers() {
     select: (data) => data[0]
   });
 
-  // Flatten questions
+  // Flatten questions - always call useMemo
   const flattenedQuestions = React.useMemo(() => {
     if (!quiz?.questions) return [];
     
@@ -60,12 +60,12 @@ export default function ReviewAnswers() {
     });
     
     return flattened;
-  }, [quiz?.questions]);
+  }, [quiz]);
 
   const questions = flattenedQuestions;
   const answers = attempt?.answers || {};
 
-  // Load saved AI data on mount
+  // Load saved AI data on mount - always call useEffect
   React.useEffect(() => {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
@@ -75,10 +75,10 @@ export default function ReviewAnswers() {
     }
   }, [attempt]);
 
-  // Save AI explanations before leaving page
+  // Save AI explanations before leaving page - always call useEffect
   React.useEffect(() => {
     return () => {
-      if (Object.keys(aiExplanations).length > 0) {
+      if (Object.keys(aiExplanations).length > 0 && attemptId) {
         base44.entities.QuizAttempt.update(attemptId, {
           ai_explanations: aiExplanations
         }).catch(e => console.error('Failed to save explanations on unmount:', e));
