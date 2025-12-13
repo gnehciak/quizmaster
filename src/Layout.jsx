@@ -9,9 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger } from
-"@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, BarChart3 } from 'lucide-react';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User, LogOut, Settings, BarChart3, Users } from 'lucide-react';
 
 export default function Layout({ children, currentPageName }) {
   const { data: user } = useQuery({
@@ -36,15 +36,15 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      {currentPageName !== 'TakeQuiz' &&
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      {currentPageName !== 'TakeQuiz' && (
+        <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-between h-16">
               <Link to={createPageUrl('Home')} className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                   Q
                 </div>
-                <span className="text-xl font-bold text-slate-800">Online Learning Portal</span>
+                <span className="text-xl font-bold text-slate-800">QuizMaster</span>
               </Link>
 
               <div className="flex items-center gap-4">
@@ -54,22 +54,30 @@ export default function Layout({ children, currentPageName }) {
                   </Button>
                 </Link>
 
-                {user ?
-              <>
+                {user ? (
+                  <>
                     <Link to={createPageUrl('Profile')}>
                       <Button variant="ghost" size="sm">
                         My Progress
                       </Button>
                     </Link>
 
-                    {user.role === 'admin' &&
-                <Link to={createPageUrl('AdminDashboard')}>
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <Settings className="w-4 h-4" />
-                          Admin
-                        </Button>
-                      </Link>
-                }
+                    {user.role === 'admin' && (
+                      <>
+                        <Link to={createPageUrl('AdminDashboard')}>
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <Settings className="w-4 h-4" />
+                            Admin
+                          </Button>
+                        </Link>
+                        <Link to={createPageUrl('UserManagement')}>
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <User className="w-4 h-4" />
+                            Users
+                          </Button>
+                        </Link>
+                      </>
+                    )}
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -91,14 +99,14 @@ export default function Layout({ children, currentPageName }) {
                             Profile
                           </Link>
                         </DropdownMenuItem>
-                        {user.role === 'admin' &&
-                    <DropdownMenuItem asChild>
+                        {user.role === 'admin' && (
+                          <DropdownMenuItem asChild>
                             <Link to={createPageUrl('AdminDashboard')} className="cursor-pointer">
                               <BarChart3 className="w-4 h-4 mr-2" />
                               Admin Dashboard
                             </Link>
                           </DropdownMenuItem>
-                    }
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                           <LogOut className="w-4 h-4 mr-2" />
@@ -106,22 +114,22 @@ export default function Layout({ children, currentPageName }) {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </> :
-
-              <Button onClick={handleLogin} size="sm">
+                  </>
+                ) : (
+                  <Button onClick={handleLogin} size="sm">
                     Sign In
                   </Button>
-              }
+                )}
               </div>
             </div>
           </div>
         </nav>
-      }
+      )}
 
       {/* Main Content */}
       <main className="flex-1">
         {children}
       </main>
-    </div>);
-
+    </div>
+  );
 }
