@@ -229,17 +229,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Explanation (shown when answer is wrong)</Label>
-            <ReactQuill
-              value={question.explanation || ''}
-              onChange={(value) => updateField('explanation', value)}
-              placeholder="Explain the correct answer..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
-            />
-          </div>
+
         </div>
 
         <Button
@@ -457,17 +447,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                   </Button>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label className="text-xs">Explanation (optional)</Label>
-                  <ReactQuill
-                    value={cq.explanation || ''}
-                    onChange={(value) => updateComprehensionQuestion(qIdx, 'explanation', value)}
-                    placeholder="Explain the correct answer..."
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white rounded-lg"
-                  />
-                </div>
+
               </div>
             ))}
             <Button variant="outline" onClick={addComprehensionQuestion} className="gap-2">
@@ -730,13 +710,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Blank Options</Label>
-            </div>
-            <Button type="button" variant="outline" onClick={addBlank} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Blank
-            </Button>
+            <Label>Blank Options</Label>
             {question.blanks?.map((blank, idx) => (
               <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -802,9 +776,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
                     Add Option
                   </Button>
                 </div>
-              </div>
-            ))}
-          </div>
+                </div>
+                ))}
+                <Button type="button" variant="outline" onClick={addBlank} className="gap-2 w-full">
+                <Plus className="w-4 h-4" />
+                Add Blank
+                </Button>
+                </div>
         </div>
       )}
 
