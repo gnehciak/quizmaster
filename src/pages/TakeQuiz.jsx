@@ -253,14 +253,14 @@ export default function TakeQuiz() {
             }
           }
 
-          const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Keep it concise (2-3 sentences).
-      ${passageContext ? 'When applicable, quote the specific sentence from the passage that contains the answer.' : ''}
+          const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+          ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
 
-      Question: ${questionText?.replace(/<[^>]*>/g, '')}
-      Student's Answer: ${JSON.stringify(answer)}
-      Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
+          Question: ${questionText?.replace(/<[^>]*>/g, '')}
+          Student's Answer: ${JSON.stringify(answer)}
+          Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
 
-      Provide a helpful first-person explanation:`;
+          Provide a helpful first-person explanation:`;
 
           const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
