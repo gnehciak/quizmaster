@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2,
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 import MultipleChoiceQuestion from '@/components/quiz/MultipleChoiceQuestion';
 import ReadingComprehensionQuestion from '@/components/quiz/ReadingComprehensionQuestion';
@@ -240,7 +241,7 @@ export default function TakeQuiz() {
         try {
           const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
           let passageContext = '';
-          
+
           // Include passage text for reading-based questions
           if (q.passage || q.passages?.length > 0) {
             if (q.passages?.length > 0) {
@@ -251,23 +252,25 @@ export default function TakeQuiz() {
               passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
             }
           }
-          
+
           const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Keep it concise (2-3 sentences).
-${passageContext ? 'When applicable, quote the specific sentence from the passage that contains the answer.' : ''}
+      ${passageContext ? 'When applicable, quote the specific sentence from the passage that contains the answer.' : ''}
 
-Question: ${questionText?.replace(/<[^>]*>/g, '')}
-Student's Answer: ${JSON.stringify(answer)}
-Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
+      Question: ${questionText?.replace(/<[^>]*>/g, '')}
+      Student's Answer: ${JSON.stringify(answer)}
+      Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
 
-Provide a helpful first-person explanation:`;
+      Provide a helpful first-person explanation:`;
 
-          const result = await base44.integrations.Core.InvokeLLM({
-            prompt: prompt
-          });
-          
-          explanations[idx] = result;
+          const genAI = new GoogleGenerativeAI('AIzaSyAwbHNQirjMxfFY8g1KVKoEJJwaf74h0uo');
+          const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text();
+
+          explanations[idx] = text;
           // Update immediately for this question
-          setAiExplanations(prev => ({...prev, [idx]: result}));
+          setAiExplanations(prev => ({...prev, [idx]: text}));
         } catch (e) {
           explanations[idx] = "Unable to generate explanation at this time.";
           setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
