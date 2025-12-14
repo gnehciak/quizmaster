@@ -144,7 +144,9 @@ export default function CourseDetail() {
 
   // Handle payment status from URL
   React.useEffect(() => {
-    const paymentStatus = urlParams.get('payment');
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    
     if (paymentStatus === 'success') {
       setPurchaseSuccessOpen(true);
       queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
@@ -157,7 +159,7 @@ export default function CourseDetail() {
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname + '?id=' + courseId);
     }
-  }, [courseId, queryClient]);
+  }, []);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
