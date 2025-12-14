@@ -124,13 +124,17 @@ ${aiInput}`;
         comprehensionQuestions: questions
       });
       
-      toast.success('Question auto-filled successfully!');
-      setAiInput('');
-      setShowAiInput(false);
+      // Defer UI state updates to prevent interfering with data update
+      requestAnimationFrame(() => {
+        toast.success('Question auto-filled successfully!');
+        setAiInput('');
+        setShowAiInput(false);
+        setAiLoading(false);
+      });
     } catch (error) {
       toast.error('Failed to parse question: ' + error.message);
+      setAiLoading(false);
     }
-    setAiLoading(false);
   };
 
   // Drop Zone handlers
