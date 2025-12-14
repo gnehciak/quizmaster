@@ -6,6 +6,13 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, Grid3x3, List, ListTree, Upload, Download, Info } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import CategoryFilter from '@/components/quiz/CategoryFilter';
@@ -31,6 +38,7 @@ export default function ManageQuizzes() {
   const [formatGuideOpen, setFormatGuideOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importQuizName, setImportQuizName] = useState('');
+  const [importCategoryId, setImportCategoryId] = useState('');
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -63,6 +71,7 @@ export default function ManageQuizzes() {
       setImportDialogOpen(false);
       setImportFile(null);
       setImportQuizName('');
+      setImportCategoryId('');
     },
     onError: (error) => {
       toast.error('Failed to import quiz: ' + error.message);
@@ -165,6 +174,13 @@ export default function ManageQuizzes() {
 
       // Use the new name provided by user
       quizData.title = importQuizName.trim();
+      
+      // Set category if selected
+      if (importCategoryId) {
+        const selectedCat = categories.find(c => c.id === importCategoryId);
+        quizData.category_id = importCategoryId;
+        quizData.category = selectedCat?.name || '';
+      }
 
       // Create the quiz
       createMutation.mutate(quizData);
@@ -401,15 +417,36 @@ export default function ManageQuizzes() {
                     </div>
                     
                     {importFile && (
-                      <div className="space-y-2">
-                        <Label htmlFor="quiz-name">Quiz Name</Label>
-                        <Input
-                          id="quiz-name"
-                          value={importQuizName}
-                          onChange={(e) => setImportQuizName(e.target.value)}
-                          placeholder="Enter a name for the imported quiz"
-                          className="w-full"
-                        />
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="quiz-name">Quiz Name</Label>
+                          <Input
+                            id="quiz-name"
+                            value={importQuizName}
+                            onChange={(e) => setImportQuizName(e.target.value)}
+                            placeholder="Enter a name for the imported quiz"
+                            className="w-full"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="quiz-category">Category (Optional)</Label>
+                          <Select
+                            value={importCategoryId}
+                            onValueChange={setImportCategoryId}
+                          >
+                            <SelectTrigger id="quiz-category">
+                              <SelectValue placeholder="Select a category..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     )}
                     
@@ -420,6 +457,7 @@ export default function ManageQuizzes() {
                           setImportDialogOpen(false);
                           setImportFile(null);
                           setImportQuizName('');
+                          setImportCategoryId('');
                         }}
                       >
                         Cancel
