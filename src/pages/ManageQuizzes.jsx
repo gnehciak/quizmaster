@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function ManageQuizzes() {
   const [searchTerm, setSearchTerm] = useState('');
