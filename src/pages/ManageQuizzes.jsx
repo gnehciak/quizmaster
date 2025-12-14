@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
 
 export default function ManageQuizzes() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,6 +30,7 @@ export default function ManageQuizzes() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [formatGuideOpen, setFormatGuideOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
+  const [importQuizName, setImportQuizName] = useState('');
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -60,6 +62,7 @@ export default function ManageQuizzes() {
       toast.success('Quiz imported successfully!');
       setImportDialogOpen(false);
       setImportFile(null);
+      setImportQuizName('');
     },
     onError: (error) => {
       toast.error('Failed to import quiz: ' + error.message);
@@ -219,17 +222,22 @@ export default function ManageQuizzes() {
       return;
     }
 
+    if (!importQuizName.trim()) {
+      toast.error('Please enter a name for the imported quiz');
+      return;
+    }
+
     try {
       const text = await importFile.text();
       const quizData = JSON.parse(text);
 
       // Validate required fields
-      if (!quizData.title) {
-        throw new Error('Quiz must have a title');
-      }
       if (!Array.isArray(quizData.questions)) {
         throw new Error('Quiz must have a questions array');
       }
+
+      // Use the new name provided by user
+      quizData.title = importQuizName.trim();
 
       // Create the quiz
       createMutation.mutate(quizData);
@@ -238,20 +246,40 @@ export default function ManageQuizzes() {
     }
   };
 
-  const handleFileDrop = (e) => {
+  const handleFileDrop = async (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type === 'application/json') {
       setImportFile(file);
+      // Try to extract the original quiz name from the file
+      try {
+        const text = await file.text();
+        const quizData = JSON.parse(text);
+        if (quizData.title) {
+          setImportQuizName(quizData.title + ' (Imported)');
+        }
+      } catch (error) {
+        // If parsing fails, just leave the name empty
+      }
     } else {
       toast.error('Please drop a valid JSON file');
     }
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setImportFile(file);
+      // Try to extract the original quiz name from the file
+      try {
+        const text = await file.text();
+        const quizData = JSON.parse(text);
+        if (quizData.title) {
+          setImportQuizName(quizData.title + ' (Imported)');
+        }
+      } catch (error) {
+        // If parsing fails, just leave the name empty
+      }
     }
   };
 
@@ -445,19 +473,33 @@ export default function ManageQuizzes() {
                       )}
                     </div>
                     
+                    {importFile && (
+                      <div className="space-y-2">
+                        <Label htmlFor="quiz-name">Quiz Name</Label>
+                        <Input
+                          id="quiz-name"
+                          value={importQuizName}
+                          onChange={(e) => setImportQuizName(e.target.value)}
+                          placeholder="Enter a name for the imported quiz"
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+                    
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="outline"
                         onClick={() => {
                           setImportDialogOpen(false);
                           setImportFile(null);
+                          setImportQuizName('');
                         }}
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleImportFile}
-                        disabled={!importFile || createMutation.isPending}
+                        disabled={!importFile || !importQuizName.trim() || createMutation.isPending}
                         className="bg-indigo-600 hover:bg-indigo-700"
                       >
                         {createMutation.isPending ? 'Importing...' : 'Import Quiz'}
