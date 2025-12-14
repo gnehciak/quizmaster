@@ -482,7 +482,8 @@ export default function ManageQuizzes() {
             quiz={quiz}
             index={idx}
             onDelete={handleDelete}
-            onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)} />
+            onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)}
+            onExport={handleExportQuiz} />
 
           )}
           </div> :

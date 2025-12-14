@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 
-export default function QuizCard({ quiz, onDelete, onEdit, index }) {
+export default function QuizCard({ quiz, onDelete, onEdit, onExport, index }) {
   const questionCount = quiz.questions?.length || 0;
   
   const getQuestionTypes = () => {
@@ -114,6 +114,16 @@ export default function QuizCard({ quiz, onDelete, onEdit, index }) {
               Start Quiz
             </Button>
           </Link>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => onExport?.(quiz)}
+            className="hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600"
+            title="Export Quiz"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
           
           <Button 
             variant="outline" 
