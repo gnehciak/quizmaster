@@ -436,27 +436,48 @@ ${aiInput}`;
             {question.comprehensionQuestions?.map((cq, qIdx) => (
               <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAiInput(showAiInput === qIdx ? false : qIdx)}
-                      className="gap-2 h-8"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      AI Parse
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeComprehensionQuestion(qIdx)}
-                      className="text-red-500 h-8"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
+                <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const questions = [...(question.comprehensionQuestions || [])];
+                      questions[qIdx] = {
+                        ...questions[qIdx],
+                        question: 'Sample test question?',
+                        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                        correctAnswer: 'Option B'
+                      };
+                      onChange({
+                        ...question,
+                        comprehensionQuestions: questions
+                      });
+                    }}
+                    className="gap-2 h-8"
+                  >
+                    Test
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAiInput(showAiInput === qIdx ? false : qIdx)}
+                    className="gap-2 h-8"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    AI Parse
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeComprehensionQuestion(qIdx)}
+                    className="text-red-500 h-8"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
                 </div>
 
                 {showAiInput === qIdx && (
