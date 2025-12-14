@@ -70,12 +70,110 @@ export default function CreateQuiz() {
     }
   }, [existingQuiz]);
 
+  const cleanQuestionData = (question) => {
+    const base = { id: question.id, type: question.type };
+    
+    switch (question.type) {
+      case 'multiple_choice':
+        return {
+          ...base,
+          question: question.question,
+          options: question.options,
+          correctAnswer: question.correctAnswer,
+          ...(question.explanation && { explanation: question.explanation })
+        };
+        
+      case 'reading_comprehension':
+        return {
+          ...base,
+          ...(question.passage && { passage: question.passage }),
+          ...(question.passages && { passages: question.passages }),
+          comprehensionQuestions: question.comprehensionQuestions?.map(cq => ({
+            id: cq.id,
+            question: cq.question,
+            options: cq.options,
+            correctAnswer: cq.correctAnswer,
+            ...(cq.explanation && { explanation: cq.explanation })
+          }))
+        };
+        
+      case 'drag_drop_single':
+        return {
+          ...base,
+          ...(question.question && { question: question.question }),
+          ...(question.passage && { passage: question.passage }),
+          options: question.options,
+          dropZones: question.dropZones?.map(z => ({
+            id: z.id,
+            label: z.label,
+            correctAnswer: z.correctAnswer
+          }))
+        };
+        
+      case 'drag_drop_dual':
+        return {
+          ...base,
+          ...(question.passage && { passage: question.passage }),
+          ...(question.rightPaneQuestion && { rightPaneQuestion: question.rightPaneQuestion }),
+          options: question.options,
+          dropZones: question.dropZones?.map(z => ({
+            id: z.id,
+            label: z.label,
+            correctAnswer: z.correctAnswer
+          }))
+        };
+        
+      case 'inline_dropdown_separate':
+        return {
+          ...base,
+          ...(question.question && { question: question.question }),
+          textWithBlanks: question.textWithBlanks,
+          blanks: question.blanks?.map(b => ({
+            id: b.id,
+            options: b.options,
+            correctAnswer: b.correctAnswer
+          }))
+        };
+        
+      case 'inline_dropdown_same':
+        return {
+          ...base,
+          textWithBlanks: question.textWithBlanks,
+          options: question.options,
+          blanks: question.blanks?.map(b => ({
+            id: b.id,
+            correctAnswer: b.correctAnswer
+          }))
+        };
+        
+      case 'matching_list_dual':
+        return {
+          ...base,
+          ...(question.passage && { passage: question.passage }),
+          ...(question.passages && { passages: question.passages }),
+          matchingQuestions: question.matchingQuestions?.map(mq => ({
+            id: mq.id,
+            question: mq.question,
+            correctAnswer: mq.correctAnswer
+          }))
+        };
+        
+      default:
+        return question;
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      const cleanedData = {
+        ...data,
+        questions: data.questions?.map(q => cleanQuestionData(q))
+      };
+      
       if (quizId) {
-        return base44.entities.Quiz.update(quizId, data);
+        return base44.entities.Quiz.update(quizId, cleanedData);
       }
-      return base44.entities.Quiz.create(data);
+      return base44.entities.Quiz.create(cleanedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
