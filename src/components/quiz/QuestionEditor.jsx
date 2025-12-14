@@ -434,7 +434,7 @@ ${aiInput}`;
               <Label>Comprehension Questions</Label>
             </div>
             {question.comprehensionQuestions?.map((cq, qIdx) => (
-              <div key={`${cq.id}-${cq.question}-${cq.options?.join(',')}`} className="bg-slate-50 rounded-xl p-4 space-y-3">
+              <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
                 <div className="flex items-center gap-2">
