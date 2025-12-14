@@ -436,8 +436,20 @@ export default function ManageQuizzes() {
                         </div>
                       )}
                     </div>
+
+                    <div className="text-center text-sm text-slate-500">or</div>
+
+                    <div className="space-y-2">
+                      <Label>Paste JSON</Label>
+                      <Textarea
+                        value={pastedJson}
+                        onChange={(e) => handlePasteJson(e.target.value)}
+                        placeholder='Paste quiz JSON here...'
+                        className="min-h-[120px] font-mono text-xs"
+                      />
+                    </div>
                     
-                    {importFile && (
+                    {(importFile || pastedJson) && (
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="quiz-name">Quiz Name</Label>
