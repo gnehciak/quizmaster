@@ -12,6 +12,8 @@ export default function CategoryFilter({ selectedCategory, onCategoryChange, qui
     queryFn: () => base44.entities.QuizCategory.list(),
   });
 
+  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
@@ -47,7 +49,7 @@ export default function CategoryFilter({ selectedCategory, onCategoryChange, qui
         </motion.button>
 
         {/* Individual category buttons */}
-        {categories.map((category) => {
+        {sortedCategories.map((category) => {
           const count = quizCounts[category.id] || 0;
           const isSelected = selectedCategory === category.id;
 
