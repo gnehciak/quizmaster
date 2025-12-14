@@ -149,7 +149,7 @@ ${aiInput}`;
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-      const prompt = `Parse the following text into multiple matching questions with their correct answers. Extract each question and its corresponding correct answer.
+      const prompt = `Parse the following text into multiple matching questions with their correct answers. Extract each question and its corresponding correct answer. Keep the original sentences without rephrasing. Individual letters correspond to the correct answer for that line.
 
 Return ONLY a JSON object with this exact structure:
 {
