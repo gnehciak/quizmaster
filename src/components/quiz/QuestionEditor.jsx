@@ -137,7 +137,7 @@ ${aiInput}`;
     }
   };
 
-  const handleMatchingAiParse = async (qIdx) => {
+  const handleMatchingBulkAiParse = async () => {
     if (!aiInput.trim()) {
       toast.error('Please enter text to parse');
       return;
@@ -149,12 +149,20 @@ ${aiInput}`;
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-      const prompt = `Parse the following text into a matching question with its correct answer. Extract the question text and identify which option from the dropdown list is the correct match.
+      const prompt = `Parse the following text into multiple matching questions with their correct answers. Extract each question and its corresponding correct answer.
 
 Return ONLY a JSON object with this exact structure:
 {
-  "question": "the question text",
-  "correctAnswer": "the correct answer text"
+  "questions": [
+    {
+      "question": "question text 1",
+      "correctAnswer": "correct answer 1"
+    },
+    {
+      "question": "question text 2",
+      "correctAnswer": "correct answer 2"
+    }
+  ]
 }
 
 Text to parse:
@@ -171,26 +179,25 @@ ${aiInput}`;
       
       const parsed = JSON.parse(jsonMatch[0]);
       
-      const questions = [...(question.matchingQuestions || [])];
-      questions[qIdx] = {
-        ...questions[qIdx],
-        question: parsed.question,
-        correctAnswer: parsed.correctAnswer
-      };
+      const newQuestions = parsed.questions.map(q => ({
+        id: `mq_${Date.now()}_${Math.random()}`,
+        question: q.question,
+        correctAnswer: q.correctAnswer
+      }));
       
       onChange({
         ...question,
-        matchingQuestions: questions
+        matchingQuestions: newQuestions
       });
       
       requestAnimationFrame(() => {
-        toast.success('Question auto-filled successfully!');
+        toast.success(`${newQuestions.length} questions auto-filled successfully!`);
         setAiInput('');
         setShowAiInput(false);
         setAiLoading(false);
       });
     } catch (error) {
-      toast.error('Failed to parse question: ' + error.message);
+      toast.error('Failed to parse questions: ' + error.message);
       setAiLoading(false);
     }
   };
@@ -1224,102 +1231,94 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-4">
-            <Label>Matching Questions</Label>
-            {question.matchingQuestions?.map((mq, qIdx) => (
-              <div key={mq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAiInput(showAiInput === `matching_${qIdx}` ? false : `matching_${qIdx}`)}
-                      className="gap-2 h-8"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      AI Parse
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeMatchingQuestion(qIdx)}
-                      className="text-red-500 h-8"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Matching Questions</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAiInput(showAiInput === 'matching_bulk' ? false : 'matching_bulk')}
+                className="gap-2 h-8"
+              >
+                <Sparkles className="w-3 h-3" />
+                AI Parse All
+              </Button>
+            </div>
 
-                {showAiInput === `matching_${qIdx}` && (
-                  <div className="space-y-2 p-3 bg-white rounded-lg border-2 border-indigo-200">
-                    <Label className="text-xs text-indigo-700 font-semibold">AI Parse Input</Label>
-                    <Textarea
-                      value={aiInput}
-                      onChange={(e) => setAiInput(e.target.value)}
-                      placeholder="Paste or type: Question text? Answer: correct answer"
-                      className="min-h-[100px] text-sm"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleMatchingAiParse(qIdx)}
-                        disabled={aiLoading}
-                        className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        {aiLoading ? (
-                          <>
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            Parsing...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-3 h-3" />
-                            Auto-fill
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setShowAiInput(false);
-                          setAiInput('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                <ReactQuill
-                  value={mq.question}
-                  onChange={(value) => updateMatchingQuestion(qIdx, 'question', value)}
-                  placeholder="Enter matching question..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg"
+            {showAiInput === 'matching_bulk' && (
+              <div className="space-y-2 p-3 bg-white rounded-lg border-2 border-indigo-200 mb-3">
+                <Label className="text-xs text-indigo-700 font-semibold">AI Parse Input</Label>
+                <Textarea
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="Paste multiple questions with answers, e.g.: Q1. Question? Answer: A Q2. Question? Answer: B"
+                  className="min-h-[120px] text-sm"
                 />
-                
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs text-slate-600">Correct Answer:</Label>
-                  <Select
-                    value={mq.correctAnswer || ''}
-                    onValueChange={(value) => updateMatchingQuestion(qIdx, 'correctAnswer', value)}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleMatchingBulkAiParse()}
+                    disabled={aiLoading}
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700"
                   >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select correct answer..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {question.options?.filter(o => o).map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Parsing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        Auto-fill All
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAiInput(false);
+                      setAiInput('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
+              </div>
+            )}
+
+            {question.matchingQuestions?.map((mq, qIdx) => (
+              <div key={mq.id} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+                <span className="text-xs font-medium text-slate-500 w-16">Q{qIdx + 1}</span>
+                <Input
+                  value={mq.question}
+                  onChange={(e) => updateMatchingQuestion(qIdx, 'question', e.target.value)}
+                  placeholder="Enter matching question..."
+                  className="flex-1 h-9"
+                />
+                <Select
+                  value={mq.correctAnswer || ''}
+                  onValueChange={(value) => updateMatchingQuestion(qIdx, 'correctAnswer', value)}
+                >
+                  <SelectTrigger className="w-40 h-9">
+                    <SelectValue placeholder="Answer..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {question.options?.filter(o => o).map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeMatchingQuestion(qIdx)}
+                  className="text-slate-400 hover:text-red-500 h-9 w-9"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
               </div>
             ))}
             <Button variant="outline" onClick={addMatchingQuestion} className="gap-2">
