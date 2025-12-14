@@ -109,18 +109,16 @@ ${aiInput}`;
       
       const parsed = JSON.parse(jsonMatch[0]);
       
-      // Update the comprehension question using the existing update function
-      const currentQuestion = question.comprehensionQuestions[qIdx];
-      const updatedQuestion = {
-        ...currentQuestion,
-        question: parsed.question,
-        options: parsed.options,
-        correctAnswer: parsed.correctAnswer
-      };
+      // Update fields one at a time to ensure state updates properly
+      updateComprehensionQuestion(qIdx, 'question', parsed.question);
       
-      const updatedQuestions = [...question.comprehensionQuestions];
-      updatedQuestions[qIdx] = updatedQuestion;
-      onChange({ ...question, comprehensionQuestions: updatedQuestions });
+      // Use setTimeout to ensure sequential updates
+      setTimeout(() => {
+        updateComprehensionQuestion(qIdx, 'options', parsed.options);
+        setTimeout(() => {
+          updateComprehensionQuestion(qIdx, 'correctAnswer', parsed.correctAnswer);
+        }, 50);
+      }, 50);
       
       toast.success('Question auto-filled successfully!');
       setAiInput('');
