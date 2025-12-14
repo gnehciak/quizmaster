@@ -74,12 +74,6 @@ export default function ManageQuizzes() {
     queryFn: () => base44.entities.QuizCategory.list()
   });
 
-  // Create category map for lookups
-  const categoryMap = categories.reduce((acc, cat) => {
-    acc[cat.id] = cat;
-    return acc;
-  }, {});
-
   // Filter by search and category
   const filteredQuizzes = quizzes.filter((quiz) => {
     const matchesSearch = quiz.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
