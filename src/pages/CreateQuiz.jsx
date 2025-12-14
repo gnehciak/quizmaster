@@ -39,6 +39,7 @@ export default function CreateQuiz() {
   const [quiz, setQuiz] = useState({
     title: '',
     description: '',
+    category_id: '',
     category: 'general_knowledge',
     status: 'draft',
     timer_enabled: false,
@@ -254,15 +255,22 @@ export default function CreateQuiz() {
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={quiz.category || ''}
-                onValueChange={(value) => setQuiz(prev => ({ ...prev, category: value }))}
+                value={quiz.category_id || ''}
+                onValueChange={(value) => {
+                  const selectedCat = categories.find(c => c.id === value);
+                  setQuiz(prev => ({ 
+                    ...prev, 
+                    category_id: value,
+                    category: selectedCat?.name || ''
+                  }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

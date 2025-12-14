@@ -69,11 +69,24 @@ export default function ManageQuizzes() {
     }
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ['quizCategories'],
+    queryFn: () => base44.entities.QuizCategory.list()
+  });
+
+  // Create category map for lookups
+  const categoryMap = categories.reduce((acc, cat) => {
+    acc[cat.id] = cat;
+    return acc;
+  }, {});
+
   // Filter by search and category
   const filteredQuizzes = quizzes.filter((quiz) => {
     const matchesSearch = quiz.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || quiz.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || 
+      quiz.category_id === selectedCategory || 
+      (!quiz.category_id && quiz.category === selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
@@ -99,8 +112,10 @@ export default function ManageQuizzes() {
 
   // Calculate quiz counts by category
   const quizCounts = quizzes.reduce((acc, quiz) => {
-    const category = quiz.category || 'Uncategorized';
-    acc[category] = (acc[category] || 0) + 1;
+    const categoryId = quiz.category_id || quiz.category;
+    if (categoryId) {
+      acc[categoryId] = (acc[categoryId] || 0) + 1;
+    }
     return acc;
   }, {});
 
