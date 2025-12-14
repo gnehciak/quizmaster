@@ -10,12 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse }) {
+  const [aiInput, setAiInput] = React.useState('');
+  const [aiLoading, setAiLoading] = React.useState(false);
+  const [showAiInput, setShowAiInput] = React.useState(false);
   const quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
@@ -66,6 +71,42 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const removeComprehensionQuestion = (index) => {
     const questions = question.comprehensionQuestions.filter((_, i) => i !== index);
     updateField('comprehensionQuestions', questions);
+  };
+
+  const handleAiParse = async (qIdx) => {
+    if (!aiInput.trim()) {
+      toast.error('Please enter text to parse');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Parse the following text into a quiz question with options and correct answer. Return a JSON object with the structure: {"question": "the question text", "options": ["option1", "option2", "option3", "option4"], "correctAnswer": "the correct option"}. Here's the text to parse:\n\n${aiInput}`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            options: { type: "array", items: { type: "string" } },
+            correctAnswer: { type: "string" }
+          }
+        }
+      });
+
+      const parsed = response;
+      
+      // Update the comprehension question
+      updateComprehensionQuestion(qIdx, 'question', parsed.question);
+      updateComprehensionQuestion(qIdx, 'options', parsed.options);
+      updateComprehensionQuestion(qIdx, 'correctAnswer', parsed.correctAnswer);
+      
+      toast.success('Question auto-filled successfully!');
+      setAiInput('');
+      setShowAiInput(false);
+    } catch (error) {
+      toast.error('Failed to parse question: ' + error.message);
+    }
+    setAiLoading(false);
   };
 
   // Drop Zone handlers
@@ -368,15 +409,71 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
               <div key={cq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeComprehensionQuestion(qIdx)}
-                    className="text-red-500 h-8"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAiInput(showAiInput === qIdx ? false : qIdx)}
+                      className="gap-2 h-8"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      AI Parse
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeComprehensionQuestion(qIdx)}
+                      className="text-red-500 h-8"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
+
+                {showAiInput === qIdx && (
+                  <div className="space-y-2 p-3 bg-white rounded-lg border-2 border-indigo-200">
+                    <Label className="text-xs text-indigo-700 font-semibold">AI Parse Input</Label>
+                    <Textarea
+                      value={aiInput}
+                      onChange={(e) => setAiInput(e.target.value)}
+                      placeholder="Paste or type: Question text? A) Option 1 B) Option 2 C) Option 3 D) Option 4. Answer: B"
+                      className="min-h-[100px] text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleAiParse(qIdx)}
+                        disabled={aiLoading}
+                        className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        {aiLoading ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Parsing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3" />
+                            Auto-fill
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowAiInput(false);
+                          setAiInput('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label className="text-xs">Question</Label>
