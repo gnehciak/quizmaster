@@ -83,7 +83,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       const prompt = `Parse the following unformatted text into a quiz question with options and correct answer. The text may contain the question, multiple choice options (A, B, C, D or 1, 2, 3, 4 or just listed), and the correct answer. Extract and separate these parts intelligently.
 
@@ -133,6 +133,114 @@ ${aiInput}`;
       });
     } catch (error) {
       toast.error('Failed to parse question: ' + error.message);
+      setAiLoading(false);
+    }
+  };
+
+  const handleMatchingAiParse = async (qIdx) => {
+    if (!aiInput.trim()) {
+      toast.error('Please enter text to parse');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+
+      const prompt = `Parse the following text into a matching question with its correct answer. Extract the question text and identify which option from the dropdown list is the correct match.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "question": "the question text",
+  "correctAnswer": "the correct answer text"
+}
+
+Text to parse:
+${aiInput}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse response');
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      const questions = [...(question.matchingQuestions || [])];
+      questions[qIdx] = {
+        ...questions[qIdx],
+        question: parsed.question,
+        correctAnswer: parsed.correctAnswer
+      };
+      
+      onChange({
+        ...question,
+        matchingQuestions: questions
+      });
+      
+      requestAnimationFrame(() => {
+        toast.success('Question auto-filled successfully!');
+        setAiInput('');
+        setShowAiInput(false);
+        setAiLoading(false);
+      });
+    } catch (error) {
+      toast.error('Failed to parse question: ' + error.message);
+      setAiLoading(false);
+    }
+  };
+
+  const handleDragDropAiParse = async () => {
+    if (!aiInput.trim()) {
+      toast.error('Please enter text to parse');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+
+      const prompt = `Parse the following text to extract a list of draggable items/options for a drag and drop question. Extract all the items that should be draggable.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "options": ["item1", "item2", "item3", "item4"]
+}
+
+Text to parse:
+${aiInput}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse response');
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      onChange({
+        ...question,
+        options: parsed.options
+      });
+      
+      requestAnimationFrame(() => {
+        toast.success('Options auto-filled successfully!');
+        setAiInput('');
+        setShowAiInput(false);
+        setAiLoading(false);
+      });
+    } catch (error) {
+      toast.error('Failed to parse options: ' + error.message);
       setAiLoading(false);
     }
   };
@@ -1064,15 +1172,71 @@ ${aiInput}`;
               <div key={mq.id} className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeMatchingQuestion(qIdx)}
-                    className="text-red-500 h-8"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAiInput(showAiInput === `matching_${qIdx}` ? false : `matching_${qIdx}`)}
+                      className="gap-2 h-8"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      AI Parse
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMatchingQuestion(qIdx)}
+                      className="text-red-500 h-8"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
+
+                {showAiInput === `matching_${qIdx}` && (
+                  <div className="space-y-2 p-3 bg-white rounded-lg border-2 border-indigo-200">
+                    <Label className="text-xs text-indigo-700 font-semibold">AI Parse Input</Label>
+                    <Textarea
+                      value={aiInput}
+                      onChange={(e) => setAiInput(e.target.value)}
+                      placeholder="Paste or type: Question text? Answer: correct answer"
+                      className="min-h-[100px] text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleMatchingAiParse(qIdx)}
+                        disabled={aiLoading}
+                        className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        {aiLoading ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Parsing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3" />
+                            Auto-fill
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowAiInput(false);
+                          setAiInput('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 
                 <ReactQuill
                   value={mq.question}
