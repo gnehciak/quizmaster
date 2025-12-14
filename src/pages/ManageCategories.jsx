@@ -13,8 +13,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, ChevronLeft, Pencil, GripVertical } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, ChevronLeft, Pencil, FileQuestion } from 'lucide-react';
 
 export default function ManageCategories() {
   const queryClient = useQueryClient();
@@ -23,6 +29,7 @@ export default function ManageCategories() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
+  const [sortBy, setSortBy] = useState('alpha');
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -39,6 +46,11 @@ export default function ManageCategories() {
   const { data: categories = [] } = useQuery({
     queryKey: ['quizCategories'],
     queryFn: () => base44.entities.QuizCategory.list(),
+  });
+
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => base44.entities.Quiz.list(),
   });
 
   const createMutation = useMutation({
@@ -60,19 +72,7 @@ export default function ManageCategories() {
     }
   });
 
-  const reorderMutation = useMutation({
-    mutationFn: async (reorderedCategories) => {
-      // Update all categories with new order
-      await Promise.all(
-        reorderedCategories.map((cat, index) =>
-          base44.entities.QuizCategory.update(cat.id, { order: index })
-        )
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
-    }
-  });
+
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.QuizCategory.delete(id),
@@ -95,15 +95,35 @@ export default function ManageCategories() {
     updateMutation.mutate({ id: editingCategory.id, data: { name: editName } });
   };
 
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(categories);
-    const [reordered] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reordered);
-    
-    reorderMutation.mutate(items);
-  };
+  // Calculate quiz counts per category
+  const quizCounts = quizzes.reduce((acc, quiz) => {
+    const categoryId = quiz.category_id || quiz.category;
+    if (categoryId) {
+      acc[categoryId] = (acc[categoryId] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  // Sort categories
+  const sortedCategories = [...categories].sort((a, b) => {
+    const countA = quizCounts[a.id] || 0;
+    const countB = quizCounts[b.id] || 0;
+
+    switch (sortBy) {
+      case 'alpha':
+        return a.name.localeCompare(b.name);
+      case 'alpha_reverse':
+        return b.name.localeCompare(a.name);
+      case 'newest':
+        return new Date(b.created_date) - new Date(a.created_date);
+      case 'most_quizzes':
+        return countB - countA;
+      case 'least_quizzes':
+        return countA - countB;
+      default:
+        return a.name.localeCompare(b.name);
+    }
+  });
 
   if (userLoading) {
     return (
@@ -165,67 +185,82 @@ export default function ManageCategories() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {categories.length > 0 && (
-          <p className="text-sm text-slate-500 mb-4">Drag and drop to reorder categories</p>
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold">{categories.length}</span> {categories.length === 1 ? 'category' : 'categories'}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">Sort by:</span>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alpha">A → Z</SelectItem>
+                  <SelectItem value="alpha_reverse">Z → A</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="most_quizzes">Most Quizzes</SelectItem>
+                  <SelectItem value="least_quizzes">Least Quizzes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         )}
         
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="categories">
-            {(provided) => (
-              <div 
-                {...provided.droppableProps} 
-                ref={provided.innerRef}
-                className="grid sm:grid-cols-2 gap-4"
+        <div className="space-y-3">
+          {sortedCategories.map((category) => {
+            const quizCount = quizCounts[category.id] || 0;
+            return (
+              <div
+                key={category.id}
+                className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow"
               >
-                {categories.map((category, index) => (
-                  <Draggable key={category.id} draggableId={category.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`bg-white rounded-xl border p-4 flex items-center gap-3 transition-shadow ${
-                          snapshot.isDragging ? 'shadow-lg border-indigo-300' : ''
-                        }`}
-                      >
-                        <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                          <GripVertical className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <span className="font-medium text-slate-800 flex-1">{category.name}</span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(category)}
-                            className="text-slate-400 hover:text-indigo-600"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              if (confirm(`Delete category "${category.name}"?`)) {
-                                deleteMutation.mutate(category.id);
-                              }
-                            }}
-                            className="text-slate-400 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <FileQuestion className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-slate-800 text-lg mb-1">{category.name}</h3>
+                      <div className="flex items-center gap-4 text-sm text-slate-500">
+                        <span>{quizCount} {quizCount === 1 ? 'quiz' : 'quizzes'}</span>
+                        <span>•</span>
+                        <span>Created {new Date(category.created_date).toLocaleDateString()}</span>
                       </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-                {categories.length === 0 && (
-                  <p className="text-slate-500 col-span-2 text-center py-8">
-                    No categories yet. Create one to get started.
-                  </p>
-                )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(category)}
+                      className="text-slate-400 hover:text-indigo-600"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm(`Delete category "${category.name}"?`)) {
+                          deleteMutation.mutate(category.id);
+                        }
+                      }}
+                      className="text-slate-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+            );
+          })}
+          {categories.length === 0 && (
+            <p className="text-slate-500 text-center py-8">
+              No categories yet. Create one to get started.
+            </p>
+          )}
+        </div>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
