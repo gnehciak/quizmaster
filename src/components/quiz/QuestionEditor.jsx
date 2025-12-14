@@ -21,11 +21,6 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
-  
-  React.useEffect(() => {
-    console.log('QuestionEditor - question prop updated:', question);
-    console.log('QuestionEditor - comprehensionQuestions:', question.comprehensionQuestions);
-  }, [question]);
   const quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
@@ -443,37 +438,6 @@ ${aiInput}`;
                 <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-500">Question {qIdx + 1}</span>
                 <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const questions = [...(question.comprehensionQuestions || [])];
-                      const updatedQuestion = {
-                        ...questions[qIdx],
-                        question: 'Sample test question?',
-                        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                        correctAnswer: 'Option B'
-                      };
-                      questions[qIdx] = updatedQuestion;
-
-                      console.log('TEST BUTTON - Updated question:', updatedQuestion);
-                      console.log('TEST BUTTON - Options array:', updatedQuestion.options);
-                      console.log('TEST BUTTON - Full questions array:', questions);
-
-                      const fullUpdate = {
-                        ...question,
-                        comprehensionQuestions: questions
-                      };
-
-                      console.log('TEST BUTTON - Full object being passed to onChange:', fullUpdate);
-
-                      onChange(fullUpdate);
-                    }}
-                    className="gap-2 h-8"
-                  >
-                    Test
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"
