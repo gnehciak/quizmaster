@@ -49,6 +49,7 @@ export default function CreateQuiz() {
   
   const [previewMode, setPreviewMode] = useState(false);
   const [collapsedQuestions, setCollapsedQuestions] = useState(new Set());
+  const [categorySearch, setCategorySearch] = useState('');
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
