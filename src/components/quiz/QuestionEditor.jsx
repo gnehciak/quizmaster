@@ -81,24 +81,43 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
 
     setAiLoading(true);
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Parse the following text into a quiz question with options and correct answer. Return a JSON object with the structure: {"question": "the question text", "options": ["option1", "option2", "option3", "option4"], "correctAnswer": "the correct option"}. Here's the text to parse:\n\n${aiInput}`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            question: { type: "string" },
-            options: { type: "array", items: { type: "string" } },
-            correctAnswer: { type: "string" }
-          }
-        }
-      });
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
-      const parsed = response;
+      const prompt = `Parse the following unformatted text into a quiz question with options and correct answer. The text may contain the question, multiple choice options (A, B, C, D or 1, 2, 3, 4 or just listed), and the correct answer. Extract and separate these parts intelligently.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "question": "the question text",
+  "options": ["option1", "option2", "option3", "option4"],
+  "correctAnswer": "the correct option text (must match one of the options exactly)"
+}
+
+Text to parse:
+${aiInput}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
       
-      // Update the comprehension question
-      updateComprehensionQuestion(qIdx, 'question', parsed.question);
-      updateComprehensionQuestion(qIdx, 'options', parsed.options);
-      updateComprehensionQuestion(qIdx, 'correctAnswer', parsed.correctAnswer);
+      // Parse JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse response');
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Update the comprehension question with new data
+      const questions = [...(question.comprehensionQuestions || [])];
+      questions[qIdx] = {
+        ...questions[qIdx],
+        question: parsed.question,
+        options: parsed.options,
+        correctAnswer: parsed.correctAnswer
+      };
+      updateField('comprehensionQuestions', questions);
       
       toast.success('Question auto-filled successfully!');
       setAiInput('');
