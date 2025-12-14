@@ -108,6 +108,88 @@ export default function ManageQuizzes() {
   };
 
   const handleExportQuiz = (quiz) => {
+    // Clean up questions based on their type
+    const cleanedQuestions = quiz.questions?.map(q => {
+      const base = { id: q.id, type: q.type };
+      
+      switch (q.type) {
+        case 'multiple_choice':
+          return {
+            ...base,
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            ...(q.explanation && { explanation: q.explanation })
+          };
+          
+        case 'reading_comprehension':
+          return {
+            ...base,
+            passage: q.passage,
+            comprehensionQuestions: q.comprehensionQuestions?.map(cq => ({
+              id: cq.id,
+              question: cq.question,
+              options: cq.options,
+              correctAnswer: cq.correctAnswer,
+              ...(cq.explanation && { explanation: cq.explanation })
+            }))
+          };
+          
+        case 'drag_drop_single':
+          return {
+            ...base,
+            question: q.question,
+            options: q.options,
+            dropZones: q.dropZones?.map(dz => ({
+              id: dz.id,
+              label: dz.label,
+              correctAnswer: dz.correctAnswer
+            }))
+          };
+          
+        case 'drag_drop_dual':
+          return {
+            ...base,
+            ...(q.passages ? { passages: q.passages } : { passage: q.passage }),
+            ...(q.rightPaneQuestion && { rightPaneQuestion: q.rightPaneQuestion }),
+            options: q.options,
+            dropZones: q.dropZones?.map(dz => ({
+              id: dz.id,
+              label: dz.label,
+              correctAnswer: dz.correctAnswer
+            }))
+          };
+          
+        case 'inline_dropdown_separate':
+        case 'inline_dropdown_same':
+          return {
+            ...base,
+            question: q.question,
+            textWithBlanks: q.textWithBlanks,
+            blanks: q.blanks?.map(b => ({
+              id: b.id,
+              options: b.options,
+              correctAnswer: b.correctAnswer
+            }))
+          };
+          
+        case 'matching_list_dual':
+          return {
+            ...base,
+            ...(q.passages ? { passages: q.passages } : { passage: q.passage }),
+            ...(q.rightPaneQuestion && { rightPaneQuestion: q.rightPaneQuestion }),
+            matchingQuestions: q.matchingQuestions?.map(mq => ({
+              id: mq.id,
+              question: mq.question,
+              correctAnswer: mq.correctAnswer
+            }))
+          };
+          
+        default:
+          return q;
+      }
+    });
+
     const exportData = {
       title: quiz.title,
       description: quiz.description,
@@ -115,7 +197,7 @@ export default function ManageQuizzes() {
       timer_enabled: quiz.timer_enabled,
       timer_duration: quiz.timer_duration,
       attempts_allowed: quiz.attempts_allowed,
-      questions: quiz.questions,
+      questions: cleanedQuestions,
       status: quiz.status
     };
 
