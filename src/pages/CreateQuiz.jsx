@@ -71,8 +71,13 @@ export default function CreateQuiz() {
   useEffect(() => {
     if (existingQuiz) {
       setQuiz(existingQuiz);
+      // Set category search to show the selected category name
+      if (existingQuiz.category_id) {
+        const cat = sortedCategories.find(c => c.id === existingQuiz.category_id);
+        if (cat) setCategorySearch(cat.name);
+      }
     }
-  }, [existingQuiz]);
+  }, [existingQuiz, sortedCategories]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -255,41 +260,40 @@ export default function CreateQuiz() {
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label>Category</Label>
-              <Select
-                value={quiz.category_id || ''}
-                onValueChange={(value) => {
-                  const selectedCat = sortedCategories.find(c => c.id === value);
-                  setQuiz(prev => ({ 
-                    ...prev, 
-                    category_id: value,
-                    category: selectedCat?.name || ''
-                  }));
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="px-2 pb-2">
-                    <Input
-                      placeholder="Search categories..."
-                      value={categorySearch}
-                      onChange={(e) => setCategorySearch(e.target.value)}
-                      className="h-8"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
+              <Input
+                placeholder="Search and select category..."
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                onFocus={() => setCategorySearch('')}
+              />
+              {categorySearch && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {sortedCategories
                     .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
                     .map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setQuiz(prev => ({ 
+                            ...prev, 
+                            category_id: cat.id,
+                            category: cat.name
+                          }));
+                          setCategorySearch(cat.name);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-slate-100 transition-colors"
+                      >
                         {cat.name}
-                      </SelectItem>
+                      </button>
                     ))}
-                </SelectContent>
-              </Select>
+                  {sortedCategories.filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
+                    <div className="px-4 py-2 text-sm text-slate-500">No categories found</div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
