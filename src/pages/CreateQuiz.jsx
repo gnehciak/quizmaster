@@ -67,18 +67,21 @@ export default function CreateQuiz() {
     queryFn: () => base44.entities.QuizCategory.list(),
   });
 
-  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedCategories = React.useMemo(() => 
+    [...categories].sort((a, b) => a.name.localeCompare(b.name)), 
+    [categories]
+  );
 
   useEffect(() => {
     if (existingQuiz) {
       setQuiz(existingQuiz);
       // Set category search to show the selected category name
-      if (existingQuiz.category_id) {
-        const cat = sortedCategories.find(c => c.id === existingQuiz.category_id);
+      if (existingQuiz.category_id && categories.length > 0 && !categorySearch) {
+        const cat = categories.find(c => c.id === existingQuiz.category_id);
         if (cat) setCategorySearch(cat.name);
       }
     }
-  }, [existingQuiz, sortedCategories]);
+  }, [existingQuiz, categories]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
