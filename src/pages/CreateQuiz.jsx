@@ -65,6 +65,8 @@ export default function CreateQuiz() {
     queryFn: () => base44.entities.QuizCategory.list(),
   });
 
+  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
   useEffect(() => {
     if (existingQuiz) {
       setQuiz(existingQuiz);
@@ -257,7 +259,7 @@ export default function CreateQuiz() {
               <Select
                 value={quiz.category_id || ''}
                 onValueChange={(value) => {
-                  const selectedCat = categories.find(c => c.id === value);
+                  const selectedCat = sortedCategories.find(c => c.id === value);
                   setQuiz(prev => ({ 
                     ...prev, 
                     category_id: value,
@@ -269,11 +271,22 @@ export default function CreateQuiz() {
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
+                  <div className="px-2 pb-2">
+                    <Input
+                      placeholder="Search categories..."
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      className="h-8"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  {sortedCategories
+                    .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                    .map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

@@ -39,6 +39,7 @@ export default function ManageQuizzes() {
   const [importFile, setImportFile] = useState(null);
   const [importQuizName, setImportQuizName] = useState('');
   const [importCategoryId, setImportCategoryId] = useState('');
+  const [importCategorySearch, setImportCategorySearch] = useState('');
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -82,6 +83,8 @@ export default function ManageQuizzes() {
     queryKey: ['quizCategories'],
     queryFn: () => base44.entities.QuizCategory.list()
   });
+
+  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
 
   // Filter by search and category
   const filteredQuizzes = quizzes.filter((quiz) => {
@@ -439,11 +442,22 @@ export default function ManageQuizzes() {
                               <SelectValue placeholder="Select a category..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {categories.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  {cat.name}
-                                </SelectItem>
-                              ))}
+                              <div className="px-2 pb-2">
+                                <Input
+                                  placeholder="Search categories..."
+                                  value={importCategorySearch}
+                                  onChange={(e) => setImportCategorySearch(e.target.value)}
+                                  className="h-8"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              {sortedCategories
+                                .filter(cat => cat.name.toLowerCase().includes(importCategorySearch.toLowerCase()))
+                                .map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
