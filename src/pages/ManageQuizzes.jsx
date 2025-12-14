@@ -41,6 +41,7 @@ export default function ManageQuizzes() {
   const [importCategoryId, setImportCategoryId] = useState('');
   const [importCategorySearch, setImportCategorySearch] = useState('');
   const [importCategoryDropdownOpen, setImportCategoryDropdownOpen] = useState(false);
+  const [pastedJson, setPastedJson] = useState('');
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -157,8 +158,8 @@ export default function ManageQuizzes() {
   };
 
   const handleImportFile = async () => {
-    if (!importFile) {
-      toast.error('Please select a file to import');
+    if (!importFile && !pastedJson.trim()) {
+      toast.error('Please select a file or paste JSON to import');
       return;
     }
 
@@ -168,7 +169,7 @@ export default function ManageQuizzes() {
     }
 
     try {
-      const text = await importFile.text();
+      const text = importFile ? await importFile.text() : pastedJson;
       const quizData = JSON.parse(text);
 
       // Validate required fields
@@ -198,6 +199,7 @@ export default function ManageQuizzes() {
     const file = e.dataTransfer.files[0];
     if (file && file.type === 'application/json') {
       setImportFile(file);
+      setPastedJson('');
       // Try to extract the original quiz name from the file
       try {
         const text = await file.text();
@@ -217,6 +219,7 @@ export default function ManageQuizzes() {
     const file = e.target.files[0];
     if (file) {
       setImportFile(file);
+      setPastedJson('');
       // Try to extract the original quiz name from the file
       try {
         const text = await file.text();
@@ -227,6 +230,20 @@ export default function ManageQuizzes() {
       } catch (error) {
         // If parsing fails, just leave the name empty
       }
+    }
+  };
+
+  const handlePasteJson = (text) => {
+    setPastedJson(text);
+    setImportFile(null);
+    // Try to extract the original quiz name from pasted JSON
+    try {
+      const quizData = JSON.parse(text);
+      if (quizData.title) {
+        setImportQuizName(quizData.title + ' (Imported)');
+      }
+    } catch (error) {
+      // If parsing fails, just leave the name empty
     }
   };
 
@@ -476,15 +493,17 @@ export default function ManageQuizzes() {
                         onClick={() => {
                           setImportDialogOpen(false);
                           setImportFile(null);
+                          setPastedJson('');
                           setImportQuizName('');
                           setImportCategoryId('');
+                          setImportCategorySearch('');
                         }}
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleImportFile}
-                        disabled={!importFile || !importQuizName.trim() || createMutation.isPending}
+                        disabled={(!importFile && !pastedJson.trim()) || !importQuizName.trim() || createMutation.isPending}
                         className="bg-indigo-600 hover:bg-indigo-700"
                       >
                         {createMutation.isPending ? 'Importing...' : 'Import Quiz'}
