@@ -109,15 +109,18 @@ ${aiInput}`;
       
       const parsed = JSON.parse(jsonMatch[0]);
       
-      // Update the comprehension question with new data
-      const questions = [...(question.comprehensionQuestions || [])];
-      questions[qIdx] = {
-        ...questions[qIdx],
+      // Update the comprehension question using the existing update function
+      const currentQuestion = question.comprehensionQuestions[qIdx];
+      const updatedQuestion = {
+        ...currentQuestion,
         question: parsed.question,
         options: parsed.options,
         correctAnswer: parsed.correctAnswer
       };
-      updateField('comprehensionQuestions', questions);
+      
+      const updatedQuestions = [...question.comprehensionQuestions];
+      updatedQuestions[qIdx] = updatedQuestion;
+      onChange({ ...question, comprehensionQuestions: updatedQuestions });
       
       toast.success('Question auto-filled successfully!');
       setAiInput('');
