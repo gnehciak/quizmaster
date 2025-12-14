@@ -13,7 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, ChevronLeft, Pencil } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Pencil, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export default function ManageCategories() {
   const queryClient = useQueryClient();
@@ -59,6 +60,20 @@ export default function ManageCategories() {
     }
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (reorderedCategories) => {
+      // Update all categories with new order
+      await Promise.all(
+        reorderedCategories.map((cat, index) =>
+          base44.entities.QuizCategory.update(cat.id, { order: index })
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.QuizCategory.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizCategories'] })
@@ -78,6 +93,16 @@ export default function ManageCategories() {
   const handleUpdate = () => {
     if (!editName.trim()) return;
     updateMutation.mutate({ id: editingCategory.id, data: { name: editName } });
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(categories);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    
+    reorderMutation.mutate(items);
   };
 
   if (userLoading) {
@@ -139,40 +164,68 @@ export default function ManageCategories() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid sm:grid-cols-2 gap-4">
-          {categories.map(category => (
-            <div key={category.id} className="bg-white rounded-xl border p-4 flex items-center justify-between">
-              <span className="font-medium text-slate-800">{category.name}</span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEdit(category)}
-                  className="text-slate-400 hover:text-indigo-600"
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (confirm(`Delete category "${category.name}"?`)) {
-                      deleteMutation.mutate(category.id);
-                    }
-                  }}
-                  className="text-slate-400 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+        {categories.length > 0 && (
+          <p className="text-sm text-slate-500 mb-4">Drag and drop to reorder categories</p>
+        )}
+        
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="categories">
+            {(provided) => (
+              <div 
+                {...provided.droppableProps} 
+                ref={provided.innerRef}
+                className="grid sm:grid-cols-2 gap-4"
+              >
+                {categories.map((category, index) => (
+                  <Draggable key={category.id} draggableId={category.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`bg-white rounded-xl border p-4 flex items-center gap-3 transition-shadow ${
+                          snapshot.isDragging ? 'shadow-lg border-indigo-300' : ''
+                        }`}
+                      >
+                        <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                          <GripVertical className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <span className="font-medium text-slate-800 flex-1">{category.name}</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(category)}
+                            className="text-slate-400 hover:text-indigo-600"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm(`Delete category "${category.name}"?`)) {
+                                deleteMutation.mutate(category.id);
+                              }
+                            }}
+                            className="text-slate-400 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+                {categories.length === 0 && (
+                  <p className="text-slate-500 col-span-2 text-center py-8">
+                    No categories yet. Create one to get started.
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
-          {categories.length === 0 && (
-            <p className="text-slate-500 col-span-2 text-center py-8">
-              No categories yet. Create one to get started.
-            </p>
-          )}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
