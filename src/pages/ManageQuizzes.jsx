@@ -6,18 +6,29 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, Grid3x3, List, ListTree } from 'lucide-react';
+import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, Grid3x3, List, ListTree, Upload, Download, Info } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import CategoryFilter from '@/components/quiz/CategoryFilter';
 import SortFilter from '@/components/quiz/SortFilter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from 'sonner';
 
 export default function ManageQuizzes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState('card');
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [formatGuideOpen, setFormatGuideOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -40,6 +51,19 @@ export default function ManageQuizzes() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Quiz.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizzes'] })
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (quizData) => base44.entities.Quiz.create(quizData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+      toast.success('Quiz imported successfully!');
+      setImportDialogOpen(false);
+      setImportFile(null);
+    },
+    onError: (error) => {
+      toast.error('Failed to import quiz: ' + error.message);
+    }
   });
 
   // Filter by search and category
@@ -83,6 +107,72 @@ export default function ManageQuizzes() {
     }
   };
 
+  const handleExportQuiz = (quiz) => {
+    const exportData = {
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      timer_enabled: quiz.timer_enabled,
+      timer_duration: quiz.timer_duration,
+      attempts_allowed: quiz.attempts_allowed,
+      questions: quiz.questions,
+      status: quiz.status
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${quiz.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_quiz.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Quiz exported successfully!');
+  };
+
+  const handleImportFile = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    try {
+      const text = await importFile.text();
+      const quizData = JSON.parse(text);
+
+      // Validate required fields
+      if (!quizData.title) {
+        throw new Error('Quiz must have a title');
+      }
+      if (!Array.isArray(quizData.questions)) {
+        throw new Error('Quiz must have a questions array');
+      }
+
+      // Create the quiz
+      createMutation.mutate(quizData);
+    } catch (error) {
+      toast.error('Invalid quiz file: ' + error.message);
+    }
+  };
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/json') {
+      setImportFile(file);
+    } else {
+      toast.error('Please drop a valid JSON file');
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
@@ -117,6 +207,183 @@ export default function ManageQuizzes() {
                   Manage Categories
                 </Button>
               </Link>
+              <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Upload className="w-4 h-4" />
+                    Import Quiz
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center justify-between">
+                      Import Quiz
+                      <Dialog open={formatGuideOpen} onOpenChange={setFormatGuideOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Info className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Quiz File Format Guide</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 text-sm">
+                            <div>
+                              <h3 className="font-semibold text-slate-800 mb-2">File Format</h3>
+                              <p className="text-slate-600 mb-2">The quiz file must be in JSON format with the following structure:</p>
+                              <pre className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto text-xs">
+{`{
+  "title": "Quiz Title",
+  "description": "Quiz description",
+  "category": "general_knowledge",
+  "timer_enabled": false,
+  "timer_duration": 30,
+  "attempts_allowed": 999,
+  "status": "draft",
+  "questions": []
+}`}</pre>
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-semibold text-slate-800 mb-2">Question Types</h3>
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="font-medium text-slate-700">1. Multiple Choice</p>
+                                  <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs mt-1">
+{`{
+  "id": "q1",
+  "type": "multiple_choice",
+  "question": "Question text?",
+  "options": ["Option 1", "Option 2", "Option 3"],
+  "correctAnswer": "Option 1",
+  "explanation": "Optional explanation"
+}`}</pre>
+                                </div>
+                                
+                                <div>
+                                  <p className="font-medium text-slate-700">2. Reading Comprehension</p>
+                                  <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs mt-1">
+{`{
+  "id": "q2",
+  "type": "reading_comprehension",
+  "passage": "Reading passage text...",
+  "comprehensionQuestions": [
+    {
+      "id": "cq1",
+      "question": "Question about the passage?",
+      "options": ["A", "B", "C"],
+      "correctAnswer": "A"
+    }
+  ]
+}`}</pre>
+                                </div>
+                                
+                                <div>
+                                  <p className="font-medium text-slate-700">3. Drag & Drop</p>
+                                  <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs mt-1">
+{`{
+  "id": "q3",
+  "type": "drag_drop_single",
+  "question": "Match items",
+  "options": ["Item 1", "Item 2"],
+  "dropZones": [
+    {
+      "id": "zone1",
+      "label": "Zone 1",
+      "correctAnswer": "Item 1"
+    }
+  ]
+}`}</pre>
+                                </div>
+                                
+                                <div>
+                                  <p className="font-medium text-slate-700">4. Fill in the Blanks</p>
+                                  <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs mt-1">
+{`{
+  "id": "q4",
+  "type": "inline_dropdown_separate",
+  "question": "Complete the sentence",
+  "textWithBlanks": "The sky is {{blank1}}",
+  "blanks": [
+    {
+      "id": "blank1",
+      "options": ["blue", "green", "red"],
+      "correctAnswer": "blue"
+    }
+  ]
+}`}</pre>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-semibold text-slate-800 mb-2">Tips</h3>
+                              <ul className="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Export an existing quiz to see the exact format</li>
+                                <li>Each question must have a unique ID</li>
+                                <li>Status can be "draft" or "published"</li>
+                                <li>Category should match existing categories</li>
+                                <li>All fields with HTML content should be valid HTML strings</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div
+                      onDrop={handleFileDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer"
+                      onClick={() => document.getElementById('quiz-file-upload').click()}
+                    >
+                      <input
+                        id="quiz-file-upload"
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
+                      <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                      {importFile ? (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">{importFile.name}</p>
+                          <p className="text-xs text-slate-500 mt-1">Click to change file</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800 mb-1">
+                            Drop your quiz JSON file here
+                          </p>
+                          <p className="text-xs text-slate-500">or click to browse</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setImportDialogOpen(false);
+                          setImportFile(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleImportFile}
+                        disabled={!importFile || createMutation.isPending}
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        {createMutation.isPending ? 'Importing...' : 'Import Quiz'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Link to={createPageUrl('CreateQuiz')}>
                 <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
                   <Plus className="w-4 h-4" />
