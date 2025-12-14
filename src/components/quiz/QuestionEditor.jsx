@@ -849,7 +849,64 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-4">
-            <Label>Draggable Options</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Draggable Options</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAiInput(showAiInput === 'dragdrop' ? false : 'dragdrop')}
+                className="gap-2 h-8"
+              >
+                <Sparkles className="w-3 h-3" />
+                AI Parse
+              </Button>
+            </div>
+
+            {showAiInput === 'dragdrop' && (
+              <div className="space-y-2 p-3 bg-white rounded-lg border-2 border-indigo-200 mb-3">
+                <Label className="text-xs text-indigo-700 font-semibold">AI Parse Input</Label>
+                <Textarea
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="Paste or type: Item A, Item B, Item C, Item D"
+                  className="min-h-[100px] text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleDragDropAiParse()}
+                    disabled={aiLoading}
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Parsing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        Auto-fill
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAiInput(false);
+                      setAiInput('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {question.options?.map((option, idx) => (
               <div key={idx} className="flex items-center gap-3">
                 <GripVertical className="w-4 h-4 text-slate-400" />
