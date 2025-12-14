@@ -50,6 +50,7 @@ export default function CreateQuiz() {
   const [previewMode, setPreviewMode] = useState(false);
   const [collapsedQuestions, setCollapsedQuestions] = useState(new Set());
   const [categorySearch, setCategorySearch] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -266,9 +267,10 @@ export default function CreateQuiz() {
                 placeholder="Search and select category..."
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
-                onFocus={() => setCategorySearch('')}
+                onFocus={() => setCategoryDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setCategoryDropdownOpen(false), 200)}
               />
-              {categorySearch && (
+              {categoryDropdownOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {sortedCategories
                     .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
@@ -283,6 +285,7 @@ export default function CreateQuiz() {
                             category: cat.name
                           }));
                           setCategorySearch(cat.name);
+                          setCategoryDropdownOpen(false);
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-slate-100 transition-colors"
                       >

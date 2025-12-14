@@ -40,6 +40,7 @@ export default function ManageQuizzes() {
   const [importQuizName, setImportQuizName] = useState('');
   const [importCategoryId, setImportCategoryId] = useState('');
   const [importCategorySearch, setImportCategorySearch] = useState('');
+  const [importCategoryDropdownOpen, setImportCategoryDropdownOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -439,9 +440,10 @@ export default function ManageQuizzes() {
                             placeholder="Search and select category..."
                             value={importCategorySearch}
                             onChange={(e) => setImportCategorySearch(e.target.value)}
-                            onFocus={() => setImportCategorySearch('')}
+                            onFocus={() => setImportCategoryDropdownOpen(true)}
+                            onBlur={() => setTimeout(() => setImportCategoryDropdownOpen(false), 200)}
                           />
-                          {importCategorySearch && (
+                          {importCategoryDropdownOpen && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                               {sortedCategories
                                 .filter(cat => cat.name.toLowerCase().includes(importCategorySearch.toLowerCase()))
@@ -452,6 +454,7 @@ export default function ManageQuizzes() {
                                     onClick={() => {
                                       setImportCategoryId(cat.id);
                                       setImportCategorySearch(cat.name);
+                                      setImportCategoryDropdownOpen(false);
                                     }}
                                     className="w-full px-4 py-2 text-left hover:bg-slate-100 transition-colors"
                                   >
