@@ -21,6 +21,11 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
+  
+  React.useEffect(() => {
+    console.log('QuestionEditor - question prop updated:', question);
+    console.log('QuestionEditor - comprehensionQuestions:', question.comprehensionQuestions);
+  }, [question]);
   const quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],

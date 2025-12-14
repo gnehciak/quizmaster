@@ -123,9 +123,17 @@ export default function CreateQuiz() {
   };
 
   const updateQuestion = (index, updatedQuestion) => {
+    console.log('CreateQuiz - updateQuestion called for index:', index);
+    console.log('CreateQuiz - updatedQuestion received:', updatedQuestion);
+    console.log('CreateQuiz - comprehensionQuestions in update:', updatedQuestion.comprehensionQuestions);
     const questions = [...quiz.questions];
     questions[index] = updatedQuestion;
-    setQuiz(prev => ({ ...prev, questions }));
+    console.log('CreateQuiz - setting quiz state with questions:', questions);
+    setQuiz(prev => {
+      const newQuiz = { ...prev, questions };
+      console.log('CreateQuiz - new quiz state:', newQuiz);
+      return newQuiz;
+    });
   };
 
   const deleteQuestion = (index) => {
