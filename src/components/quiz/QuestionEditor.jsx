@@ -444,16 +444,26 @@ ${aiInput}`;
                     size="sm"
                     onClick={() => {
                       const questions = [...(question.comprehensionQuestions || [])];
-                      questions[qIdx] = {
+                      const updatedQuestion = {
                         ...questions[qIdx],
                         question: 'Sample test question?',
                         options: ['Option A', 'Option B', 'Option C', 'Option D'],
                         correctAnswer: 'Option B'
                       };
-                      onChange({
+                      questions[qIdx] = updatedQuestion;
+
+                      console.log('TEST BUTTON - Updated question:', updatedQuestion);
+                      console.log('TEST BUTTON - Options array:', updatedQuestion.options);
+                      console.log('TEST BUTTON - Full questions array:', questions);
+
+                      const fullUpdate = {
                         ...question,
                         comprehensionQuestions: questions
-                      });
+                      };
+
+                      console.log('TEST BUTTON - Full object being passed to onChange:', fullUpdate);
+
+                      onChange(fullUpdate);
                     }}
                     className="gap-2 h-8"
                   >
