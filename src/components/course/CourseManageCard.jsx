@@ -235,7 +235,7 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           <Link to={createPageUrl(`CourseDetail?id=${course.id}`)} className="flex-1">
             <Button
               size="sm"
-              className="w-full gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="w-full gap-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="text-xs">Open</span>
@@ -244,7 +244,7 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           <Button
             onClick={() => onEdit(course)}
             size="sm"
-            className="flex-1 gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+            className="flex-1 gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700"
           >
             <Edit className="w-3.5 h-3.5" />
             <span className="text-xs">Edit</span>
@@ -252,7 +252,7 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           <Button
             onClick={() => onDuplicate(course)}
             size="sm"
-            className="flex-1 gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+            className="flex-1 gap-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700"
           >
             <Copy className="w-3.5 h-3.5" />
             <span className="text-xs">Duplicate</span>
@@ -260,7 +260,7 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           <Button
             onClick={() => onDelete(course.id)}
             size="sm"
-            className="w-9 p-0 bg-red-600 hover:bg-red-700 text-white"
+            className="w-9 p-0 bg-red-100 hover:bg-red-200 text-red-700"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
