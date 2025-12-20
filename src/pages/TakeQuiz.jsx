@@ -47,7 +47,6 @@ export default function TakeQuiz() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
-  const [countdown, setCountdown] = useState(null);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -184,17 +183,7 @@ export default function TakeQuiz() {
   };
 
   const handleStartQuiz = async () => {
-    setCountdown(5);
-    
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    setQuizStarted(true);
     
     // Create attempt record when quiz starts
     try {
@@ -211,10 +200,6 @@ export default function TakeQuiz() {
     } catch (e) {
       console.error('Failed to create attempt:', e);
     }
-    
-    setTimeout(() => {
-      setQuizStarted(true);
-    }, 5000);
   };
 
   const handleConfirmSubmit = async () => {
@@ -498,34 +483,6 @@ export default function TakeQuiz() {
             <Button>Back to Quizzes</Button>
           </Link>
         </div>
-      </div>
-    );
-  }
-
-  // Countdown screen
-  if (countdown !== null) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center z-50">
-        <motion.div
-          key={countdown}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 1.5, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <motion.div
-            animate={{ 
-              scale: [1, 1.2, 1],
-              rotate: [0, 360]
-            }}
-            transition={{ duration: 1 }}
-            className="text-white"
-          >
-            <div className="text-9xl font-bold mb-4">{countdown}</div>
-            <div className="text-2xl font-medium">Get Ready...</div>
-          </motion.div>
-        </motion.div>
       </div>
     );
   }
