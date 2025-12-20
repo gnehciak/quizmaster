@@ -231,36 +231,42 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <Link to={createPageUrl(`CourseDetail?id=${course.id}`)} className="flex-1">
-            <Button
-              size="sm"
-              className="w-full gap-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="text-xs">Open</span>
-            </Button>
-          </Link>
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => onEdit(course)}
-            size="sm"
-            className="flex-1 gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700"
+            className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700"
           >
-            <Edit className="w-3.5 h-3.5" />
-            <span className="text-xs">Edit</span>
+            <Edit className="w-4 h-4" />
+            Edit Course
           </Button>
-          <Button
+          
+          <Link to={createPageUrl(`CourseDetail?id=${course.id}`)}>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600"
+              title="Open Course"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+          </Link>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
             onClick={() => onDuplicate(course)}
-            size="sm"
-            className="flex-1 gap-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700"
+            className="hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600"
+            title="Duplicate Course"
           >
-            <Copy className="w-3.5 h-3.5" />
-            <span className="text-xs">Duplicate</span>
+            <Copy className="w-4 h-4" />
           </Button>
-          <Button
+          
+          <Button 
+            variant="outline" 
+            size="icon"
             onClick={() => onDelete(course.id)}
-            size="sm"
-            className="w-9 p-0 bg-red-100 hover:bg-red-200 text-red-700"
+            className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+            title="Delete Course"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
