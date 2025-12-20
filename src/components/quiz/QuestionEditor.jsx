@@ -70,7 +70,10 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const updateComprehensionQuestion = (index, field, value) => {
     const questions = [...(question.comprehensionQuestions || [])];
     questions[index] = { ...questions[index], [field]: value };
-    updateField('comprehensionQuestions', questions);
+    // Use flushSync for immediate synchronous update
+    flushSync(() => {
+      updateField('comprehensionQuestions', questions);
+    });
   };
 
   const removeComprehensionQuestion = (index) => {
