@@ -234,9 +234,8 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
         <div className="flex gap-2">
           <Link to={createPageUrl(`CourseDetail?id=${course.id}`)} className="flex-1">
             <Button
-              variant="outline"
               size="sm"
-              className="w-full gap-1.5"
+              className="w-full gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="text-xs">Open</span>
@@ -244,27 +243,24 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           </Link>
           <Button
             onClick={() => onEdit(course)}
-            variant="outline"
             size="sm"
-            className="flex-1 gap-1.5"
+            className="flex-1 gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
           >
             <Edit className="w-3.5 h-3.5" />
             <span className="text-xs">Edit</span>
           </Button>
           <Button
             onClick={() => onDuplicate(course)}
-            variant="outline"
             size="sm"
-            className="flex-1 gap-1.5"
+            className="flex-1 gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
           >
             <Copy className="w-3.5 h-3.5" />
-            <span className="text-xs">Copy</span>
+            <span className="text-xs">Duplicate</span>
           </Button>
           <Button
             onClick={() => onDelete(course.id)}
-            variant="outline"
             size="sm"
-            className="w-9 h-9 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
+            className="w-9 p-0 bg-red-600 hover:bg-red-700 text-white"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
