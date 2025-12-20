@@ -23,12 +23,15 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [showAiInput, setShowAiInput] = React.useState(false);
   const quillModules = {
     toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link'],
       [{ 'background': [] }]
     ]
   };
 
-  const quillFormats = ['bold', 'italic', 'underline', 'background'];
+  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background'];
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });

@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function CreateQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -54,6 +56,18 @@ export default function CreateQuiz() {
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link'],
+      [{ 'background': [] }]
+    ]
+  };
+
+  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background'];
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -256,11 +270,13 @@ export default function CreateQuiz() {
             
             <div className="sm:col-span-2 space-y-2">
               <Label>Description (optional)</Label>
-              <Textarea
+              <ReactQuill
                 value={quiz.description || ''}
-                onChange={(e) => setQuiz(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(value) => setQuiz(prev => ({ ...prev, description: value }))}
                 placeholder="Brief description of the quiz..."
-                className="min-h-[80px]"
+                modules={quillModules}
+                formats={quillFormats}
+                className="bg-white rounded-lg"
               />
             </div>
             
