@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
+  const updateTimeoutRef = React.useRef(null);
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
