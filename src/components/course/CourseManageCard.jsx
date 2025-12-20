@@ -2,11 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Lock, Unlock, DollarSign, ExternalLink } from 'lucide-react';
+import { Edit, Trash2, Lock, Unlock, DollarSign, ExternalLink, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function CourseManageCard({ course, index, onEdit, onDelete, viewMode = 'card' }) {
+export default function CourseManageCard({ course, index, onEdit, onDelete, onDuplicate, viewMode = 'card' }) {
   
   if (viewMode === 'compact') {
     return (
@@ -44,6 +44,14 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, view
               className="h-8 w-8 p-0"
             >
               <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => onDuplicate(course)}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <Copy className="w-4 h-4" />
             </Button>
             <Button
               onClick={() => onDelete(course.id)}
@@ -131,6 +139,15 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, view
             >
               <Edit className="w-4 h-4" />
               Edit
+            </Button>
+            <Button
+              onClick={() => onDuplicate(course)}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              Duplicate
             </Button>
             <Button
               onClick={() => onDelete(course.id)}
@@ -231,6 +248,14 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, view
           >
             <Edit className="w-4 h-4" />
             Edit
+          </Button>
+          <Button
+            onClick={() => onDuplicate(course)}
+            variant="outline"
+            className="flex-1 gap-2"
+          >
+            <Copy className="w-4 h-4" />
+            Duplicate
           </Button>
           <Button
             onClick={() => onDelete(course.id)}

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, Trash2, Pencil, GripVertical, LayoutGrid, List, ListOrdered, Upload, Loader2, X } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Skeleton } from '@/components/ui/skeleton';
 import CourseManageCard from '@/components/course/CourseManageCard';
 
@@ -193,6 +194,25 @@ export default function ManageCourses() {
     setFeatures(features.filter((_, i) => i !== index));
   };
 
+  const handleDuplicate = async (course) => {
+    const duplicateData = {
+      title: `${course.title} (Copy)`,
+      description: course.description,
+      category: course.category,
+      visibility: course.visibility,
+      is_locked: course.is_locked,
+      unlock_code: course.unlock_code,
+      price: course.price,
+      enrollment_duration: course.enrollment_duration,
+      image_url: course.image_url,
+      features: course.features,
+      content_blocks: course.content_blocks,
+      quiz_ids: course.quiz_ids
+    };
+    await base44.entities.Course.create(duplicateData);
+    queryClient.invalidateQueries({ queryKey: ['courses'] });
+  };
+
   const handleCreateCategory = () => {
     if (!categoryName.trim()) return;
     createCategoryMutation.mutate({ name: categoryName });
@@ -212,6 +232,21 @@ export default function ManageCourses() {
     if (window.confirm('Delete this category?')) {
       deleteCategoryMutation.mutate(id);
     }
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(categories);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    
+    // Update order for all categories
+    items.forEach((cat, idx) => {
+      base44.entities.CourseCategory.update(cat.id, { order: idx });
+    });
+    
+    queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
   };
 
   if (userLoading) {
@@ -292,71 +327,91 @@ export default function ManageCourses() {
 
                     {/* Existing Categories */}
                     <div className="space-y-3">
-                      <Label>Existing Categories</Label>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {categories.map((category) => (
-                          <div
-                            key={category.id}
-                            className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200"
-                          >
-                            <GripVertical className="w-4 h-4 text-slate-400" />
-                            
-                            {editingCategory?.id === category.id ? (
-                              <>
-                                <Input
-                                  value={categoryName}
-                                  onChange={(e) => setCategoryName(e.target.value)}
-                                  className="flex-1"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={handleUpdateCategory}
-                                  disabled={!categoryName.trim()}
-                                >
-                                  Save
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingCategory(null);
-                                    setCategoryName('');
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <span className="flex-1 font-medium text-slate-800">
-                                  {category.name}
-                                </span>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => handleEditCategory(category)}
-                                  className="text-slate-400 hover:text-indigo-600"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => handleDeleteCategory(category.id)}
-                                  className="text-slate-400 hover:text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                        {categories.length === 0 && (
-                          <p className="text-center text-slate-500 py-4">
-                            No categories yet. Add one to get started.
-                          </p>
-                        )}
-                      </div>
+                      <Label>Existing Categories (drag to reorder)</Label>
+                      <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="categories">
+                          {(provided) => (
+                            <div 
+                              {...provided.droppableProps} 
+                              ref={provided.innerRef}
+                              className="space-y-2 max-h-96 overflow-y-auto"
+                            >
+                              {categories.map((category, index) => (
+                                <Draggable key={category.id} draggableId={category.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      className={`flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 ${
+                                        snapshot.isDragging ? 'shadow-lg border-indigo-400' : ''
+                                      }`}
+                                    >
+                                      <div {...provided.dragHandleProps}>
+                                        <GripVertical className="w-4 h-4 text-slate-400 cursor-grab active:cursor-grabbing" />
+                                      </div>
+                                      
+                                      {editingCategory?.id === category.id ? (
+                                        <>
+                                          <Input
+                                            value={categoryName}
+                                            onChange={(e) => setCategoryName(e.target.value)}
+                                            className="flex-1"
+                                          />
+                                          <Button
+                                            size="sm"
+                                            onClick={handleUpdateCategory}
+                                            disabled={!categoryName.trim()}
+                                          >
+                                            Save
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                              setEditingCategory(null);
+                                              setCategoryName('');
+                                            }}
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="flex-1 font-medium text-slate-800">
+                                            {category.name}
+                                          </span>
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => handleEditCategory(category)}
+                                            className="text-slate-400 hover:text-indigo-600"
+                                          >
+                                            <Pencil className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => handleDeleteCategory(category.id)}
+                                            className="text-slate-400 hover:text-red-600"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                              {categories.length === 0 && (
+                                <p className="text-center text-slate-500 py-4">
+                                  No categories yet. Add one to get started.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </Droppable>
+                      </DragDropContext>
                     </div>
                   </div>
                 </DialogContent>
@@ -572,8 +627,8 @@ export default function ManageCourses() {
         </div>
 
         {/* Category Filter */}
-        <div className="mb-6 overflow-x-auto">
-          <div className="flex gap-2 pb-2">
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
               onClick={() => setSelectedCategory('all')}
@@ -669,6 +724,7 @@ export default function ManageCourses() {
                 index={idx}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
                 viewMode={viewMode}
               />
             ))}
