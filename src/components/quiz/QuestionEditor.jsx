@@ -117,35 +117,26 @@ ${aiInput}`;
       
       const parsed = JSON.parse(jsonMatch[0]);
       
-      // Clear any pending updates
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-
       // Create completely new question object with updated data
       const questions = [...(question.comprehensionQuestions || [])];
-      questions[qIdx] = {
-        ...questions[qIdx],
+      const newQuestion = {
+        id: `cq_${Date.now()}`,
         question: parsed.question,
-        options: parsed.options,
+        options: [...parsed.options],
         correctAnswer: parsed.correctAnswer
       };
       
-      // Use flushSync to force synchronous update
-      flushSync(() => {
-        onChange({
-          ...question,
-          comprehensionQuestions: questions
-        });
+      questions[qIdx] = newQuestion;
+      
+      // Call onChange and wait before any state updates
+      onChange({
+        ...question,
+        comprehensionQuestions: questions
       });
       
-      // Delay cleanup to ensure parent has time to update
-      updateTimeoutRef.current = setTimeout(() => {
-        setAiLoading(false);
-        setAiInput('');
-        setShowAiInput(false);
-        toast.success('Question auto-filled successfully!');
-      }, 200);
+      // Don't auto-close - let user see it worked and close manually
+      setAiLoading(false);
+      toast.success('Question auto-filled successfully!');
     } catch (error) {
       toast.error('Failed to parse question: ' + error.message);
       setAiLoading(false);
