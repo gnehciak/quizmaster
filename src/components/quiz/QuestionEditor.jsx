@@ -131,9 +131,13 @@ ${aiInput}`;
         comprehensionQuestions: questions
       });
       
-      // Don't auto-close - let user see it worked and close manually
-      setAiLoading(false);
-      toast.success('Question auto-filled successfully!');
+      // Auto-close after successful parse
+      setTimeout(() => {
+        setAiLoading(false);
+        setAiInput('');
+        setShowAiInput(false);
+        toast.success('Question auto-filled successfully!');
+      }, 100);
     } catch (error) {
       toast.error('Failed to parse question: ' + error.message);
       setAiLoading(false);
