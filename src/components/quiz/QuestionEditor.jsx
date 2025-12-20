@@ -121,19 +121,23 @@ ${aiInput}`;
         correctAnswer: parsed.correctAnswer
       };
       
-      // Use onChange directly with the complete updated question object
-      onChange({
+      // Force React to recognize this as a new object by creating a completely new reference
+      const updatedQuestion = {
         ...question,
-        comprehensionQuestions: questions
-      });
+        comprehensionQuestions: questions,
+        _forceUpdate: Date.now() // Force update trigger
+      };
+      
+      // Use onChange directly with the complete updated question object
+      onChange(updatedQuestion);
       
       // Defer UI state updates to prevent interfering with data update
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         toast.success('Question auto-filled successfully!');
         setAiInput('');
         setShowAiInput(false);
         setAiLoading(false);
-      });
+      }, 100);
     } catch (error) {
       toast.error('Failed to parse question: ' + error.message);
       setAiLoading(false);
