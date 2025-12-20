@@ -18,9 +18,9 @@ export default function DragDropQuestion({
   // Available options (not yet placed)
   const availableOptions = question.options.filter(opt => !usedAnswers.includes(opt));
 
-  const handleDragStart = (e, option) => {
+  const handleDragStart = (e, option, fromZone = null) => {
     if (showResults) return;
-    setDraggedItem(option);
+    setDraggedItem({ item: option, fromZone });
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -33,17 +33,38 @@ export default function DragDropQuestion({
     e.preventDefault();
     if (showResults || !draggedItem) return;
     
-    // Remove from previous zone if exists
     const newAnswers = { ...selectedAnswers };
-    Object.keys(newAnswers).forEach(key => {
-      if (newAnswers[key] === draggedItem) {
-        delete newAnswers[key];
-      }
-    });
+    
+    // Remove from previous zone if it was in one
+    if (draggedItem.fromZone) {
+      delete newAnswers[draggedItem.fromZone];
+    } else {
+      // Remove from any other zone if exists
+      Object.keys(newAnswers).forEach(key => {
+        if (newAnswers[key] === draggedItem.item) {
+          delete newAnswers[key];
+        }
+      });
+    }
     
     // Add to new zone
-    newAnswers[zoneId] = draggedItem;
+    newAnswers[zoneId] = draggedItem.item;
     onAnswer(newAnswers);
+    setDraggedItem(null);
+  };
+
+  const handleDropToAvailable = (e) => {
+    e.preventDefault();
+    if (showResults || !draggedItem) return;
+    
+    const newAnswers = { ...selectedAnswers };
+    
+    // Remove from zone
+    if (draggedItem.fromZone) {
+      delete newAnswers[draggedItem.fromZone];
+      onAnswer(newAnswers);
+    }
+    
     setDraggedItem(null);
   };
 
@@ -81,12 +102,16 @@ export default function DragDropQuestion({
       </div>
 
       {/* Draggable Options */}
-      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60">
+      <div 
+        className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60"
+        onDragOver={handleDragOver}
+        onDrop={handleDropToAvailable}
+      >
         <p className="text-sm text-slate-500 mb-4 font-medium">
           Drag items to their correct positions:
         </p>
         
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 min-h-[60px]">
           <AnimatePresence mode="popLayout">
             {availableOptions.map((option) => (
               <motion.div
@@ -96,7 +121,7 @@ export default function DragDropQuestion({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 draggable={!showResults}
-                onDragStart={(e) => handleDragStart(e, option)}
+                onDragStart={(e) => handleDragStart(e, option, null)}
                 onDragEnd={() => setDraggedItem(null)}
                 className={cn(
                   "px-4 py-2.5 bg-white rounded-xl border-2 border-slate-200",
@@ -155,15 +180,22 @@ export default function DragDropQuestion({
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
+                  draggable={!showResults}
+                  onDragStart={(e) => handleDragStart(e, placedAnswer, zone.id)}
+                  onDragEnd={() => setDraggedItem(null)}
                   className={cn(
                     "px-4 py-2.5 rounded-xl flex items-center justify-between gap-2",
-                    !showResults && "bg-white border border-indigo-200",
+                    !showResults && "bg-white border border-indigo-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
                     isCorrect && "bg-emerald-100 border border-emerald-300",
-                    isWrong && "bg-red-100 border border-red-300"
+                    isWrong && "bg-red-100 border border-red-300",
+                    showResults && "cursor-default"
                   )}
                 >
+                  {!showResults && (
+                    <GripVertical className="w-4 h-4 text-slate-400" />
+                  )}
                   <span className={cn(
-                    "font-medium",
+                    "font-medium flex-1",
                     isCorrect && "text-emerald-700",
                     isWrong && "text-red-700"
                   )}>

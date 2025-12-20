@@ -104,7 +104,7 @@ export default function ReadingComprehensionQuestion({
         <div className="flex-1 px-8 py-6">
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
-              className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
+              className="prose prose-slate max-w-none text-slate-800 leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1"
               dangerouslySetInnerHTML={{ __html: activePassage?.content }}
             />
           </div>

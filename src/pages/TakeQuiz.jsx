@@ -47,6 +47,7 @@ export default function TakeQuiz() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
+  const [countdown, setCountdown] = useState(null);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -183,7 +184,17 @@ export default function TakeQuiz() {
   };
 
   const handleStartQuiz = async () => {
-    setQuizStarted(true);
+    setCountdown(5);
+    
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     
     // Create attempt record when quiz starts
     try {
@@ -200,6 +211,10 @@ export default function TakeQuiz() {
     } catch (e) {
       console.error('Failed to create attempt:', e);
     }
+    
+    setTimeout(() => {
+      setQuizStarted(true);
+    }, 5000);
   };
 
   const handleConfirmSubmit = async () => {
@@ -487,6 +502,34 @@ export default function TakeQuiz() {
     );
   }
 
+  // Countdown screen
+  if (countdown !== null) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center z-50">
+        <motion.div
+          key={countdown}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 1.5, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ 
+              scale: [1, 1.2, 1],
+              rotate: [0, 360]
+            }}
+            transition={{ duration: 1 }}
+            className="text-white"
+          >
+            <div className="text-9xl font-bold mb-4">{countdown}</div>
+            <div className="text-2xl font-medium">Get Ready...</div>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Pre-start screen
   if (!quizStarted && !showResults && !isReviewMode) {
     const attemptsAllowed = quiz.attempts_allowed || 999;
@@ -505,7 +548,10 @@ export default function TakeQuiz() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-800 mb-3">{quiz.title}</h1>
             {quiz.description && (
-              <p className="text-slate-600 text-lg">{quiz.description}</p>
+              <div 
+                className="text-slate-600 text-lg prose prose-slate max-w-none prose-p:my-1"
+                dangerouslySetInnerHTML={{ __html: quiz.description }}
+              />
             )}
           </div>
 
@@ -650,67 +696,144 @@ export default function TakeQuiz() {
                 Overview
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Quiz Overview</DialogTitle>
               </DialogHeader>
-              <div className="space-y-2 mt-4">
-                {questions.map((q, idx) => {
-                  const isAnswered = answers[idx] !== undefined;
-                  const isFlagged = flaggedQuestions.has(idx);
-                  const isCurrent = idx === currentIndex;
+              <div className="space-y-6 mt-4">
+                {(() => {
+                  // Group questions by type
+                  const groupedQuestions = {};
+                  const typeLabels = {
+                    'reading_comprehension': 'Reading Comprehension',
+                    'multiple_choice': 'Multiple Choice',
+                    'drag_drop_single': 'Drag & Drop',
+                    'drag_drop_dual': 'Drag & Drop (Dual Pane)',
+                    'inline_dropdown_separate': 'Fill in the Blanks',
+                    'inline_dropdown_same': 'Fill in the Blanks',
+                    'matching_list_dual': 'Matching List'
+                  };
 
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setCurrentIndex(idx);
-                        setOverviewOpen(false);
-                      }}
-                      className={cn(
-                        "w-full p-4 rounded-lg border-2 text-left transition-all flex items-center justify-between group",
-                        isCurrent && "border-indigo-500 bg-indigo-50",
-                        !isCurrent && isAnswered && "border-emerald-200 bg-emerald-50/50 hover:border-emerald-300",
-                        !isCurrent && !isAnswered && "border-slate-200 hover:border-slate-300"
-                      )}
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm",
-                          isCurrent && "bg-indigo-600 text-white",
-                          !isCurrent && isAnswered && "bg-emerald-500 text-white",
-                          !isCurrent && !isAnswered && "bg-slate-200 text-slate-600"
-                        )}>
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-slate-800 text-sm line-clamp-1">
-                            {q.isSubQuestion 
-                              ? q.subQuestion.question?.replace(/<[^>]*>/g, '').substring(0, 60) + '...'
-                              : q.question?.replace(/<[^>]*>/g, '').substring(0, 60) + '...'}
+                  questions.forEach((q, idx) => {
+                    const type = q.type;
+                    if (!groupedQuestions[type]) {
+                      groupedQuestions[type] = [];
+                    }
+                    groupedQuestions[type].push({ question: q, index: idx });
+                  });
+
+                  return Object.entries(groupedQuestions).map(([type, items]) => {
+                    // Check if this is a reading comp group
+                    const isReadingComp = type === 'reading_comprehension';
+                    let parentGroups = {};
+                    
+                    if (isReadingComp) {
+                      // Group by parent ID
+                      items.forEach(item => {
+                        const parentId = item.question.parentId || 'standalone';
+                        if (!parentGroups[parentId]) {
+                          parentGroups[parentId] = [];
+                        }
+                        parentGroups[parentId].push(item);
+                      });
+                    }
+
+                    return (
+                      <div key={type} className="space-y-2">
+                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                          {typeLabels[type]}
+                        </h3>
+                        
+                        {isReadingComp ? (
+                          // Show grouped reading comp questions
+                          Object.entries(parentGroups).map(([parentId, parentItems]) => (
+                            <div key={parentId} className="flex flex-wrap gap-2">
+                              {parentItems.map(({ question: q, index: idx }) => {
+                                const isAnswered = answers[idx] !== undefined;
+                                const isFlagged = flaggedQuestions.has(idx);
+                                const isCurrent = idx === currentIndex;
+                                
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      setCurrentIndex(idx);
+                                      setOverviewOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
+                                      isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
+                                      !isCurrent && isAnswered && isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                                      !isCurrent && isAnswered && !isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                                      !isCurrent && !isAnswered && isFlagged && "bg-amber-400 text-white border-amber-400",
+                                      !isCurrent && !isAnswered && !isFlagged && "bg-slate-200 text-slate-600 border-slate-300"
+                                    )}
+                                  >
+                                    {idx + 1}
+                                    {isFlagged && (
+                                      <Flag className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 fill-current" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ))
+                        ) : (
+                          // Show questions horizontally for other types
+                          <div className="flex flex-wrap gap-2">
+                            {items.map(({ question: q, index: idx }) => {
+                              const isAnswered = answers[idx] !== undefined;
+                              const isFlagged = flaggedQuestions.has(idx);
+                              const isCurrent = idx === currentIndex;
+                              
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setCurrentIndex(idx);
+                                    setOverviewOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
+                                    isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
+                                    !isCurrent && isAnswered && isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                                    !isCurrent && isAnswered && !isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                                    !isCurrent && !isAnswered && isFlagged && "bg-amber-400 text-white border-amber-400",
+                                    !isCurrent && !isAnswered && !isFlagged && "bg-slate-200 text-slate-600 border-slate-300"
+                                  )}
+                                >
+                                  {idx + 1}
+                                  {isFlagged && (
+                                    <Flag className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 fill-current" />
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
-                            {q.type === 'reading_comprehension' && 'Reading Comprehension'}
-                            {q.type === 'multiple_choice' && 'Multiple Choice'}
-                            {q.type === 'drag_drop_single' && 'Drag & Drop'}
-                            {q.type === 'drag_drop_dual' && 'Drag & Drop (Dual Pane)'}
-                            {q.type === 'inline_dropdown_separate' && 'Fill in the Blanks'}
-                            {q.type === 'inline_dropdown_same' && 'Fill in the Blanks'}
-                            {q.type === 'matching_list_dual' && 'Matching List'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isFlagged && (
-                          <Flag className="w-5 h-5 text-amber-500 fill-current" />
-                        )}
-                        {isAnswered && !isCurrent && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         )}
                       </div>
-                    </button>
-                  );
-                })}
+                    );
+                  });
+                })()}
+                
+                <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-indigo-600"></div>
+                    <span>Current</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-emerald-500"></div>
+                    <span>Answered</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-amber-400"></div>
+                    <span>Flagged</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-slate-200"></div>
+                    <span>Not Started</span>
+                  </div>
+                </div>
               </div>
             </DialogContent>
           </Dialog>

@@ -54,9 +54,9 @@ export default function DragDropDualQuestion({
     };
   }, [isDragging]);
 
-  const handleDragStart = (e, item) => {
+  const handleDragStart = (e, item, fromZone = null) => {
     if (showResults) return;
-    setDraggedItem(item);
+    setDraggedItem({ item, fromZone });
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -70,10 +70,35 @@ export default function DragDropDualQuestion({
     e.preventDefault();
     
     if (draggedItem) {
-      onAnswer({
-        ...selectedAnswers,
-        [zoneId]: draggedItem
-      });
+      const newAnswers = { ...selectedAnswers };
+      
+      // Remove from previous zone if it was in one
+      if (draggedItem.fromZone) {
+        delete newAnswers[draggedItem.fromZone];
+      } else {
+        // Remove from any other zone if exists
+        Object.keys(newAnswers).forEach(key => {
+          if (newAnswers[key] === draggedItem.item) {
+            delete newAnswers[key];
+          }
+        });
+      }
+      
+      // Add to new zone
+      newAnswers[zoneId] = draggedItem.item;
+      onAnswer(newAnswers);
+      setDraggedItem(null);
+    }
+  };
+
+  const handleDropToAvailable = (e) => {
+    if (showResults) return;
+    e.preventDefault();
+    
+    if (draggedItem && draggedItem.fromZone) {
+      const newAnswers = { ...selectedAnswers };
+      delete newAnswers[draggedItem.fromZone];
+      onAnswer(newAnswers);
       setDraggedItem(null);
     }
   };
@@ -151,18 +176,24 @@ export default function DragDropDualQuestion({
           {/* Available Options */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-slate-600">Drag from here:</h3>
-            <div className="flex flex-wrap gap-2">
+            <div 
+              className="flex flex-wrap gap-2 min-h-[60px]"
+              onDragOver={handleDragOver}
+              onDrop={handleDropToAvailable}
+            >
               {availableOptions.map((option, idx) => (
                 <motion.div
                   key={idx}
                   draggable={!showResults}
-                  onDragStart={(e) => handleDragStart(e, option)}
+                  onDragStart={(e) => handleDragStart(e, option, null)}
+                  onDragEnd={() => setDraggedItem(null)}
                   className={cn(
-                    "px-4 py-2 bg-white border-2 border-slate-300 rounded-lg cursor-move",
+                    "px-4 py-2 bg-white border-2 border-slate-300 rounded-lg cursor-grab active:cursor-grabbing flex items-center gap-2",
                     "hover:border-indigo-400 hover:shadow-md transition-all",
                     showResults && "opacity-50 cursor-not-allowed"
                   )}
                 >
+                  <GripVertical className="w-4 h-4 text-slate-400" />
                   {option}
                 </motion.div>
               ))}
@@ -197,7 +228,16 @@ export default function DragDropDualQuestion({
                   </div>
                   
                   {droppedItem && (
-                    <div className="mt-2 px-3 py-2 bg-white border border-slate-300 rounded-lg inline-block">
+                    <div 
+                      className={cn(
+                        "mt-2 px-3 py-2 bg-white border border-slate-300 rounded-lg inline-flex items-center gap-2",
+                        !showResults && "cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                      )}
+                      draggable={!showResults}
+                      onDragStart={(e) => handleDragStart(e, droppedItem, zone.id)}
+                      onDragEnd={() => setDraggedItem(null)}
+                    >
+                      {!showResults && <GripVertical className="w-4 h-4 text-slate-400" />}
                       {droppedItem}
                     </div>
                   )}
