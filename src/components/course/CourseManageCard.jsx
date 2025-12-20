@@ -235,35 +235,38 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
           <Link to={createPageUrl(`CourseDetail?id=${course.id}`)} className="flex-1">
             <Button
               variant="outline"
-              className="w-full gap-2"
+              size="sm"
+              className="w-full gap-1.5"
             >
-              <ExternalLink className="w-4 h-4" />
-              Open
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="text-xs">Open</span>
             </Button>
           </Link>
           <Button
             onClick={() => onEdit(course)}
             variant="outline"
-            className="flex-1 gap-2"
+            size="sm"
+            className="flex-1 gap-1.5"
           >
-            <Edit className="w-4 h-4" />
-            Edit
+            <Edit className="w-3.5 h-3.5" />
+            <span className="text-xs">Edit</span>
           </Button>
           <Button
             onClick={() => onDuplicate(course)}
             variant="outline"
-            className="flex-1 gap-2"
+            size="sm"
+            className="flex-1 gap-1.5"
           >
-            <Copy className="w-4 h-4" />
-            Duplicate
+            <Copy className="w-3.5 h-3.5" />
+            <span className="text-xs">Copy</span>
           </Button>
           <Button
             onClick={() => onDelete(course.id)}
             variant="outline"
-            className="flex-1 gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
+            size="sm"
+            className="w-9 h-9 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
           >
             <Trash2 className="w-4 h-4" />
-            Delete
           </Button>
         </div>
       </div>

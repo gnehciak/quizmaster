@@ -66,7 +66,10 @@ export default function ManageCourses() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['courseCategories'],
-    queryFn: () => base44.entities.CourseCategory.list(),
+    queryFn: async () => {
+      const cats = await base44.entities.CourseCategory.list();
+      return cats.sort((a, b) => (a.order || 0) - (b.order || 0));
+    },
   });
 
   const saveMutation = useMutation({
