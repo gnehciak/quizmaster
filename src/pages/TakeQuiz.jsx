@@ -755,12 +755,19 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       const prompt = `You are a Year 6 teacher helping a student with a drag-and-drop exercise.
 
 **CRITICAL RULES:**
-1. Give contextual clues about what belongs in the gap labeled "${zone.label}"
-2. Explain what type of information fits (e.g., "starting sentence", "connecting sentence", "conclusion")
-3. If it's a sentence, mention connectives or opening words that might help (e.g., "Look for sentences that start with 'However' or 'In addition'")
-4. Do NOT reveal the actual answer: "${zone.correctAnswer}"
-5. If there's a passage, highlight relevant sections with <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>
-6. Return the ENTIRE passage text with highlights if applicable
+1. **Highlighting (if passage exists):** - Locate specific keywords, phrases, or sentences that give clues about what fits in "${zone.label}"
+   - Wrap EACH piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>
+   - Keep any existing formatting such as <strong>, <p>, <em> tags inside the highlighted sections
+   - You may highlight multiple separate sections if the clues are spread across the text
+2. **Text Integrity:** - You MUST return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure
+   - Do NOT summarize, truncate, or alter the non-highlighted text
+3. **Advice (2-3 sentences only):** - Explain what type of content fits (e.g., "starting sentence", "connecting sentence", "conclusion")
+   - Mention connectives or opening words if applicable (e.g., "Look for words like 'However' or 'In addition'")
+   - Do NOT reveal the actual answer: "${zone.correctAnswer}"
+4. **JSON Logic:**
+   - If there's a passage, use the [For passages] format with full highlighted content
+   - If no passage, use the [No passage] format
+   - Return valid raw JSON only
 
 **INPUT DATA:**
 Gap Label: ${zone.label}
@@ -772,13 +779,13 @@ ${passageContext}
 
 ${hasPassages ? `[For passages]
 {
-  "advice": "Explain what type of content fits in ${zone.label}. Give clues about sentence structure or connectives. Do NOT state the answer.",
+  "advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives. Do NOT state the answer.",
   "passages": [
-    {"passageId": "passage_id", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around relevant sections"}
+    {"passageId": "passage_id", "highlightedContent": "FULL COMPLETE passage text with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around clues/keywords"}
   ]
 }` : `[No passage]
 {
-  "advice": "Explain what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
+  "advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
 }`}`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
