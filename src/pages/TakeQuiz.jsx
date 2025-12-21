@@ -48,11 +48,8 @@ export default function TakeQuiz() {
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
   const [aiHelperOpen, setAiHelperOpen] = useState(false);
-  const [aiHelperStage, setAiHelperStage] = useState(1);
   const [aiHelperContent, setAiHelperContent] = useState('');
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
-  const [stageUnlockTime, setStageUnlockTime] = useState(null);
-  const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
   const [highlightedPassages, setHighlightedPassages] = useState({});
   const [aiHelperCache, setAiHelperCache] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
@@ -171,7 +168,6 @@ export default function TakeQuiz() {
       setAiHelperCache(prev => ({
         ...prev,
         [currentIndex]: {
-          stage: aiHelperStage,
           content: aiHelperContent,
           highlightedPassages
         }
@@ -180,7 +176,6 @@ export default function TakeQuiz() {
 
     // Reset AI helper when navigating
     setAiHelperOpen(false);
-    setStageUnlockTime(null);
 
     if (currentIndex < totalQuestions - 1) {
       const nextIndex = currentIndex + 1;
@@ -190,11 +185,9 @@ export default function TakeQuiz() {
       // Restore cached AI helper state for next question
       const cached = aiHelperCache[nextIndex];
       if (cached) {
-        setAiHelperStage(cached.stage);
         setAiHelperContent(cached.content);
         setHighlightedPassages(cached.highlightedPassages || {});
       } else {
-        setAiHelperStage(1);
         setAiHelperContent('');
         setHighlightedPassages({});
       }
@@ -214,7 +207,6 @@ export default function TakeQuiz() {
       setAiHelperCache(prev => ({
         ...prev,
         [currentIndex]: {
-          stage: aiHelperStage,
           content: aiHelperContent,
           highlightedPassages
         }
@@ -223,7 +215,6 @@ export default function TakeQuiz() {
 
     // Reset AI helper when navigating
     setAiHelperOpen(false);
-    setStageUnlockTime(null);
 
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
@@ -233,11 +224,9 @@ export default function TakeQuiz() {
       // Restore cached AI helper state for previous question
       const cached = aiHelperCache[prevIndex];
       if (cached) {
-        setAiHelperStage(cached.stage);
         setAiHelperContent(cached.content);
         setHighlightedPassages(cached.highlightedPassages || {});
       } else {
-        setAiHelperStage(1);
         setAiHelperContent('');
         setHighlightedPassages({});
       }
@@ -452,25 +441,9 @@ export default function TakeQuiz() {
     };
   };
 
-  // Stage unlock timer
-  useEffect(() => {
-    if (!stageUnlockTime) return;
 
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((stageUnlockTime - now) / 1000));
-      setSecondsUntilUnlock(remaining);
 
-      if (remaining === 0) {
-        clearInterval(interval);
-        setStageUnlockTime(null);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [stageUnlockTime]);
-
-  const getAiHelp = async (stage) => {
+  const getAiHelp = async () => {
     setAiHelperLoading(true);
 
     try {
@@ -504,37 +477,7 @@ export default function TakeQuiz() {
       const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
       const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
 
-      console.log('=== AI Helper Stage', stage, '===');
-      let prompt = '';
-      if (stage === 1) {
-        prompt = `You are a Year 6 teacher helping a student find evidence.
-  Tone: Simple, direct.
-  Rules:
-  1. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the broad section (3-5 sentences) that contains the answer.
-  2. Preserve ALL original HTML formatting and tags.
-  3. The 'advice' should tell them what to look for within the highlighted section.
-  4. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
-  5. Return valid JSON only. Do not use markdown formatting.
-
-  Input Data:
-  Question: ${questionText}
-  Passage(s): ${passageContext}
-  Options: ${optionsContext}
-
-  Output Format (JSON):${hasMultiplePassages ? `
-  {
-  "advice": "Teaching guidance about what to scan for in the texts (2-3 sentences).",
-  "passages": [
-    {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around relevant section"},
-    {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
-  ]
-  }` : `
-  {
-  "advice": "Teaching guidance about what to scan for in the text (2-3 sentences).",
-  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the relevant section"
-  }`}`;
-      } else if (stage === 2) {
-        prompt = `You are a Year 6 teacher revealing the answer.
+      const prompt = `You are a Year 6 teacher revealing the answer.
   Tone: Simple, direct.
   Rules:
   1. State the correct answer clearly in the advice.
@@ -554,15 +497,14 @@ export default function TakeQuiz() {
   {
   "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
   "passages": [
-    {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
-    {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
+  {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
+  {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
   ]
   }` : `
   {
   "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
   "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
   }`}`;
-      }
 
       console.log('AI Helper Prompt:', prompt);
 
@@ -605,14 +547,6 @@ export default function TakeQuiz() {
         setAiHelperContent(text);
         setHighlightedPassages({});
       }
-
-      setAiHelperStage(stage);
-
-      // Start 10 second timer if not at stage 2
-      if (stage < 2) {
-        setStageUnlockTime(Date.now() + 10000);
-        setSecondsUntilUnlock(10);
-      }
     } catch (e) {
       setAiHelperContent("Unable to generate help at this time. Please try again.");
     } finally {
@@ -625,11 +559,10 @@ export default function TakeQuiz() {
     // Check if we have cached content for this question
     const cached = aiHelperCache[currentIndex];
     if (cached) {
-      setAiHelperStage(cached.stage);
       setAiHelperContent(cached.content);
       setHighlightedPassages(cached.highlightedPassages || {});
     } else if (!aiHelperContent) {
-      getAiHelp(1);
+      getAiHelp();
     }
   };
 
@@ -1096,7 +1029,7 @@ export default function TakeQuiz() {
                 className="fixed right-24 top-1/2 -translate-y-1/2 w-96 max-h-[80vh] bg-white rounded-2xl shadow-2xl z-40 flex flex-col border border-slate-200"
               >
                 <div className="p-6 border-b border-slate-200">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-600" />
                       AI Helper
@@ -1108,32 +1041,6 @@ export default function TakeQuiz() {
                       <X className="w-5 h-5 text-slate-600" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
-                        aiHelperStage >= 1 ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-400"
-                      )}>
-                        {aiHelperStage >= 1 ? <CheckCircle2 className="w-5 h-5" /> : "1"}
-                      </div>
-                      <span className="text-xs font-medium text-slate-600">Hint</span>
-                    </div>
-                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-                      <div className={cn(
-                        "h-full bg-purple-600 transition-all",
-                        aiHelperStage >= 2 ? "w-full" : "w-0"
-                      )} />
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
-                        aiHelperStage >= 2 ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-400"
-                      )}>
-                        {aiHelperStage >= 2 ? <CheckCircle2 className="w-5 h-5" /> : "2"}
-                      </div>
-                      <span className="text-xs font-medium text-slate-600">Answer</span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6">
@@ -1142,38 +1049,10 @@ export default function TakeQuiz() {
                       <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
                     </div>
                   ) : aiHelperContent ? (
-                    <div className="space-y-4">
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                          {aiHelperContent}
-                        </p>
-                      </div>
-
-                      {aiHelperStage < 2 && (
-                        <div className="text-center">
-                          {stageUnlockTime && secondsUntilUnlock > 0 ? (
-                            <div className="text-sm text-slate-500">
-                              <Clock className="w-4 h-4 inline-block mr-1" />
-                              Next help available in {secondsUntilUnlock}s
-                            </div>
-                          ) : (
-                            <Button
-                              onClick={() => getAiHelp(aiHelperStage + 1)}
-                              variant="outline"
-                              className="gap-2"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              Reveal Answer
-                            </Button>
-                          )}
-                        </div>
-                      )}
-
-                      {aiHelperStage === 2 && (
-                        <div className="text-center text-sm text-slate-500">
-                          This is the maximum level of help available.
-                        </div>
-                      )}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                        {aiHelperContent}
+                      </p>
                     </div>
                   ) : null}
                 </div>
