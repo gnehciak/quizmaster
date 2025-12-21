@@ -477,34 +477,33 @@ export default function TakeQuiz() {
       const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
       const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
 
-      const prompt = `You are a Year 6 teacher revealing the answer.
-  Tone: Simple, direct.
-  Rules:
-  1. State the correct answer clearly in the advice.
-  2. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the SPECIFIC sentence/phrase that proves the answer.
-  3. Preserve ALL original HTML formatting and tags.
-  4. The 'advice' must explain the link between the highlighted text and the correct option.
-  5. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
-  6. Return valid JSON only. Do not use markdown formatting.
+      const prompt = `You are a Year 6 teacher helping a student understand the evidence.
+      Tone: Simple, direct.
+      Rules:
+      1. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the SPECIFIC sentence/phrase that proves the answer.
+      2. Preserve ALL original HTML formatting and tags.
+      3. The 'advice' must explain why the highlighted text supports the correct answer. DO NOT state what the correct answer is.
+      4. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
+      5. Return valid JSON only. Do not use markdown formatting.
 
-  Input Data:
-  Question: ${questionText}
-  Passage(s): ${passageContext}
-  Options: ${optionsContext}
-  Correct Answer: ${answerContext}
+      Input Data:
+      Question: ${questionText}
+      Passage(s): ${passageContext}
+      Options: ${optionsContext}
+      Correct Answer: ${answerContext}
 
-  Output Format (JSON):${hasMultiplePassages ? `
-  {
-  "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
-  "passages": [
-  {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
-  {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
-  ]
-  }` : `
-  {
-  "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
-  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
-  }`}`;
+      Output Format (JSON):${hasMultiplePassages ? `
+      {
+      "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+      "passages": [
+      {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
+      {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
+      ]
+      }` : `
+      {
+      "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+      "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+      }`}`;
 
       console.log('AI Helper Prompt:', prompt);
 
