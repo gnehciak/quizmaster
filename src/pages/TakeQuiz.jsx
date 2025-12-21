@@ -790,32 +790,36 @@ ${hasPassages ? `[For passages]
   "advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
 }`}`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+console.log('Drop Zone Help Prompt:', prompt);
 
-      let advice = text;
-      let passages = {};
-      
-      try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          advice = parsed.advice || text;
+const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+const result = await model.generateContent(prompt);
+const response = await result.response;
+const text = response.text();
 
-          if (parsed.passages && Array.isArray(parsed.passages)) {
-            parsed.passages.forEach(p => {
-              if (p.passageId && p.highlightedContent) {
-                passages[p.passageId] = p.highlightedContent;
-              }
-            });
-          }
+console.log('Drop Zone Help Response:', text);
+
+let advice = text;
+let passages = {};
+
+try {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    const parsed = JSON.parse(jsonMatch[0]);
+    advice = parsed.advice || text;
+
+    if (parsed.passages && Array.isArray(parsed.passages)) {
+      parsed.passages.forEach(p => {
+        if (p.passageId && p.highlightedContent) {
+          passages[p.passageId] = p.highlightedContent;
         }
-      } catch (e) {
-        console.error('Error parsing AI response:', e);
-      }
+      });
+    }
+  }
+} catch (e) {
+  console.error('Error parsing AI response:', e);
+}
 
       setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: advice }));
       setDropZoneHighlightedPassages(passages);
