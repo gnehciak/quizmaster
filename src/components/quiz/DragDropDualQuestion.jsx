@@ -230,9 +230,9 @@ export default function DragDropDualQuestion({
               const isWrong = showResults && droppedItem && droppedItem !== zone.correctAnswer;
               const tipId = `dropzone-${currentIndex}-${zone.id}`;
               const wasTipOpened = openedTips.has(tipId);
-              const canShowHelp = !showResults && onRequestHelp && (isAdmin || wasTipOpened || tipsUsed < tipsAllowed);
               const helpContent = aiHelperContent[zone.id];
               const isLoadingHelp = aiHelperLoading[zone.id];
+              const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
 
               return (
                 <div
@@ -250,8 +250,9 @@ export default function DragDropDualQuestion({
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-700">{zone.label}</span>
                     <div className="flex items-center gap-2">
-                      {canShowHelp && (
+                      {!showResults && onRequestHelp && (
                         <Popover onOpenChange={(open) => {
+                          if (isTipDisabled) return;
                           setActiveHelpZone(open ? zone.id : null);
                           if (!helpContent && open) onRequestHelp(zone.id);
                         }}>
@@ -260,6 +261,7 @@ export default function DragDropDualQuestion({
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0"
+                              disabled={isTipDisabled}
                             >
                               {isLoadingHelp ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />

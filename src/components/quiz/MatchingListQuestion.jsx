@@ -208,9 +208,9 @@ export default function MatchingListQuestion({
                 const isWrong = showResults && selectedAnswerItem && selectedAnswerItem !== q.correctAnswer;
                 const tipId = `matching-${currentIndex}-${q.id}`;
                 const wasTipOpened = openedTips.has(tipId);
-                const canShowHelp = !showResults && onRequestHelp && (isAdmin || wasTipOpened || tipsUsed < tipsAllowed);
                 const helpContent = aiHelperContent[q.id];
                 const isLoadingHelp = aiHelperLoading[q.id];
+                const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
 
                 return (
                   <div
@@ -228,8 +228,9 @@ export default function MatchingListQuestion({
                     />
                     
                     <div className="flex items-center gap-3 min-w-[200px]">
-                      {canShowHelp && (
+                      {!showResults && onRequestHelp && (
                         <Popover onOpenChange={(open) => {
+                          if (isTipDisabled) return;
                           if (!helpContent && open) onRequestHelp(q.id);
                         }}>
                           <PopoverTrigger asChild>
@@ -237,6 +238,7 @@ export default function MatchingListQuestion({
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0"
+                              disabled={isTipDisabled}
                             >
                               {isLoadingHelp ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />

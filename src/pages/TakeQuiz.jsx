@@ -1397,7 +1397,7 @@ try {
         </div>
 
         {/* Question Counter & Tips */}
-        <div className="text-center flex items-center justify-center gap-3">
+        <div className="flex-1 flex items-center justify-center gap-3">
           <h2 className="text-xl font-semibold text-slate-800">
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
@@ -1526,9 +1526,10 @@ try {
               </div>
             </DialogContent>
           </Dialog>
-          </div>
+        </div>
 
         {/* Edit Quiz Button (Admin Only) */}
+        <div className="flex items-center">
         {user?.role === 'admin' && (
           <Link to={createPageUrl(`CreateQuiz?id=${quizId}`)}>
             <Button variant="outline" size="sm" className="gap-2">
@@ -1537,6 +1538,7 @@ try {
             </Button>
           </Link>
         )}
+        </div>
       </div>
 
       {/* Main Content */}
