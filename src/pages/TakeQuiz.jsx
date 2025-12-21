@@ -1638,7 +1638,7 @@ try {
 
           {/* Submit Confirmation Dialog */}
           <Dialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl">Confirm Submission</DialogTitle>
           </DialogHeader>
@@ -1647,9 +1647,31 @@ try {
               Are you sure you want to finish the test?
             </p>
 
-            <div className="space-y-2 text-sm text-slate-600">
-              <p>• Have you completed all questions?</p>
-              <p>• Have you reviewed all your answers?</p>
+            {/* Question Status Overview */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-700">Question Status:</h4>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <div className="text-2xl font-bold text-emerald-700">
+                      {questions.filter((_, idx) => answers[idx] !== undefined).length}
+                    </div>
+                    <div className="text-xs text-emerald-600">Answered</div>
+                  </div>
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <div className="text-2xl font-bold text-amber-700">
+                      {flaggedQuestions.size}
+                    </div>
+                    <div className="text-xs text-amber-600">Flagged</div>
+                  </div>
+                  <div className="p-2 bg-slate-200 rounded-lg">
+                    <div className="text-2xl font-bold text-slate-700">
+                      {questions.filter((_, idx) => answers[idx] === undefined).length}
+                    </div>
+                    <div className="text-xs text-slate-600">Unanswered</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {quiz?.timer_enabled && quiz?.timer_duration && (
