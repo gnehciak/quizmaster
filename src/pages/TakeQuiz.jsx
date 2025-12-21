@@ -882,129 +882,38 @@ export default function TakeQuiz() {
               <DialogHeader>
                 <DialogTitle>Quiz Overview</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6 mt-4">
-                {(() => {
-                  // Group questions by type
-                  const groupedQuestions = {};
-                  const typeLabels = {
-                    'reading_comprehension': 'Reading Comprehension',
-                    'multiple_choice': 'Multiple Choice',
-                    'drag_drop_single': 'Drag & Drop',
-                    'drag_drop_dual': 'Drag & Drop (Dual Pane)',
-                    'inline_dropdown_separate': 'Fill in the Blanks',
-                    'inline_dropdown_same': 'Fill in the Blanks',
-                    'matching_list_dual': 'Matching List'
-                  };
-
-                  questions.forEach((q, idx) => {
-                    const type = q.type;
-                    if (!groupedQuestions[type]) {
-                      groupedQuestions[type] = [];
-                    }
-                    groupedQuestions[type].push({ question: q, index: idx });
-                  });
-
-                  return Object.entries(groupedQuestions).map(([type, items]) => {
-                    // Check if this is a reading comp group
-                    const isReadingComp = type === 'reading_comprehension';
-                    let parentGroups = {};
-                    
-                    if (isReadingComp) {
-                      // Group by parent ID
-                      items.forEach(item => {
-                        const parentId = item.question.parentId || 'standalone';
-                        if (!parentGroups[parentId]) {
-                          parentGroups[parentId] = [];
-                        }
-                        parentGroups[parentId].push(item);
-                      });
-                    }
+              <div className="space-y-4 mt-4">
+                <div className="flex flex-wrap gap-2">
+                  {questions.map((q, idx) => {
+                    const isAnswered = answers[idx] !== undefined;
+                    const isFlagged = flaggedQuestions.has(idx);
+                    const isCurrent = idx === currentIndex;
 
                     return (
-                      <div key={type} className="space-y-2">
-                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                          {typeLabels[type]}
-                        </h3>
-                        
-                        {isReadingComp ? (
-                          // Show grouped reading comp questions
-                          Object.entries(parentGroups).map(([parentId, parentItems]) => (
-                            <div key={parentId} className="flex flex-wrap gap-2">
-                              {parentItems.map(({ question: q, index: idx }) => {
-                                const isAnswered = answers[idx] !== undefined;
-                                const isFlagged = flaggedQuestions.has(idx);
-                                const isCurrent = idx === currentIndex;
-                                
-                                return (
-                                  <button
-                                    key={idx}
-                                    onClick={() => {
-                                       setCurrentIndex(idx);
-                                      setOverviewOpen(false);
-
-                                      // Reset AI helper state
-                                      setAiHelperContent('');
-                                      setHighlightedPassages({});
-                                    }}
-                                    className={cn(
-                                      "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
-                                      isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
-                                      !isCurrent && isAnswered && isFlagged && "bg-emerald-500 text-white border-emerald-500",
-                                      !isCurrent && isAnswered && !isFlagged && "bg-emerald-500 text-white border-emerald-500",
-                                      !isCurrent && !isAnswered && isFlagged && "bg-amber-400 text-white border-amber-400",
-                                      !isCurrent && !isAnswered && !isFlagged && "bg-slate-200 text-slate-600 border-slate-300"
-                                    )}
-                                  >
-                                    {idx + 1}
-                                    {isFlagged && (
-                                      <Flag className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 fill-current" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          ))
-                        ) : (
-                          // Show questions horizontally for other types
-                          <div className="flex flex-wrap gap-2">
-                            {items.map(({ question: q, index: idx }) => {
-                              const isAnswered = answers[idx] !== undefined;
-                              const isFlagged = flaggedQuestions.has(idx);
-                              const isCurrent = idx === currentIndex;
-                              
-                              return (
-                                <button
-                                  key={idx}
-                                  onClick={() => {
-                                    setCurrentIndex(idx);
-                                    setOverviewOpen(false);
-
-                                    // Reset AI helper state
-                                    setAiHelperContent('');
-                                    setHighlightedPassages({});
-                                  }}
-                                  className={cn(
-                                    "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
-                                    isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
-                                    !isCurrent && isAnswered && isFlagged && "bg-emerald-500 text-white border-emerald-500",
-                                    !isCurrent && isAnswered && !isFlagged && "bg-emerald-500 text-white border-emerald-500",
-                                    !isCurrent && !isAnswered && isFlagged && "bg-amber-400 text-white border-amber-400",
-                                    !isCurrent && !isAnswered && !isFlagged && "bg-slate-200 text-slate-600 border-slate-300"
-                                  )}
-                                >
-                                  {idx + 1}
-                                  {isFlagged && (
-                                    <Flag className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 fill-current" />
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setCurrentIndex(idx);
+                          setOverviewOpen(false);
+                          setAiHelperContent('');
+                          setHighlightedPassages({});
+                        }}
+                        className={cn(
+                          "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
+                          isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
+                          !isCurrent && isAnswered && isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                          !isCurrent && isAnswered && !isFlagged && "bg-emerald-500 text-white border-emerald-500",
+                          !isCurrent && !isAnswered && isFlagged && "bg-amber-400 text-white border-amber-400",
+                          !isCurrent && !isAnswered && !isFlagged && "bg-slate-200 text-slate-600 border-slate-300"
                         )}
-                      </div>
+                      >
+                        {idx + 1}
+                        {isFlagged && (
+                          <Flag className="w-3 h-3 absolute -top-1 -right-1 text-amber-500 fill-current" />
+                        )}
+                      </button>
                     );
-                  });
-                })()}
+                  })}
                 
                 <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
                   <div className="flex items-center gap-2">
