@@ -158,6 +158,12 @@ export default function TakeQuiz() {
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
     
+    // Reset AI helper when navigating
+    setAiHelperOpen(false);
+    setAiHelperStage(1);
+    setAiHelperContent('');
+    setStageUnlockTime(null);
+    
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(prev => prev + 1);
       setQuestionStartTime(Date.now());
@@ -171,6 +177,12 @@ export default function TakeQuiz() {
       ...prev,
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
+    
+    // Reset AI helper when navigating
+    setAiHelperOpen(false);
+    setAiHelperStage(1);
+    setAiHelperContent('');
+    setStageUnlockTime(null);
     
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
@@ -384,6 +396,92 @@ export default function TakeQuiz() {
       minutes: String(mins).padStart(2, '0'),
       seconds: String(secs).padStart(2, '0')
     };
+  };
+
+  // Stage unlock timer
+  useEffect(() => {
+    if (!stageUnlockTime) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((stageUnlockTime - now) / 1000));
+      setSecondsUntilUnlock(remaining);
+
+      if (remaining === 0) {
+        clearInterval(interval);
+        setStageUnlockTime(null);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [stageUnlockTime]);
+
+  const getAiHelp = async (stage) => {
+    setAiHelperLoading(true);
+    
+    try {
+      const q = currentQuestion;
+      let questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
+      questionText = questionText?.replace(/<[^>]*>/g, '');
+      
+      let passageContext = '';
+      if (q.passage || q.passages?.length > 0) {
+        if (q.passages?.length > 0) {
+          passageContext = '\n\nPassages:\n' + q.passages.map(p => 
+            `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+          ).join('\n\n');
+        } else {
+          passageContext = '\n\nPassage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+        }
+      }
+
+      let prompt = '';
+      if (stage === 1) {
+        prompt = `You are a helpful tutor assisting a student with a quiz question. Provide general guidance to help them think about the question without revealing the answer directly.
+
+Question: ${questionText}${passageContext}
+
+Provide a brief, encouraging hint (2-3 sentences) that guides their thinking:`;
+      } else if (stage === 2) {
+        prompt = `You are a helpful tutor. The student needs more help. If there's a passage, highlight which paragraph or section contains the answer. Otherwise, provide more specific guidance without revealing the answer.
+
+Question: ${questionText}${passageContext}
+
+${passageContext ? 'Point to the specific paragraph/section in the passage where they can find the answer (2-3 sentences):' : 'Provide more specific guidance (2-3 sentences):'}`;
+      } else if (stage === 3) {
+        prompt = `You are a helpful tutor. The student needs maximum help. Point to the exact sentence or detail that contains the answer, and explain the reasoning, but still don't directly state the final answer choice.
+
+Question: ${questionText}${passageContext}
+
+${passageContext ? 'Quote the specific sentence(s) from the passage and explain how it leads to the answer:' : 'Provide detailed guidance that nearly reveals the answer:'}`;
+      }
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setAiHelperContent(text);
+      setAiHelperStage(stage);
+      
+      // Start 10 second timer if not at stage 3
+      if (stage < 3) {
+        setStageUnlockTime(Date.now() + 10000);
+        setSecondsUntilUnlock(10);
+      }
+    } catch (e) {
+      setAiHelperContent("Unable to generate help at this time. Please try again.");
+    } finally {
+      setAiHelperLoading(false);
+    }
+  };
+
+  const handleAiHelperOpen = () => {
+    setAiHelperOpen(true);
+    if (!aiHelperContent) {
+      getAiHelp(1);
+    }
   };
 
   const renderQuestion = () => {
@@ -801,7 +899,7 @@ export default function TakeQuiz() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {!showResults && (
             <motion.div
@@ -817,7 +915,120 @@ export default function TakeQuiz() {
           )}
         </AnimatePresence>
 
+        {/* AI Helper Button */}
+        {!showResults && !submitted && (
+          <button
+            onClick={handleAiHelperOpen}
+            className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-br from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 z-20"
+            title="Need help?"
+          >
+            <Sparkles className="w-6 h-6" />
+          </button>
+        )}
 
+        {/* AI Helper Side Panel */}
+        <AnimatePresence>
+          {aiHelperOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setAiHelperOpen(false)}
+                className="fixed inset-0 bg-black/20 z-30"
+              />
+              <motion.div
+                initial={{ x: 400 }}
+                animate={{ x: 0 }}
+                exit={{ x: 400 }}
+                className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-40 flex flex-col"
+              >
+                <div className="p-6 border-b border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-600" />
+                      AI Helper
+                    </h3>
+                    <button
+                      onClick={() => setAiHelperOpen(false)}
+                      className="p-1 hover:bg-slate-100 rounded transition-colors"
+                    >
+                      <X className="w-5 h-5 text-slate-600" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                      aiHelperStage >= 1 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
+                    )}>1</div>
+                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div className={cn(
+                        "h-full bg-purple-600 transition-all",
+                        aiHelperStage >= 2 ? "w-full" : "w-0"
+                      )} />
+                    </div>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                      aiHelperStage >= 2 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
+                    )}>2</div>
+                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div className={cn(
+                        "h-full bg-purple-600 transition-all",
+                        aiHelperStage >= 3 ? "w-full" : "w-0"
+                      )} />
+                    </div>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                      aiHelperStage >= 3 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
+                    )}>3</div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6">
+                  {aiHelperLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                    </div>
+                  ) : aiHelperContent ? (
+                    <div className="space-y-4">
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                          {aiHelperContent}
+                        </p>
+                      </div>
+
+                      {aiHelperStage < 3 && (
+                        <div className="text-center">
+                          {stageUnlockTime && secondsUntilUnlock > 0 ? (
+                            <div className="text-sm text-slate-500">
+                              <Clock className="w-4 h-4 inline-block mr-1" />
+                              Next help available in {secondsUntilUnlock}s
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => getAiHelp(aiHelperStage + 1)}
+                              variant="outline"
+                              className="gap-2"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              Need More Help
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {aiHelperStage === 3 && (
+                        <div className="text-center text-sm text-slate-500">
+                          This is the maximum level of help available.
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Bottom Navigation */}
