@@ -443,23 +443,23 @@ export default function TakeQuiz() {
 
       let prompt = '';
       if (stage === 1) {
-        prompt = `You are a helpful tutor assisting a student with a quiz question. Provide general guidance to help them think about the question without revealing the answer directly.
+        prompt = `You are a friendly and helpful tutor assisting a Year 6 student (10-11 years old) with a quiz question. Use simple, clear language that a Year 6 student would understand. Provide general guidance to help them think about the question without revealing the answer directly.
 
 Question: ${questionText}${passageContext}
 
-Provide a brief, encouraging hint (2-3 sentences) that guides their thinking:`;
+Provide a brief, encouraging hint in simple language (2-3 sentences) that guides their thinking:`;
       } else if (stage === 2) {
-        prompt = `You are a helpful tutor. The student needs more help. If there's a passage, highlight which paragraph or section contains the answer. Otherwise, provide more specific guidance without revealing the answer.
+        prompt = `You are a friendly tutor helping a Year 6 student (10-11 years old). Use simple, clear language. The student needs more help. If there's a passage, tell them which paragraph or section to look at. Otherwise, provide more specific guidance without revealing the answer.
 
 Question: ${questionText}${passageContext}
 
-${passageContext ? 'Point to the specific paragraph/section in the passage where they can find the answer (2-3 sentences):' : 'Provide more specific guidance (2-3 sentences):'}`;
+${passageContext ? 'In simple language, tell them which paragraph or section in the passage has the answer (2-3 sentences):' : 'Provide more specific guidance in simple language (2-3 sentences):'}`;
       } else if (stage === 3) {
-        prompt = `You are a helpful tutor. The student needs maximum help. Point to the exact sentence or detail that contains the answer, and explain the reasoning, but still don't directly state the final answer choice.
+        prompt = `You are a friendly tutor helping a Year 6 student (10-11 years old). Use simple, clear language they can understand. The student needs maximum help. Point to the exact sentence or detail that contains the answer, and explain the reasoning simply, but still don't directly state the final answer choice.
 
 Question: ${questionText}${passageContext}
 
-${passageContext ? 'Quote the specific sentence(s) from the passage and explain how it leads to the answer:' : 'Provide detailed guidance that nearly reveals the answer:'}`;
+${passageContext ? 'In simple language, quote the specific sentence(s) from the passage and explain how it helps find the answer:' : 'In simple language, provide detailed guidance that nearly reveals the answer:'}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
