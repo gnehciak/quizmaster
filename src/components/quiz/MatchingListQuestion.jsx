@@ -33,13 +33,83 @@ export default function MatchingListQuestion({
     
     if (!textToHighlight) return text;
     
-    const cleanText = text.replace(/<[^>]*>/g, '');
-    const cleanHighlight = textToHighlight.trim();
+    // Clean both the passage text and highlight text (remove HTML tags and decode entities)
+    const cleanPassage = text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+    const cleanHighlight = textToHighlight.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
     
-    if (!cleanText.includes(cleanHighlight)) return text;
+    if (!cleanHighlight) return text;
     
-    const regex = new RegExp(`(${cleanHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    // Check if the cleaned highlight exists in the cleaned passage
+    if (!cleanPassage.toLowerCase().includes(cleanHighlight.toLowerCase())) {
+      console.log('Highlight not found in passage:', { cleanHighlight, cleanPassage: cleanPassage.substring(0, 200) });
+      return text;
+    }
+    
+    // Find the exact position in the clean text
+    const startIndex = cleanPassage.toLowerCase().indexOf(cleanHighlight.toLowerCase());
+    if (startIndex === -1) return text;
+    
+    const endIndex = startIndex + cleanHighlight.length;
+    
+    // Now find the corresponding position in the original HTML text
+    let currentCleanIndex = 0;
+    let currentHtmlIndex = 0;
+    let highlightStartHtml = -1;
+    let highlightEndHtml = -1;
+    
+    while (currentHtmlIndex < text.length && currentCleanIndex <= endIndex) {
+      // Check if we're at an HTML tag
+      if (text[currentHtmlIndex] === '<') {
+        const tagEnd = text.indexOf('>', currentHtmlIndex);
+        if (tagEnd !== -1) {
+          currentHtmlIndex = tagEnd + 1;
+          continue;
+        }
+      }
+      
+      // Check for HTML entities
+      if (text[currentHtmlIndex] === '&') {
+        const entityEnd = text.indexOf(';', currentHtmlIndex);
+        if (entityEnd !== -1) {
+          const entity = text.substring(currentHtmlIndex, entityEnd + 1);
+          if (entity === '&nbsp;' || entity === '&amp;' || entity === '&lt;' || entity === '&gt;' || entity === '&quot;') {
+            if (currentCleanIndex === startIndex) {
+              highlightStartHtml = currentHtmlIndex;
+            }
+            currentCleanIndex++;
+            currentHtmlIndex = entityEnd + 1;
+            if (currentCleanIndex === endIndex) {
+              highlightEndHtml = currentHtmlIndex;
+            }
+            continue;
+          }
+        }
+      }
+      
+      // Regular character
+      if (currentCleanIndex === startIndex) {
+        highlightStartHtml = currentHtmlIndex;
+      }
+      currentCleanIndex++;
+      currentHtmlIndex++;
+      if (currentCleanIndex === endIndex) {
+        highlightEndHtml = currentHtmlIndex;
+      }
+    }
+    
+    if (highlightStartHtml === -1 || highlightEndHtml === -1) {
+      // Fallback to simple replacement
+      const escapedHighlight = cleanHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedHighlight})`, 'gi');
+      return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    }
+    
+    // Insert highlight marks
+    return text.substring(0, highlightStartHtml) + 
+           '<mark class="bg-yellow-200 px-1 rounded">' + 
+           text.substring(highlightStartHtml, highlightEndHtml) + 
+           '</mark>' + 
+           text.substring(highlightEndHtml);
   };
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
