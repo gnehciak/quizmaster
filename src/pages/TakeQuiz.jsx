@@ -490,10 +490,10 @@ export default function TakeQuiz() {
       if (q.passage || q.passages?.length > 0) {
         if (q.passages?.length > 0) {
           passageContext = '\n\nPassages:\n' + q.passages.map(p => 
-            `[${p.id}] ${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+            `[${p.id}] ${p.title}:\n${p.content}`
           ).join('\n\n');
         } else {
-          passageContext = '\n\nPassage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+          passageContext = '\n\nPassage:\n' + q.passage;
         }
       }
 
@@ -510,7 +510,7 @@ export default function TakeQuiz() {
 Tone: Simple, direct.
 Rules:
 1. Identify the specific paragraph or section (3-5 sentences) that contains the answer.
-2. The highlighted text must be an EXACT copy-paste from the passage(s). Do not summarize or alter it.
+2. The highlighted text must be an EXACT copy-paste from the passage(s). Copy it EXACTLY as written, including ALL punctuation, HTML tags like <p>, </p>, <em>, </em>, special characters, and line breaks. Do not clean up, summarize, or alter it in any way.
 3. The 'advice' should tell them what to look for within this section.
 4. ${hasMultiplePassages ? 'If the answer requires evidence from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
 5. Return valid JSON only. Do not use markdown formatting.
@@ -524,13 +524,13 @@ Output Format (JSON):${hasMultiplePassages ? `
 {
   "advice": "Teaching guidance about what to scan for in the texts (2-3 sentences).",
   "highlights": [
-    {"passageId": "passage_123", "text": "The exact broad section from first passage"},
-    {"passageId": "passage_456", "text": "The exact broad section from second passage (if needed)"}
+    {"passageId": "passage_123", "text": "The exact broad section from first passage - COPY EXACTLY INCLUDING HTML TAGS"},
+    {"passageId": "passage_456", "text": "The exact broad section from second passage (if needed) - COPY EXACTLY INCLUDING HTML TAGS"}
   ]
 }` : `
 {
   "advice": "Teaching guidance about what to scan for in the text below (2-3 sentences).",
-  "highlightText": "The exact broad section text from the passage."
+  "highlightText": "The exact broad section text from the passage - COPY EXACTLY INCLUDING HTML TAGS."
 }`}`;
       } else if (stage === 2) {
         prompt = `You are a Year 6 teacher revealing the answer.
@@ -538,7 +538,7 @@ Tone: Simple, direct.
 Rules:
 1. State the correct answer clearly.
 2. Identify the SPECIFIC sentence or phrase that proves the answer.
-3. The highlighted text must be an EXACT copy-paste of that specific sentence/phrase from the passage(s).
+3. The highlighted text must be an EXACT copy-paste of that specific sentence/phrase from the passage(s). Copy it EXACTLY as written, including ALL punctuation, HTML tags like <p>, </p>, <em>, </em>, special characters, and line breaks. Do not clean up, summarize, or alter it in any way.
 4. The 'advice' must explain the link between the text and the correct option.
 5. ${hasMultiplePassages ? 'If evidence is needed from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
 6. Return valid JSON only. Do not use markdown formatting.
@@ -553,13 +553,13 @@ Output Format (JSON):${hasMultiplePassages ? `
 {
   "advice": "The correct answer is [Option]. Explain simply why these sentences prove the answer (2-3 sentences).",
   "highlights": [
-    {"passageId": "passage_123", "text": "The specific sentence from first passage"},
-    {"passageId": "passage_456", "text": "The specific sentence from second passage (if needed)"}
+    {"passageId": "passage_123", "text": "The specific sentence from first passage - COPY EXACTLY INCLUDING HTML TAGS"},
+    {"passageId": "passage_456", "text": "The specific sentence from second passage (if needed) - COPY EXACTLY INCLUDING HTML TAGS"}
   ]
 }` : `
 {
   "advice": "The correct answer is [Option]. Explain simply why this sentence proves the answer (2-3 sentences).",
-  "highlightText": "The specific sentence or phrase from the text."
+  "highlightText": "The specific sentence or phrase from the text - COPY EXACTLY INCLUDING HTML TAGS."
 }`}`;
       }
 
