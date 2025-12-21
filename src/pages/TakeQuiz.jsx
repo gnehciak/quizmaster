@@ -581,6 +581,7 @@ export default function TakeQuiz() {
           highlightedPassages={highlightedPassages}
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
+          onRequestHelp={handleAiHelperOpen}
         />
       );
     }
@@ -976,20 +977,7 @@ export default function TakeQuiz() {
               </div>
             </DialogContent>
           </Dialog>
-          
-          {/* AI Helper Button - Only for reading comprehension */}
-          {!showResults && !submitted && currentQuestion?.type === 'reading_comprehension' && (
-            <Button
-              onClick={handleAiHelperOpen}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              I need help
-            </Button>
-          )}
-        </div>
+          </div>
 
         {/* Logo/Brand Space */}
         <div className="w-20"></div>

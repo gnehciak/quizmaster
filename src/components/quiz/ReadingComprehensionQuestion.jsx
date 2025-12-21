@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
   question, 
@@ -13,7 +14,8 @@ export default function ReadingComprehensionQuestion({
   subQuestion = null,
   highlightedPassages = {},
   aiHelperContent = '',
-  aiHelperLoading = false
+  aiHelperLoading = false,
+  onRequestHelp = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -196,6 +198,18 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-blue-800 prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: subQuestion.explanation }}
                   />
+                </div>
+              )}
+
+              {!showResults && onRequestHelp && !aiHelperContent && !aiHelperLoading && (
+                <div className="mt-4">
+                  <Button
+                    onClick={onRequestHelp}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    I need help
+                  </Button>
                 </div>
               )}
 
