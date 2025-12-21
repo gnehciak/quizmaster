@@ -544,31 +544,31 @@ export default function TakeQuiz() {
   };
 
   const handleAiHelperOpen = async () => {
-    // Load stored tips from quiz
+    // Check if tip exists
     const tipData = quiz?.ai_helper_tips?.[currentIndex];
     if (tipData) {
+      // Load existing tip
       setAiHelperContent(tipData.advice);
       setHighlightedPassages(tipData.passages || {});
-      
-      // Increment tips used
-      const newTipsUsed = tipsUsed + 1;
-      setTipsUsed(newTipsUsed);
-      
-      // Save to attempt
-      if (currentAttemptId) {
-        try {
-          await base44.entities.QuizAttempt.update(currentAttemptId, {
-            tips_used: newTipsUsed
-          });
-        } catch (err) {
-          console.error('Failed to update tips used:', err);
-        }
+    } else {
+      // Generate new tip
+      await getAiHelp(false);
+    }
+    
+    // Increment tips used
+    const newTipsUsed = tipsUsed + 1;
+    setTipsUsed(newTipsUsed);
+    
+    // Save to attempt
+    if (currentAttemptId) {
+      try {
+        await base44.entities.QuizAttempt.update(currentAttemptId, {
+          tips_used: newTipsUsed
+        });
+      } catch (err) {
+        console.error('Failed to update tips used:', err);
       }
     }
-  };
-
-  const handleGenerateAiHelp = () => {
-    getAiHelp(false);
   };
 
   const handleRegenerateAiHelp = () => {
@@ -592,7 +592,6 @@ export default function TakeQuiz() {
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
           onRequestHelp={quiz?.allow_tips ? handleAiHelperOpen : null}
-          onGenerateHelp={handleGenerateAiHelp}
           onRegenerateHelp={handleRegenerateAiHelp}
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}

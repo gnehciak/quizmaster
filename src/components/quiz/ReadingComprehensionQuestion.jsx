@@ -16,7 +16,6 @@ export default function ReadingComprehensionQuestion({
   aiHelperContent = '',
   aiHelperLoading = false,
   onRequestHelp = null,
-  onGenerateHelp = null,
   onRegenerateHelp = null,
   isAdmin = false,
   tipsAllowed = 999,
@@ -206,33 +205,21 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
-              {!showResults && !aiHelperLoading && !aiHelperContent && (
-                <div className="mt-4 flex gap-2">
-                  {onRequestHelp && (
-                    <Button
-                      onClick={onRequestHelp}
-                      disabled={tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      I need help
-                      {tipsAllowed !== 999 && (
-                        <span className="ml-2 text-xs opacity-90">
-                          ({tipsAllowed - tipsUsed} left)
-                        </span>
-                      )}
-                    </Button>
-                  )}
-                  {isAdmin && onGenerateHelp && (
-                    <Button
-                      onClick={onGenerateHelp}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      AI Generate Tip
-                    </Button>
-                  )}
+              {!showResults && !aiHelperLoading && !aiHelperContent && onRequestHelp && (
+                <div className="mt-4">
+                  <Button
+                    onClick={onRequestHelp}
+                    disabled={tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    I need help
+                    {tipsAllowed !== 999 && (
+                      <span className="ml-2 text-xs opacity-90">
+                        ({tipsAllowed - tipsUsed} left)
+                      </span>
+                    )}
+                  </Button>
                 </div>
               )}
 
