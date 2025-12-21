@@ -173,6 +173,8 @@ export default function TakeQuiz() {
       // Reset AI helper state
       setAiHelperContent('');
       setHighlightedPassages({});
+      setBlankHelperContent({});
+      setBlankHelperLoading({});
     }
   };
 
@@ -192,6 +194,8 @@ export default function TakeQuiz() {
       // Reset AI helper state
       setAiHelperContent('');
       setHighlightedPassages({});
+      setBlankHelperContent({});
+      setBlankHelperLoading({});
     }
   };
 
