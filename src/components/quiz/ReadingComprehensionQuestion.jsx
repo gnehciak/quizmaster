@@ -18,7 +18,9 @@ export default function ReadingComprehensionQuestion({
   onRequestHelp = null,
   onGenerateHelp = null,
   onRegenerateHelp = null,
-  isAdmin = false
+  isAdmin = false,
+  tipsAllowed = 999,
+  tipsUsed = 0
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -209,10 +211,16 @@ export default function ReadingComprehensionQuestion({
                   {onRequestHelp && (
                     <Button
                       onClick={onRequestHelp}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
+                      disabled={tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Sparkles className="w-4 h-4" />
                       I need help
+                      {tipsAllowed !== 999 && (
+                        <span className="ml-2 text-xs opacity-90">
+                          ({tipsAllowed - tipsUsed} left)
+                        </span>
+                      )}
                     </Button>
                   )}
                   {isAdmin && onGenerateHelp && (

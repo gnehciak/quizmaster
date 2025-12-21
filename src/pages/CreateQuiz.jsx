@@ -45,6 +45,8 @@ export default function CreateQuiz() {
     status: 'draft',
     timer_enabled: false,
     timer_duration: 30,
+    allow_tips: false,
+    tips_allowed: 999,
     questions: []
   });
   

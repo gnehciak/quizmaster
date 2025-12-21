@@ -51,6 +51,7 @@ export default function TakeQuiz() {
   const [aiHelperContent, setAiHelperContent] = useState('');
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [highlightedPassages, setHighlightedPassages] = useState({});
+  const [tipsUsed, setTipsUsed] = useState(0);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -167,15 +168,9 @@ export default function TakeQuiz() {
       setCurrentIndex(nextIndex);
       setQuestionStartTime(Date.now());
 
-      // Load AI helper for next question if it exists
-      const tipData = quiz?.ai_helper_tips?.[nextIndex];
-      if (tipData) {
-        setAiHelperContent(tipData.advice);
-        setHighlightedPassages(tipData.passages || {});
-      } else {
-        setAiHelperContent('');
-        setHighlightedPassages({});
-      }
+      // Reset AI helper state
+      setAiHelperContent('');
+      setHighlightedPassages({});
     }
   };
 
@@ -192,15 +187,9 @@ export default function TakeQuiz() {
       setCurrentIndex(prevIndex);
       setQuestionStartTime(Date.now());
 
-      // Load AI helper for previous question if it exists
-      const tipData = quiz?.ai_helper_tips?.[prevIndex];
-      if (tipData) {
-        setAiHelperContent(tipData.advice);
-        setHighlightedPassages(tipData.passages || {});
-      } else {
-        setAiHelperContent('');
-        setHighlightedPassages({});
-      }
+      // Reset AI helper state
+      setAiHelperContent('');
+      setHighlightedPassages({});
     }
   };
 
@@ -220,16 +209,10 @@ export default function TakeQuiz() {
         score: 0,
         total: getTotalPoints(),
         percentage: 0,
-        time_taken: 0
+        time_taken: 0,
+        tips_used: 0
       });
       setCurrentAttemptId(newAttempt.id);
-      
-      // Load AI helper tips from quiz if available
-      const tipData = quiz?.ai_helper_tips?.[currentIndex];
-      if (tipData) {
-        setAiHelperContent(tipData.advice);
-        setHighlightedPassages(tipData.passages || {});
-      }
     } catch (e) {
       console.error('Failed to create attempt:', e);
     }
@@ -560,12 +543,27 @@ export default function TakeQuiz() {
     }
   };
 
-  const handleAiHelperOpen = () => {
+  const handleAiHelperOpen = async () => {
     // Load stored tips from quiz
     const tipData = quiz?.ai_helper_tips?.[currentIndex];
     if (tipData) {
       setAiHelperContent(tipData.advice);
       setHighlightedPassages(tipData.passages || {});
+      
+      // Increment tips used
+      const newTipsUsed = tipsUsed + 1;
+      setTipsUsed(newTipsUsed);
+      
+      // Save to attempt
+      if (currentAttemptId) {
+        try {
+          await base44.entities.QuizAttempt.update(currentAttemptId, {
+            tips_used: newTipsUsed
+          });
+        } catch (err) {
+          console.error('Failed to update tips used:', err);
+        }
+      }
     }
   };
 
@@ -593,10 +591,12 @@ export default function TakeQuiz() {
           highlightedPassages={highlightedPassages}
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
-          onRequestHelp={handleAiHelperOpen}
+          onRequestHelp={quiz?.allow_tips ? handleAiHelperOpen : null}
           onGenerateHelp={handleGenerateAiHelp}
           onRegenerateHelp={handleRegenerateAiHelp}
           isAdmin={user?.role === 'admin'}
+          tipsAllowed={quiz?.tips_allowed || 999}
+          tipsUsed={tipsUsed}
         />
       );
     }
@@ -915,15 +915,9 @@ export default function TakeQuiz() {
                                        setCurrentIndex(idx);
                                       setOverviewOpen(false);
 
-                                      // Load AI helper for selected question if it exists
-                                      const tipData = quiz?.ai_helper_tips?.[idx];
-                                      if (tipData) {
-                                        setAiHelperContent(tipData.advice);
-                                        setHighlightedPassages(tipData.passages || {});
-                                      } else {
-                                        setAiHelperContent('');
-                                        setHighlightedPassages({});
-                                      }
+                                      // Reset AI helper state
+                                      setAiHelperContent('');
+                                      setHighlightedPassages({});
                                     }}
                                     className={cn(
                                       "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
@@ -958,15 +952,9 @@ export default function TakeQuiz() {
                                     setCurrentIndex(idx);
                                     setOverviewOpen(false);
 
-                                    // Load AI helper for selected question if it exists
-                                    const tipData = quiz?.ai_helper_tips?.[idx];
-                                    if (tipData) {
-                                      setAiHelperContent(tipData.advice);
-                                      setHighlightedPassages(tipData.passages || {});
-                                    } else {
-                                      setAiHelperContent('');
-                                      setHighlightedPassages({});
-                                    }
+                                    // Reset AI helper state
+                                    setAiHelperContent('');
+                                    setHighlightedPassages({});
                                   }}
                                   className={cn(
                                     "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
