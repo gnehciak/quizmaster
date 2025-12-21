@@ -26,11 +26,12 @@ export default function InlineDropdownQuestion({
   // Parse text with blanks - format: "Text {{blank_id}} more text"
   const renderTextWithBlanks = () => {
     let text = question.textWithBlanks || "";
-    // Remove block-level HTML tags that cause line breaks
-    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, ' ');
-    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, ' ');
-    text = text.replace(/<br\s*\/?>/gi, ' ');
-    text = text.replace(/\s+/g, ' ').trim();
+    // Replace block-level HTML tags with spaces, but preserve actual newlines
+    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n');
+    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
+    text = text.replace(/<br\s*\/?>/gi, '\n');
+    // Clean up multiple consecutive spaces/tabs but keep newlines
+    text = text.replace(/[ \t]+/g, ' ');
     
     const parts = text.split(/(\{\{[^}]+\}\})/g);
     
@@ -103,7 +104,7 @@ export default function InlineDropdownQuestion({
       />
       
       <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
-        <div className="text-lg leading-loose text-slate-700 inline">
+        <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap">
           {renderTextWithBlanks()}
         </div>
       </div>
