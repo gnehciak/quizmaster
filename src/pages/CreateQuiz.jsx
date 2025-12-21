@@ -382,6 +382,40 @@ export default function CreateQuiz() {
                 </span>
               </div>
             </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="allow_tips"
+                checked={quiz.allow_tips || false}
+                onChange={(e) => setQuiz(prev => ({ ...prev, allow_tips: e.target.checked }))}
+                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+              />
+              <Label htmlFor="allow_tips" className="cursor-pointer">
+                Allow AI help tips during quiz
+              </Label>
+            </div>
+
+            {quiz.allow_tips && (
+              <div className="space-y-2 pl-7">
+                <Label>Tips Allowed</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="text"
+                    value={quiz.tips_allowed || 999}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setQuiz(prev => ({ ...prev, tips_allowed: value ? parseInt(value) : 999 }));
+                    }}
+                    placeholder="999"
+                    className="w-32"
+                  />
+                  <span className="text-sm text-slate-500">
+                    Set to 999 for unlimited tips
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
