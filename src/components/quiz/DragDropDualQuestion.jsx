@@ -285,17 +285,20 @@ export default function DragDropDualQuestion({
                                   className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                                   dangerouslySetInnerHTML={{ __html: helpContent }}
                                 />
-                                {highlightedPassages && highlightedPassages[activePassage?.id] && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full gap-2"
-                                    onClick={() => setActiveHelpZone(zone.id)}
-                                  >
-                                    <Sparkles className="w-4 h-4" />
-                                    Highlight
-                                  </Button>
-                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full gap-2"
+                                  onClick={() => {
+                                    console.log('Highlight clicked for zone:', zone.id);
+                                    console.log('highlightedPassages:', highlightedPassages);
+                                    console.log('activePassage?.id:', activePassage?.id);
+                                    setActiveHelpZone(zone.id);
+                                  }}
+                                >
+                                  <Sparkles className="w-4 h-4" />
+                                  {highlightedPassages && highlightedPassages[activePassage?.id] ? 'Show Highlights' : 'No Highlights Available'}
+                                </Button>
                               </div>
                             </PopoverContent>
                           )}
