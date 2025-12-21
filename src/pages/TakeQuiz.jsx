@@ -51,8 +51,6 @@ export default function TakeQuiz() {
   const [aiHelperContent, setAiHelperContent] = useState('');
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [highlightedPassages, setHighlightedPassages] = useState({});
-  const [aiHelperCache, setAiHelperCache] = useState({});
-  const [aiHelperData, setAiHelperData] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -164,30 +162,16 @@ export default function TakeQuiz() {
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
 
-    // Save current AI helper state to cache
-    if (aiHelperContent) {
-      setAiHelperCache(prev => ({
-        ...prev,
-        [currentIndex]: {
-          content: aiHelperContent,
-          highlightedPassages
-        }
-      }));
-    }
-
-    // Reset AI helper when navigating
-    setAiHelperOpen(false);
-
     if (currentIndex < totalQuestions - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       setQuestionStartTime(Date.now());
 
-      // Restore cached AI helper state for next question
-      const cached = aiHelperCache[nextIndex];
-      if (cached) {
-        setAiHelperContent(cached.content);
-        setHighlightedPassages(cached.highlightedPassages || {});
+      // Load AI helper for next question if it exists
+      const tipData = quiz?.ai_helper_tips?.[nextIndex];
+      if (tipData) {
+        setAiHelperContent(tipData.advice);
+        setHighlightedPassages(tipData.passages || {});
       } else {
         setAiHelperContent('');
         setHighlightedPassages({});
@@ -203,30 +187,16 @@ export default function TakeQuiz() {
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
 
-    // Save current AI helper state to cache
-    if (aiHelperContent) {
-      setAiHelperCache(prev => ({
-        ...prev,
-        [currentIndex]: {
-          content: aiHelperContent,
-          highlightedPassages
-        }
-      }));
-    }
-
-    // Reset AI helper when navigating
-    setAiHelperOpen(false);
-
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
       setQuestionStartTime(Date.now());
 
-      // Restore cached AI helper state for previous question
-      const cached = aiHelperCache[prevIndex];
-      if (cached) {
-        setAiHelperContent(cached.content);
-        setHighlightedPassages(cached.highlightedPassages || {});
+      // Load AI helper for previous question if it exists
+      const tipData = quiz?.ai_helper_tips?.[prevIndex];
+      if (tipData) {
+        setAiHelperContent(tipData.advice);
+        setHighlightedPassages(tipData.passages || {});
       } else {
         setAiHelperContent('');
         setHighlightedPassages({});
@@ -250,14 +220,15 @@ export default function TakeQuiz() {
         score: 0,
         total: getTotalPoints(),
         percentage: 0,
-        time_taken: 0,
-        ai_helper_tips: {}
+        time_taken: 0
       });
       setCurrentAttemptId(newAttempt.id);
       
-      // Load any existing AI helper tips
-      if (newAttempt.ai_helper_tips) {
-        setAiHelperData(newAttempt.ai_helper_tips);
+      // Load AI helper tips from quiz if available
+      const tipData = quiz?.ai_helper_tips?.[currentIndex];
+      if (tipData) {
+        setAiHelperContent(tipData.advice);
+        setHighlightedPassages(tipData.passages || {});
       }
     } catch (e) {
       console.error('Failed to create attempt:', e);
@@ -452,8 +423,8 @@ export default function TakeQuiz() {
 
   const getAiHelp = async (forceRegenerate = false) => {
     // Check if we already have AI help stored for this question
-    if (!forceRegenerate && aiHelperData[currentIndex]) {
-      const stored = aiHelperData[currentIndex];
+    if (!forceRegenerate && quiz?.ai_helper_tips?.[currentIndex]) {
+      const stored = quiz.ai_helper_tips[currentIndex];
       setAiHelperContent(stored.advice);
       setHighlightedPassages(stored.passages || {});
       return;
@@ -567,26 +538,20 @@ export default function TakeQuiz() {
       setAiHelperContent(advice);
       setHighlightedPassages(passages);
 
-      // Store in local state and save to database
+      // Save to quiz entity
       const helperData = { advice, passages };
-      setAiHelperData(prev => ({
-        ...prev,
-        [currentIndex]: helperData
-      }));
-
-      // Save to database if we have an attempt
-      if (currentAttemptId) {
-        try {
-          const existingData = aiHelperData || {};
-          await base44.entities.QuizAttempt.update(currentAttemptId, {
-            ai_helper_tips: {
-              ...existingData,
-              [currentIndex]: helperData
-            }
-          });
-        } catch (err) {
-          console.error('Failed to save AI helper data:', err);
-        }
+      try {
+        const existingTips = quiz?.ai_helper_tips || {};
+        await base44.entities.Quiz.update(quizId, {
+          ai_helper_tips: {
+            ...existingTips,
+            [currentIndex]: helperData
+          }
+        });
+        // Invalidate quiz query to refresh data
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      } catch (err) {
+        console.error('Failed to save AI helper data:', err);
       }
     } catch (e) {
       setAiHelperContent("Unable to generate help at this time. Please try again.");
@@ -596,11 +561,11 @@ export default function TakeQuiz() {
   };
 
   const handleAiHelperOpen = () => {
-    // Check if we have stored data for this question
-    if (aiHelperData[currentIndex]) {
-      const stored = aiHelperData[currentIndex];
-      setAiHelperContent(stored.advice);
-      setHighlightedPassages(stored.passages || {});
+    // Load stored tips from quiz
+    const tipData = quiz?.ai_helper_tips?.[currentIndex];
+    if (tipData) {
+      setAiHelperContent(tipData.advice);
+      setHighlightedPassages(tipData.passages || {});
     }
   };
 
@@ -947,26 +912,14 @@ export default function TakeQuiz() {
                                   <button
                                     key={idx}
                                     onClick={() => {
-                                      // Save current AI helper state before navigating
-                                      if (aiHelperContent) {
-                                        setAiHelperCache(prev => ({
-                                          ...prev,
-                                          [currentIndex]: {
-                                            content: aiHelperContent,
-                                            highlightedPassages
-                                          }
-                                        }));
-                                      }
-
-                                      setCurrentIndex(idx);
+                                       setCurrentIndex(idx);
                                       setOverviewOpen(false);
-                                      setAiHelperOpen(false);
 
-                                      // Restore cached AI helper state for selected question
-                                      const cached = aiHelperCache[idx];
-                                      if (cached) {
-                                        setAiHelperContent(cached.content);
-                                        setHighlightedPassages(cached.highlightedPassages || {});
+                                      // Load AI helper for selected question if it exists
+                                      const tipData = quiz?.ai_helper_tips?.[idx];
+                                      if (tipData) {
+                                        setAiHelperContent(tipData.advice);
+                                        setHighlightedPassages(tipData.passages || {});
                                       } else {
                                         setAiHelperContent('');
                                         setHighlightedPassages({});
@@ -1002,26 +955,14 @@ export default function TakeQuiz() {
                                 <button
                                   key={idx}
                                   onClick={() => {
-                                    // Save current AI helper state before navigating
-                                    if (aiHelperContent) {
-                                      setAiHelperCache(prev => ({
-                                        ...prev,
-                                        [currentIndex]: {
-                                          content: aiHelperContent,
-                                          highlightedPassages
-                                        }
-                                      }));
-                                    }
-
                                     setCurrentIndex(idx);
                                     setOverviewOpen(false);
-                                    setAiHelperOpen(false);
 
-                                    // Restore cached AI helper state for selected question
-                                    const cached = aiHelperCache[idx];
-                                    if (cached) {
-                                      setAiHelperContent(cached.content);
-                                      setHighlightedPassages(cached.highlightedPassages || {});
+                                    // Load AI helper for selected question if it exists
+                                    const tipData = quiz?.ai_helper_tips?.[idx];
+                                    if (tipData) {
+                                      setAiHelperContent(tipData.advice);
+                                      setHighlightedPassages(tipData.passages || {});
                                     } else {
                                       setAiHelperContent('');
                                       setHighlightedPassages({});
