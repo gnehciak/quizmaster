@@ -47,6 +47,12 @@ export default function TakeQuiz() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
+  const [aiHelperOpen, setAiHelperOpen] = useState(false);
+  const [aiHelperStage, setAiHelperStage] = useState(1);
+  const [aiHelperContent, setAiHelperContent] = useState('');
+  const [aiHelperLoading, setAiHelperLoading] = useState(false);
+  const [stageUnlockTime, setStageUnlockTime] = useState(null);
+  const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
