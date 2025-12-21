@@ -25,9 +25,13 @@ export default function InlineDropdownQuestion({
 
   // Parse text with blanks - format: "Text {{blank_id}} more text"
   const renderTextWithBlanks = () => {
-    const text = question.textWithBlanks || "";
-    // Remove HTML tags for parsing blanks
-    const cleanText = text.replace(/<[^>]*>/g, '');
+    let text = question.textWithBlanks || "";
+    // Remove block-level HTML tags that cause line breaks
+    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, ' ');
+    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, ' ');
+    text = text.replace(/<br\s*\/?>/gi, ' ');
+    text = text.replace(/\s+/g, ' ').trim();
+    
     const parts = text.split(/(\{\{[^}]+\}\})/g);
     
     return parts.map((part, idx) => {
