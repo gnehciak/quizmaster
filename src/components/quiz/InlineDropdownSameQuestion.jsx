@@ -26,10 +26,12 @@ export default function InlineDropdownSameQuestion({
 
   const renderTextWithDropdowns = () => {
     let text = question.textWithBlanks || '';
-    // Replace block-level HTML tags with newlines, preserving actual line breaks
+    // Replace block-level HTML tags with newlines
     text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n');
     text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
     text = text.replace(/<br\s*\/?>/gi, '\n');
+    // Clean up multiple consecutive newlines (more than 2)
+    text = text.replace(/\n{3,}/g, '\n\n');
     // Clean up multiple consecutive spaces/tabs but keep newlines
     text = text.replace(/[ \t]+/g, ' ');
     
