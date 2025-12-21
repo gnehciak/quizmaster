@@ -78,16 +78,57 @@ export default function Profile() {
     courseStats[attempt.course_id].push(attempt);
   });
 
+  // Group attempts by category
+  const categoryStats = {};
+  attempts.forEach(attempt => {
+    const course = courses.find(c => c.id === attempt.course_id);
+    const category = course?.category || 'Uncategorized';
+    if (!categoryStats[category]) {
+      categoryStats[category] = [];
+    }
+    categoryStats[category].push(attempt);
+  });
+
+  // Helper to calculate last 5 average
+  const calculateLast5Average = (attemptsArray) => {
+    if (attemptsArray.length === 0) return null;
+    const last5 = attemptsArray.slice(0, Math.min(5, attemptsArray.length));
+    return Math.round(last5.reduce((sum, a) => sum + a.percentage, 0) / last5.length);
+  };
+
   // Prepare chart data for each course
-  const chartData = Object.entries(courseStats).map(([courseId, courseAttempts]) => {
+  const courseChartData = Object.entries(courseStats).map(([courseId, courseAttempts]) => {
     const course = courses.find(c => c.id === courseId);
+    const sortedAttempts = [...courseAttempts].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+    const last5Avg = calculateLast5Average(courseAttempts);
+    
     return {
       courseName: course?.title || 'Unknown',
-      data: courseAttempts.slice(0, 10).reverse().map((attempt, idx) => ({
+      category: course?.category || 'Uncategorized',
+      data: sortedAttempts.slice(-10).map((attempt, idx) => ({
         attempt: `#${idx + 1}`,
         score: attempt.percentage,
-        date: new Date(attempt.created_date).toLocaleDateString()
-      }))
+        date: new Date(attempt.created_date).toLocaleDateString(),
+        avgLast5: last5Avg
+      })),
+      last5Avg
+    };
+  });
+
+  // Prepare chart data for each category
+  const categoryChartData = Object.entries(categoryStats).map(([category, categoryAttempts]) => {
+    const sortedAttempts = [...categoryAttempts].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+    const last5Avg = calculateLast5Average(categoryAttempts);
+    
+    return {
+      categoryName: category,
+      data: sortedAttempts.slice(-10).map((attempt, idx) => ({
+        attempt: `#${idx + 1}`,
+        score: attempt.percentage,
+        date: new Date(attempt.created_date).toLocaleDateString(),
+        avgLast5: last5Avg
+      })),
+      last5Avg
     };
   });
 
