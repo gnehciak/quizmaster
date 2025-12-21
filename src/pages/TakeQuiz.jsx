@@ -53,8 +53,7 @@ export default function TakeQuiz() {
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [stageUnlockTime, setStageUnlockTime] = useState(null);
   const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
-  const [highlightedText, setHighlightedText] = useState('');
-  const [highlightedTexts, setHighlightedTexts] = useState({});
+  const [highlightedPassages, setHighlightedPassages] = useState({});
   const [aiHelperCache, setAiHelperCache] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
@@ -174,8 +173,7 @@ export default function TakeQuiz() {
         [currentIndex]: {
           stage: aiHelperStage,
           content: aiHelperContent,
-          highlightedText,
-          highlightedTexts
+          highlightedPassages
         }
       }));
     }
@@ -194,13 +192,11 @@ export default function TakeQuiz() {
       if (cached) {
         setAiHelperStage(cached.stage);
         setAiHelperContent(cached.content);
-        setHighlightedText(cached.highlightedText || '');
-        setHighlightedTexts(cached.highlightedTexts || {});
+        setHighlightedPassages(cached.highlightedPassages || {});
       } else {
         setAiHelperStage(1);
         setAiHelperContent('');
-        setHighlightedText('');
-        setHighlightedTexts({});
+        setHighlightedPassages({});
       }
     }
   };
@@ -220,8 +216,7 @@ export default function TakeQuiz() {
         [currentIndex]: {
           stage: aiHelperStage,
           content: aiHelperContent,
-          highlightedText,
-          highlightedTexts
+          highlightedPassages
         }
       }));
     }
@@ -240,13 +235,11 @@ export default function TakeQuiz() {
       if (cached) {
         setAiHelperStage(cached.stage);
         setAiHelperContent(cached.content);
-        setHighlightedText(cached.highlightedText || '');
-        setHighlightedTexts(cached.highlightedTexts || {});
+        setHighlightedPassages(cached.highlightedPassages || {});
       } else {
         setAiHelperStage(1);
         setAiHelperContent('');
-        setHighlightedText('');
-        setHighlightedTexts({});
+        setHighlightedPassages({});
       }
     }
   };
@@ -487,13 +480,21 @@ export default function TakeQuiz() {
 
       const hasMultiplePassages = q.passages?.length > 1;
       let passageContext = '';
+      let passagesForPrompt = [];
+
       if (q.passage || q.passages?.length > 0) {
         if (q.passages?.length > 0) {
-          passageContext = '\n\nPassages:\n' + q.passages.map(p => 
-            `[${p.id}] ${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+          passagesForPrompt = q.passages.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content
+          }));
+          passageContext = '\n\nPassages:\n' + passagesForPrompt.map(p => 
+            `[${p.id}] ${p.title}:\n${p.content}`
           ).join('\n\n');
         } else {
-          passageContext = '\n\nPassage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+          passagesForPrompt = [{ id: 'main', title: 'Passage', content: q.passage }];
+          passageContext = '\n\nPassage:\n' + q.passage;
         }
       }
 
@@ -507,152 +508,104 @@ export default function TakeQuiz() {
       let prompt = '';
       if (stage === 1) {
         prompt = `You are a Year 6 teacher helping a student find evidence.
-Tone: Simple, direct.
-Rules:
-1. Identify the specific paragraph or section (3-5 sentences) that contains the answer.
-2. The highlighted text must be an EXACT copy-paste from the passage(s). Do not summarize or alter it.
-3. The 'advice' should tell them what to look for within this section.
-4. ${hasMultiplePassages ? 'If the answer requires evidence from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
-5. Return valid JSON only. Do not use markdown formatting.
+  Tone: Simple, direct.
+  Rules:
+  1. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the broad section (3-5 sentences) that contains the answer.
+  2. Preserve ALL original HTML formatting and tags.
+  3. The 'advice' should tell them what to look for within the highlighted section.
+  4. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
+  5. Return valid JSON only. Do not use markdown formatting.
 
-Input Data:
-Question: ${questionText}
-Passage: ${passageContext}
-Options: ${optionsContext}
+  Input Data:
+  Question: ${questionText}
+  Passage(s): ${passageContext}
+  Options: ${optionsContext}
 
-Output Format (JSON):${hasMultiplePassages ? `
-{
+  Output Format (JSON):${hasMultiplePassages ? `
+  {
   "advice": "Teaching guidance about what to scan for in the texts (2-3 sentences).",
-  "highlights": [
-    {"passageId": "passage_123", "text": "The exact broad section from first passage"},
-    {"passageId": "passage_456", "text": "The exact broad section from second passage (if needed)"}
+  "passages": [
+    {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around relevant section"},
+    {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
   ]
-}` : `
-{
-  "advice": "Teaching guidance about what to scan for in the text below (2-3 sentences).",
-  "highlightText": "The exact broad section text from the passage."
-}`}`;
+  }` : `
+  {
+  "advice": "Teaching guidance about what to scan for in the text (2-3 sentences).",
+  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the relevant section"
+  }`}`;
       } else if (stage === 2) {
         prompt = `You are a Year 6 teacher revealing the answer.
-Tone: Simple, direct.
-Rules:
-1. State the correct answer clearly.
-2. Identify the SPECIFIC sentence or phrase that proves the answer.
-3. The highlighted text must be an EXACT copy-paste of that specific sentence/phrase from the passage(s).
-4. The 'advice' must explain the link between the text and the correct option.
-5. ${hasMultiplePassages ? 'If evidence is needed from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
-6. Return valid JSON only. Do not use markdown formatting.
+  Tone: Simple, direct.
+  Rules:
+  1. State the correct answer clearly in the advice.
+  2. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the SPECIFIC sentence/phrase that proves the answer.
+  3. Preserve ALL original HTML formatting and tags.
+  4. The 'advice' must explain the link between the highlighted text and the correct option.
+  5. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
+  6. Return valid JSON only. Do not use markdown formatting.
 
-Input Data:
-Question: ${questionText}
-Passage: ${passageContext}
-Options: ${optionsContext}
-Correct Answer: ${answerContext}
+  Input Data:
+  Question: ${questionText}
+  Passage(s): ${passageContext}
+  Options: ${optionsContext}
+  Correct Answer: ${answerContext}
 
-Output Format (JSON):${hasMultiplePassages ? `
-{
-  "advice": "The correct answer is [Option]. Explain simply why these sentences prove the answer (2-3 sentences).",
-  "highlights": [
-    {"passageId": "passage_123", "text": "The specific sentence from first passage"},
-    {"passageId": "passage_456", "text": "The specific sentence from second passage (if needed)"}
+  Output Format (JSON):${hasMultiplePassages ? `
+  {
+  "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
+  "passages": [
+    {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
+    {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
   ]
-}` : `
-{
-  "advice": "The correct answer is [Option]. Explain simply why this sentence proves the answer (2-3 sentences).",
-  "highlightText": "The specific sentence or phrase from the text."
-}`}`;
+  }` : `
+  {
+  "advice": "The correct answer is [Option]. Explain simply why the highlighted text proves the answer (2-3 sentences).",
+  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+  }`}`;
       }
 
       console.log('AI Helper Prompt:', prompt);
-      
+
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
-      
+
       console.log('AI Helper Response:', text);
 
-      // Parse JSON for stages 1 and 2 with passages
-      if (stage >= 1 && passageContext) {
-        try {
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            setAiHelperContent(parsed.advice || text);
-            
-            // Helper function to match AI text to original passage using AI
-            const matchTextToPassage = async (aiText, originalPassage) => {
-              console.log('Using AI to match text to original passage...');
+      // Parse JSON response
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          setAiHelperContent(parsed.advice || text);
 
-              // Always use AI to match and preserve HTML formatting
-              const matchPrompt = `You are matching selected text to an original passage.
-
-            Original Passage (with HTML formatting):
-            ${originalPassage}
-
-            Selected Text (without formatting):
-            ${aiText}
-
-            Find the exact matching part in the original passage and return it WITH all the original HTML tags and formatting preserved.
-            Return ONLY the matched text portion, nothing else. Do not add any explanation.`;
-
-              console.log('AI Match Prompt:', matchPrompt);
-
-              const matchModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-              const matchResult = await matchModel.generateContent(matchPrompt);
-              const matchResponse = await matchResult.response;
-              const matchedText = matchResponse.text().trim();
-
-              console.log('AI Match Response:', matchedText);
-
-              return matchedText;
-            };
-            
-            // Handle multiple highlights for multiple passages
-            if (parsed.highlights && Array.isArray(parsed.highlights)) {
-              const highlightMap = {};
-              
-              for (const h of parsed.highlights) {
-                if (h.passageId && h.text) {
-                  const passage = q.passages?.find(p => p.id === h.passageId);
-                  if (passage) {
-                    const matchedText = await matchTextToPassage(h.text, passage.content);
-                    highlightMap[h.passageId] = matchedText;
-                  } else {
-                    highlightMap[h.passageId] = h.text;
-                  }
-                }
+          // Handle highlighted passages
+          if (parsed.passages && Array.isArray(parsed.passages)) {
+            const passageMap = {};
+            parsed.passages.forEach(p => {
+              if (p.passageId && p.highlightedContent) {
+                passageMap[p.passageId] = p.highlightedContent;
               }
-              
-              setHighlightedTexts(highlightMap);
-              setHighlightedText('');
-            } else if (parsed.highlightText) {
-              const originalPassage = q.passages?.length > 0 ? q.passages[0].content : q.passage;
-              const matchedText = await matchTextToPassage(parsed.highlightText, originalPassage);
-              setHighlightedText(matchedText);
-              setHighlightedTexts({});
-            } else {
-              setHighlightedText('');
-              setHighlightedTexts({});
-            }
+            });
+            setHighlightedPassages(passageMap);
+          } else if (parsed.highlightedContent) {
+            const passageId = passagesForPrompt[0]?.id || 'main';
+            setHighlightedPassages({ [passageId]: parsed.highlightedContent });
           } else {
-            setAiHelperContent(text);
-            setHighlightedText('');
-            setHighlightedTexts({});
+            setHighlightedPassages({});
           }
-        } catch (e) {
-          console.error('Error parsing AI response:', e);
+        } else {
           setAiHelperContent(text);
-          setHighlightedText('');
-          setHighlightedTexts({});
+          setHighlightedPassages({});
         }
-      } else {
+      } catch (e) {
+        console.error('Error parsing AI response:', e);
         setAiHelperContent(text);
-        setHighlightedText('');
-        setHighlightedTexts({});
+        setHighlightedPassages({});
       }
-      
+
       setAiHelperStage(stage);
 
       // Start 10 second timer if not at stage 2
@@ -674,8 +627,7 @@ Output Format (JSON):${hasMultiplePassages ? `
     if (cached) {
       setAiHelperStage(cached.stage);
       setAiHelperContent(cached.content);
-      setHighlightedText(cached.highlightedText || '');
-      setHighlightedTexts(cached.highlightedTexts || {});
+      setHighlightedPassages(cached.highlightedPassages || {});
     } else if (!aiHelperContent) {
       getAiHelp(1);
     }
@@ -694,8 +646,7 @@ Output Format (JSON):${hasMultiplePassages ? `
           showResults={submitted || reviewMode}
           singleQuestion={true}
           subQuestion={currentQuestion.subQuestion}
-          highlightedText={highlightedText}
-          highlightedTexts={highlightedTexts}
+          highlightedPassages={highlightedPassages}
         />
       );
     }
