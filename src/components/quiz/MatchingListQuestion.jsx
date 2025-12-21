@@ -17,7 +17,8 @@ export default function MatchingListQuestion({
   showResults,
   singleQuestion = false,
   subQuestion = null,
-  highlightedText = ''
+  highlightedText = '',
+  highlightedTexts = {}
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
