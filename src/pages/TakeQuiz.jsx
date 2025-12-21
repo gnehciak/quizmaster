@@ -718,7 +718,7 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       if (existingHelp) {
         setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
         if (existingHelp.passages) {
-          setDropZoneHighlightedPassages(existingHelp.passages);
+          setDropZoneHighlightedPassages(prev => ({ ...prev, [zoneId]: existingHelp.passages }));
         }
         return;
       }
@@ -827,7 +827,7 @@ try {
 }
 
       setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: advice }));
-      setDropZoneHighlightedPassages(passages);
+      setDropZoneHighlightedPassages(prev => ({ ...prev, [zoneId]: passages }));
 
       // Save to quiz entity
       try {
