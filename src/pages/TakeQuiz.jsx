@@ -581,39 +581,31 @@ Output Format (JSON):${hasMultiplePassages ? `
             const parsed = JSON.parse(jsonMatch[0]);
             setAiHelperContent(parsed.advice || text);
             
-            // Helper function to match AI text to original passage
+            // Helper function to match AI text to original passage using AI
             const matchTextToPassage = async (aiText, originalPassage) => {
-              const cleanPassage = originalPassage.replace(/<[^>]*>/g, '');
-              const cleanAiText = aiText.trim();
-              
-              // Check if direct match exists
-              if (cleanPassage.includes(cleanAiText)) {
-                return aiText; // Already matches
-              }
-              
-              console.log('Highlight not found - using AI to match...');
-              
-              // Use AI to match
+              console.log('Using AI to match text to original passage...');
+
+              // Always use AI to match and preserve HTML formatting
               const matchPrompt = `You are matching selected text to an original passage.
 
-Original Passage (with HTML formatting):
-${originalPassage}
+            Original Passage (with HTML formatting):
+            ${originalPassage}
 
-Selected Text (without formatting):
-${aiText}
+            Selected Text (without formatting):
+            ${aiText}
 
-Find the exact matching part in the original passage and return it WITH all the original HTML tags and formatting preserved.
-Return ONLY the matched text portion, nothing else.`;
+            Find the exact matching part in the original passage and return it WITH all the original HTML tags and formatting preserved.
+            Return ONLY the matched text portion, nothing else. Do not add any explanation.`;
 
               console.log('AI Match Prompt:', matchPrompt);
-              
+
               const matchModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
               const matchResult = await matchModel.generateContent(matchPrompt);
               const matchResponse = await matchResult.response;
               const matchedText = matchResponse.text().trim();
-              
+
               console.log('AI Match Response:', matchedText);
-              
+
               return matchedText;
             };
             
