@@ -1085,7 +1085,7 @@ Output Format (JSON):${hasMultiplePassages ? `
           </button>
         )}
 
-        {/* AI Helper Side Panel */}
+        {/* AI Helper Popup */}
         <AnimatePresence>
           {aiHelperOpen && (
             <>
@@ -1097,13 +1097,13 @@ Output Format (JSON):${hasMultiplePassages ? `
                 className="fixed inset-0 bg-black/20 z-30"
               />
               <motion.div
-                initial={{ x: 400 }}
-                animate={{ x: 0 }}
-                exit={{ x: 400 }}
-                className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-40 flex flex-col"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed right-24 top-1/2 -translate-y-1/2 w-96 max-h-[80vh] bg-white rounded-2xl shadow-2xl z-40 flex flex-col border border-slate-200"
               >
                 <div className="p-6 border-b border-slate-200">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-600" />
                       AI Helper
@@ -1115,31 +1115,31 @@ Output Format (JSON):${hasMultiplePassages ? `
                       <X className="w-5 h-5 text-slate-600" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      aiHelperStage >= 1 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
-                    )}>1</div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
+                        aiHelperStage >= 1 ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-400"
+                      )}>
+                        {aiHelperStage >= 1 ? <CheckCircle2 className="w-5 h-5" /> : "1"}
+                      </div>
+                      <span className="text-xs font-medium text-slate-600">Hint</span>
+                    </div>
                     <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div className={cn(
                         "h-full bg-purple-600 transition-all",
                         aiHelperStage >= 2 ? "w-full" : "w-0"
                       )} />
                     </div>
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      aiHelperStage >= 2 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
-                    )}>2</div>
-                    <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="flex flex-col items-center gap-1">
                       <div className={cn(
-                        "h-full bg-purple-600 transition-all",
-                        aiHelperStage >= 3 ? "w-full" : "w-0"
-                      )} />
+                        "w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
+                        aiHelperStage >= 2 ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-400"
+                      )}>
+                        {aiHelperStage >= 2 ? <CheckCircle2 className="w-5 h-5" /> : "2"}
+                      </div>
+                      <span className="text-xs font-medium text-slate-600">Answer</span>
                     </div>
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      aiHelperStage >= 2 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
-                    )}>2</div>
                   </div>
                 </div>
 
@@ -1170,7 +1170,7 @@ Output Format (JSON):${hasMultiplePassages ? `
                               className="gap-2"
                             >
                               <Sparkles className="w-4 h-4" />
-                              Need More Help
+                              Reveal Answer
                             </Button>
                           )}
                         </div>
