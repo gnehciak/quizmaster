@@ -164,9 +164,11 @@ export default function DragDropQuestion({
           const isCorrect = showResults && placedAnswer === zone.correctAnswer;
           const isWrong = showResults && placedAnswer && placedAnswer !== zone.correctAnswer;
           const showCorrectAnswer = showResults && !isCorrect;
-          const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+          const tipId = `dropzone-${currentIndex}-${zone.id}`;
+          const wasTipOpened = openedTips.has(tipId);
           const helpContent = aiHelperContent[zone.id];
           const isLoadingHelp = aiHelperLoading[zone.id];
+          const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
           
           return (
             <motion.div
@@ -187,14 +189,15 @@ export default function DragDropQuestion({
                 </span>
                 
                 <div className="flex items-center gap-2">
-                  {canShowHelp && (
+                  {!showResults && onRequestHelp && (
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0"
-                          onClick={() => !helpContent && onRequestHelp(zone.id)}
+                          disabled={isTipDisabled}
+                          onClick={() => !isTipDisabled && !helpContent && onRequestHelp(zone.id)}
                         >
                           {isLoadingHelp ? (
                             <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
