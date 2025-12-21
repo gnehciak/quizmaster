@@ -26,7 +26,6 @@ export default function MatchingListQuestion({
   onRequestHelp = null,
   aiHelperContent = {},
   aiHelperLoading = {},
-  highlightedPassages = {},
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
@@ -39,7 +38,6 @@ export default function MatchingListQuestion({
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
-  const [activeHelpQuestion, setActiveHelpQuestion] = useState(null);
   const containerRef = useRef(null);
 
   const handleAnswer = (questionId, answer) => {
@@ -125,11 +123,7 @@ export default function MatchingListQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: (activeHelpQuestion && highlightedPassages && highlightedPassages[activeHelpQuestion] && highlightedPassages[activeHelpQuestion][activePassage?.id])
-                  ? highlightedPassages[activeHelpQuestion][activePassage?.id] 
-                  : activePassage?.content 
-              }}
+              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
             />
           </div>
         </div>
@@ -232,7 +226,6 @@ export default function MatchingListQuestion({
                     <div className="flex items-center gap-3 min-w-[200px]">
                       {canShowHelp && (
                         <Popover onOpenChange={(open) => {
-                          setActiveHelpQuestion(open ? q.id : null);
                           if (!helpContent && open) onRequestHelp(q.id);
                         }}>
                           <PopoverTrigger asChild>
@@ -269,15 +262,6 @@ export default function MatchingListQuestion({
                                   className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                                   dangerouslySetInnerHTML={{ __html: helpContent }}
                                 />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full gap-2"
-                                  onClick={() => setActiveHelpQuestion(q.id)}
-                                >
-                                  <Sparkles className="w-4 h-4" />
-                                  Show Highlights
-                                </Button>
                               </div>
                             </PopoverContent>
                           )}

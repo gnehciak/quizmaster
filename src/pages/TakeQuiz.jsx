@@ -59,7 +59,6 @@ export default function TakeQuiz() {
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [matchingHelperLoading, setMatchingHelperLoading] = useState({});
-  const [matchingHighlightedPassages, setMatchingHighlightedPassages] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -186,7 +185,6 @@ export default function TakeQuiz() {
       setDropZoneHighlightedPassages({});
       setMatchingHelperContent({});
       setMatchingHelperLoading({});
-      setMatchingHighlightedPassages({});
     }
   };
 
@@ -213,7 +211,6 @@ export default function TakeQuiz() {
       setDropZoneHighlightedPassages({});
       setMatchingHelperContent({});
       setMatchingHelperLoading({});
-      setMatchingHighlightedPassages({});
     }
   };
 
@@ -896,10 +893,8 @@ try {
     if (!forceRegenerate) {
       const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.matchingQuestions?.[questionId];
       if (existingHelp) {
-        setMatchingHelperContent(prev => ({ ...prev, [questionId]: existingHelp.advice }));
-        if (existingHelp.passages) {
-          setMatchingHighlightedPassages(prev => ({ ...prev, [questionId]: existingHelp.passages }));
-        }
+        const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice;
+        setMatchingHelperContent(prev => ({ ...prev, [questionId]: helpText }));
         return;
       }
     }
@@ -936,37 +931,24 @@ try {
 
       const prompt = `You are a Year 6 teacher helping a student with a matching question.
 
-**CRITICAL RULES:**
-1. **Highlighting (if passage exists):** - Locate specific keywords, phrases, or sentences that give clues about the answer to "${matchingQ.question}"
-   - Wrap EACH piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>
-   - Keep any existing formatting such as <strong>, <p>, <em> tags inside the highlighted sections
-   - You may highlight multiple separate sections if the clues are spread across the text
-2. **Text Integrity:** - You MUST return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure
-   - Do NOT summarize, truncate, or alter the non-highlighted text
-3. **Advice (2-3 sentences only):** - Explain what type of answer to look for or what key concept to understand
-   - Give strategic hints without revealing the actual answer: "${matchingQ.correctAnswer}"
-4. **JSON Logic:**
-   - If there's a passage, use the [For passages] format with full highlighted content
-   - If no passage, use the [No passage] format
-   - Return valid raw JSON only
+      **TASK:**
+      Help the student answer: "${matchingQ.question}"
+      ${passageContext ? 'There is a passage provided. Quote specific sentences from the passage that give clues.' : 'Give hints about what to look for.'}
 
-**INPUT DATA:**
-Question: ${matchingQ.question}
-Correct Answer (DO NOT REVEAL): ${matchingQ.correctAnswer}
-${passageContext}
+      **CRITICAL RULES:**
+      1. **Quote specific sentences:** Find 2-3 relevant sentences from the passage and quote them.
+      2. **Guiding language:** Use phrases like "One extract says...", "Another part mentions...", "Have a read around these sentences..."
+      3. **No answer reveal:** Do NOT state the correct answer: "${matchingQ.correctAnswer}"
+      4. **Keep it brief:** 2-3 sentences of guidance + the quoted extracts
 
-**OUTPUT FORMAT (JSON):**
+      **INPUT DATA:**
+      Question: ${matchingQ.question}
+      Correct Answer (DO NOT REVEAL): ${matchingQ.correctAnswer}
+      ${passageContext}
 
-${hasPassages ? `[For passages]
-{
-  "advice": "2-3 sentences explaining what to look for to answer this question. Give hints about concepts or connections. Do NOT state the answer.",
-  "passages": [
-    {"passageId": "passage_id", "highlightedContent": "FULL COMPLETE passage text with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around clues/keywords"}
-  ]
-}` : `[No passage]
-{
-  "advice": "2-3 sentences explaining what to look for or consider to answer this question. Do NOT state the answer."
-  }`}`;
+      **OUTPUT FORMAT (plain text):**
+      Provide a helpful hint with quoted sentences. Example structure:
+      "One extract says '[quote relevant sentence]'. Another part mentions '[quote another relevant sentence]'. Have a read around these sentences and see which option matches best."`;
 
   console.log('Matching Help Prompt:', prompt);
 
@@ -978,31 +960,7 @@ ${hasPassages ? `[For passages]
 
       console.log('Matching Help Response:', text);
 
-      let advice = text;
-      let passages = {};
-
-      try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          advice = parsed.advice || text;
-
-          if (parsed.passages && Array.isArray(parsed.passages)) {
-            if (parsed.passages.length > 0 && passagesForPrompt.length > 0) {
-              const firstPassageData = parsed.passages[0];
-              if (firstPassageData && firstPassageData.highlightedContent) {
-                const actualPassageId = passagesForPrompt[0].id;
-                passages[actualPassageId] = firstPassageData.highlightedContent;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing AI response:', e);
-      }
-
-      setMatchingHelperContent(prev => ({ ...prev, [questionId]: advice }));
-      setMatchingHighlightedPassages(prev => ({ ...prev, [questionId]: passages }));
+      setMatchingHelperContent(prev => ({ ...prev, [questionId]: text }));
 
       try {
         const existingTips = quiz?.ai_helper_tips || {};
@@ -1016,7 +974,7 @@ ${hasPassages ? `[For passages]
               ...questionTips,
               matchingQuestions: {
                 ...matchingTips,
-                [questionId]: { advice, passages }
+                [questionId]: text
               }
             }
           }
@@ -1161,7 +1119,6 @@ ${hasPassages ? `[For passages]
             onRequestHelp={quiz?.allow_tips ? handleMatchingHelp : null}
             aiHelperContent={matchingHelperContent}
             aiHelperLoading={matchingHelperLoading}
-            highlightedPassages={matchingHighlightedPassages}
             isAdmin={user?.role === 'admin'}
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
