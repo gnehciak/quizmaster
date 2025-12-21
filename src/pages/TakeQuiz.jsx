@@ -425,12 +425,12 @@ export default function TakeQuiz() {
 
   const getAiHelp = async (stage) => {
     setAiHelperLoading(true);
-    
+
     try {
       const q = currentQuestion;
       let questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
       questionText = questionText?.replace(/<[^>]*>/g, '');
-      
+
       let passageContext = '';
       if (q.passage || q.passages?.length > 0) {
         if (q.passages?.length > 0) {
@@ -442,17 +442,23 @@ export default function TakeQuiz() {
         }
       }
 
+      // Get options and correct answer
+      const options = q.isSubQuestion ? q.subQuestion.options : q.options;
+      const correctAnswer = q.isSubQuestion ? q.subQuestion.correctAnswer : q.correctAnswer;
+      const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
+      const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
+
       let prompt = '';
       if (stage === 1) {
         prompt = `You are a Year 6 teacher guiding a student. Use simple, clear language. Get straight to the point - no phrases like "Great question!" or "Let me help you". Focus on teaching them HOW to think about finding the answer.
 
-Question: ${questionText}${passageContext}
+Question: ${questionText}${passageContext}${optionsContext}
 
 Give a brief teaching hint in simple language (2-3 sentences) that guides their thinking process:`;
       } else if (stage === 2) {
         prompt = `You are a Year 6 teacher helping a student learn. Use simple language. Get straight to the point. ${passageContext ? 'Teach them WHERE to look. Highlight a BROADER section (paragraph or multiple sentences) that contains the clues. Return your response as JSON.' : 'Teach them more specifically what to look for.'}
 
-Question: ${questionText}${passageContext}
+Question: ${questionText}${passageContext}${optionsContext}
 
 ${passageContext ? `Return JSON in this exact format:
 {
@@ -464,7 +470,7 @@ Find a BROADER section (paragraph or multiple sentences) from the passage. This 
       } else if (stage === 3) {
         prompt = `You are a Year 6 teacher. Use simple language. Get straight to the point. ${passageContext ? 'Now TELL them the correct answer directly and TEACH them how to find it by highlighting the specific words/sentence. Return your response as JSON.' : 'Tell them the correct answer and explain.'}
 
-Question: ${questionText}${passageContext}
+Question: ${questionText}${passageContext}${optionsContext}${answerContext}
 
 ${passageContext ? `Return JSON in this exact format:
 {
@@ -472,7 +478,7 @@ ${passageContext ? `Return JSON in this exact format:
   "highlightText": "The specific sentence or key words that contain the answer"
 }
 
-Highlight the SPECIFIC sentence or key words that directly give the answer. Copy it EXACTLY from the passage.` : 'State the correct answer directly and teach them how to recognize it (2-3 sentences):'}`;
+Highlight the SPECIFIC sentence or key words that directly give the answer. Copy it EXACTLY from the passage.` : `State the correct answer directly and teach them how to recognize it (2-3 sentences):`}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
