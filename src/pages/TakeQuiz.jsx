@@ -477,33 +477,45 @@ export default function TakeQuiz() {
       const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
       const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
 
-      const prompt = `You are a Year 6 teacher helping a student understand the evidence.
+      const prompt = `You are a Year 6 teacher helping a student find evidence in a text.
       Tone: Simple, direct.
-      Rules:
-      1. Return the ENTIRE passage(s) with <mark class="bg-yellow-200 px-1 rounded"> tags around the SPECIFIC sentence/phrase that proves the answer.
-      2. Preserve ALL original HTML formatting and tags.
-      3. The 'advice' must explain why the highlighted text supports the correct answer. DO NOT state what the correct answer is.
-      4. ${hasMultiplePassages ? 'If multiple passages are provided, return all of them. Highlight in the relevant passage(s).' : ''}
-      5. Return valid JSON only. Do not use markdown formatting.
 
-      Input Data:
+      **CRITICAL RULES:**
+      1. **Highlighting:** - Locate ALL specific sentences or phrases that prove the Correct Answer. 
+         - Wrap EACH distinct piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>.
+         - You may highlight multiple separate sections if the proof is spread across the text.
+      2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
+         - Do NOT summarize, truncate, or alter the non-highlighted text.
+      3. **Advice Strategy:** - The 'advice' must explain the connection between the highlighted text and the question. 
+         - If multiple parts are highlighted, explain how they together support the conclusion.
+         - Do NOT explicitly state the Correct Answer (e.g., do not say "The answer is A").
+      4. **JSON Logic:**
+         - If the input Passage(s) is a single string, use the [For single passage] format.
+         - If the input Passage(s) is an array/list, use the [For multiple passages] format.
+         - Return valid raw JSON only.
+
+      **INPUT DATA:**
       Question: ${questionText}
       Passage(s): ${passageContext}
       Options: ${optionsContext}
       Correct Answer: ${answerContext}
 
-      Output Format (JSON):${hasMultiplePassages ? `
+      **OUTPUT FORMAT (JSON):**
+
+      [For single passage]
       {
-      "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
-      "passages": [
-      {"passageId": "passage_123", "highlightedContent": "Full passage with <mark> tags around specific evidence"},
-      {"passageId": "passage_456", "highlightedContent": "Full passage with <mark> tags if needed"}
-      ]
-      }` : `
+        "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+        "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+      }
+
+      [For multiple passages]
       {
-      "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
-      "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
-      }`}`;
+        "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+        "passages": [
+          {"passageId": "passage_123", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"},
+          {"passageId": "passage_456", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}
+        ]
+      }`;
 
       console.log('AI Helper Prompt:', prompt);
 
