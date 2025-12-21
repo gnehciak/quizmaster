@@ -22,8 +22,22 @@ export default function ReadingComprehensionQuestion({
     if (!text) return text;
     
     // Check for passage-specific highlight
-    const highlightForPassage = highlightedTexts[passageId];
-    const textToHighlight = highlightForPassage || highlightedText;
+    let textToHighlight = highlightedTexts[passageId] || highlightedText;
+    
+    // If no direct match, try to find a highlight that matches this passage content
+    if (!textToHighlight && Object.keys(highlightedTexts).length > 0) {
+      console.log('No direct passage ID match, trying content matching for:', passageId);
+      // Try each highlight to see if it exists in this passage
+      for (const [hPassageId, hText] of Object.entries(highlightedTexts)) {
+        const normalizedPassage = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        const normalizedHighlight = hText.replace(/\s+/g, ' ').trim();
+        if (normalizedPassage.includes(normalizedHighlight.substring(0, 50))) {
+          console.log(`Found highlight from ${hPassageId} matches passage ${passageId}`);
+          textToHighlight = hText;
+          break;
+        }
+      }
+    }
     
     if (!textToHighlight) return text;
     
