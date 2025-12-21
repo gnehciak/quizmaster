@@ -27,48 +27,13 @@ export default function ReadingComprehensionQuestion({
     
     if (!textToHighlight) return text;
     
-    // Normalize text for matching - handle unicode, HTML entities, and whitespace
-    const normalizeText = (str) => {
-      return str
-        .replace(/<[^>]*>/g, '') // Remove HTML tags
-        .replace(/&nbsp;/g, ' ') // Replace HTML entities
-        .replace(/\u00a0/g, ' ') // Replace non-breaking space
-        .replace(/\u2019/g, "'") // Replace smart quotes
-        .replace(/\u2018/g, "'")
-        .replace(/\u201c/g, '"')
-        .replace(/\u201d/g, '"')
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-    };
+    const cleanText = text.replace(/<[^>]*>/g, '');
+    const cleanHighlight = textToHighlight.trim();
     
-    const normalizedPassage = normalizeText(text);
-    const normalizedHighlight = normalizeText(textToHighlight);
+    if (!cleanText.includes(cleanHighlight)) return text;
     
-    console.log('Highlighting attempt:', { 
-      passageId, 
-      highlightLength: normalizedHighlight.length,
-      highlightPreview: normalizedHighlight.substring(0, 100),
-      passagePreview: normalizedPassage.substring(0, 100)
-    });
-    
-    // Try to find the highlight in the normalized text
-    if (normalizedPassage.includes(normalizedHighlight)) {
-      // Create a flexible regex pattern that matches across different whitespace/character variations
-      const words = normalizedHighlight.split(' ').filter(w => w.length > 0);
-      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s\\u00a0&nbsp;]+');
-      const regex = new RegExp(`(${pattern})`, 'gi');
-      const highlighted = text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
-      
-      if (highlighted !== text) {
-        console.log('✓ Highlight applied successfully');
-        return highlighted;
-      }
-    }
-    
-    console.warn('✗ Highlight text not found in passage');
-    console.log('Expected:', normalizedHighlight.substring(0, 200));
-    console.log('In passage:', normalizedPassage.substring(0, 200));
-    return text;
+    const regex = new RegExp(`(${cleanHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
   };
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
