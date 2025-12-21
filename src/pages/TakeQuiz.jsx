@@ -171,6 +171,8 @@ export default function TakeQuiz() {
     setAiHelperStage(1);
     setAiHelperContent('');
     setStageUnlockTime(null);
+    setHighlightedText('');
+    setHighlightedTexts({});
     
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -191,6 +193,8 @@ export default function TakeQuiz() {
     setAiHelperStage(1);
     setAiHelperContent('');
     setStageUnlockTime(null);
+    setHighlightedText('');
+    setHighlightedTexts({});
     
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
