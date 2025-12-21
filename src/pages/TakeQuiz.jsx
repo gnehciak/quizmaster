@@ -581,18 +581,64 @@ Output Format (JSON):${hasMultiplePassages ? `
             const parsed = JSON.parse(jsonMatch[0]);
             setAiHelperContent(parsed.advice || text);
             
+            // Helper function to match AI text to original passage
+            const matchTextToPassage = async (aiText, originalPassage) => {
+              const cleanPassage = originalPassage.replace(/<[^>]*>/g, '');
+              const cleanAiText = aiText.trim();
+              
+              // Check if direct match exists
+              if (cleanPassage.includes(cleanAiText)) {
+                return aiText; // Already matches
+              }
+              
+              console.log('Highlight not found - using AI to match...');
+              
+              // Use AI to match
+              const matchPrompt = `You are matching selected text to an original passage.
+
+Original Passage (with HTML formatting):
+${originalPassage}
+
+Selected Text (without formatting):
+${aiText}
+
+Find the exact matching part in the original passage and return it WITH all the original HTML tags and formatting preserved.
+Return ONLY the matched text portion, nothing else.`;
+
+              console.log('AI Match Prompt:', matchPrompt);
+              
+              const matchModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+              const matchResult = await matchModel.generateContent(matchPrompt);
+              const matchResponse = await matchResult.response;
+              const matchedText = matchResponse.text().trim();
+              
+              console.log('AI Match Response:', matchedText);
+              
+              return matchedText;
+            };
+            
             // Handle multiple highlights for multiple passages
             if (parsed.highlights && Array.isArray(parsed.highlights)) {
               const highlightMap = {};
-              parsed.highlights.forEach(h => {
+              
+              for (const h of parsed.highlights) {
                 if (h.passageId && h.text) {
-                  highlightMap[h.passageId] = h.text;
+                  const passage = q.passages?.find(p => p.id === h.passageId);
+                  if (passage) {
+                    const matchedText = await matchTextToPassage(h.text, passage.content);
+                    highlightMap[h.passageId] = matchedText;
+                  } else {
+                    highlightMap[h.passageId] = h.text;
+                  }
                 }
-              });
+              }
+              
               setHighlightedTexts(highlightMap);
               setHighlightedText('');
             } else if (parsed.highlightText) {
-              setHighlightedText(parsed.highlightText);
+              const originalPassage = q.passages?.length > 0 ? q.passages[0].content : q.passage;
+              const matchedText = await matchTextToPassage(parsed.highlightText, originalPassage);
+              setHighlightedText(matchedText);
               setHighlightedTexts({});
             } else {
               setHighlightedText('');
@@ -604,6 +650,7 @@ Output Format (JSON):${hasMultiplePassages ? `
             setHighlightedTexts({});
           }
         } catch (e) {
+          console.error('Error parsing AI response:', e);
           setAiHelperContent(text);
           setHighlightedText('');
           setHighlightedTexts({});
