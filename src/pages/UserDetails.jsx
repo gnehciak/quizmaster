@@ -131,7 +131,7 @@ export default function UserDetails() {
       return await base44.entities.CourseAccess.delete(accessId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userAccess'] });
+      queryClient.invalidateQueries({ queryKey: ['userAccess', targetUser?.email] });
       toast.success('User unenrolled successfully');
     },
     onError: () => {
