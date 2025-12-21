@@ -21,7 +21,9 @@ export default function DragDropDualQuestion({
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
-  onRegenerateHelp
+  onRegenerateHelp,
+  openedTips = new Set(),
+  currentIndex = 0
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -226,7 +228,9 @@ export default function DragDropDualQuestion({
               const droppedItem = selectedAnswers[zone.id];
               const isCorrect = showResults && droppedItem === zone.correctAnswer;
               const isWrong = showResults && droppedItem && droppedItem !== zone.correctAnswer;
-              const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+              const tipId = `dropzone-${currentIndex}-${zone.id}`;
+              const wasTipOpened = openedTips.has(tipId);
+              const canShowHelp = !showResults && onRequestHelp && (isAdmin || wasTipOpened || tipsUsed < tipsAllowed);
               const helpContent = aiHelperContent[zone.id];
               const isLoadingHelp = aiHelperLoading[zone.id];
 

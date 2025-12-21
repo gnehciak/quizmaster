@@ -20,7 +20,8 @@ export default function ReadingComprehensionQuestion({
   onDeleteHelp = null,
   isAdmin = false,
   tipsAllowed = 999,
-  tipsUsed = 0
+  tipsUsed = 0,
+  tipOpened = false
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -210,7 +211,7 @@ export default function ReadingComprehensionQuestion({
                 <div className="mt-4">
                   <Button
                     onClick={onRequestHelp}
-                    disabled={!isAdmin && tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
+                    disabled={!isAdmin && !tipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles className="w-4 h-4" />

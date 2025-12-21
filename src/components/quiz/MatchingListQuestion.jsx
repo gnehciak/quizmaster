@@ -29,7 +29,9 @@ export default function MatchingListQuestion({
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
-  onRegenerateHelp = null
+  onRegenerateHelp = null,
+  openedTips = new Set(),
+  currentIndex = 0
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -204,7 +206,9 @@ export default function MatchingListQuestion({
                 const selectedAnswerItem = selectedAnswers[q.id];
                 const isCorrect = showResults && selectedAnswerItem === q.correctAnswer;
                 const isWrong = showResults && selectedAnswerItem && selectedAnswerItem !== q.correctAnswer;
-                const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+                const tipId = `matching-${currentIndex}-${q.id}`;
+                const wasTipOpened = openedTips.has(tipId);
+                const canShowHelp = !showResults && onRequestHelp && (isAdmin || wasTipOpened || tipsUsed < tipsAllowed);
                 const helpContent = aiHelperContent[q.id];
                 const isLoadingHelp = aiHelperLoading[q.id];
 

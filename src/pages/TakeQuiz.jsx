@@ -59,6 +59,7 @@ export default function TakeQuiz() {
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [matchingHelperLoading, setMatchingHelperLoading] = useState({});
+  const [openedTips, setOpenedTips] = useState(new Set());
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -571,6 +572,9 @@ export default function TakeQuiz() {
   };
 
   const handleAiHelperOpen = async () => {
+    const tipId = `rc-${currentIndex}`;
+    const wasAlreadyOpened = openedTips.has(tipId);
+    
     // Check if tip exists
     const tipData = quiz?.ai_helper_tips?.[currentIndex];
     if (tipData) {
@@ -582,10 +586,11 @@ export default function TakeQuiz() {
       await getAiHelp(false);
     }
     
-    // Increment tips used (only for non-admins)
-    if (user?.role !== 'admin') {
+    // Increment tips used only if this is the first time opening (only for non-admins)
+    if (!wasAlreadyOpened && user?.role !== 'admin') {
       const newTipsUsed = tipsUsed + 1;
       setTipsUsed(newTipsUsed);
+      setOpenedTips(prev => new Set([...prev, tipId]));
       
       // Save to attempt
       if (currentAttemptId) {
@@ -597,6 +602,8 @@ export default function TakeQuiz() {
           console.error('Failed to update tips used:', err);
         }
       }
+    } else if (!wasAlreadyOpened) {
+      setOpenedTips(prev => new Set([...prev, tipId]));
     }
   };
 
@@ -626,10 +633,30 @@ export default function TakeQuiz() {
   };
 
   const handleBlankHelp = async (blankId) => {
+    const tipId = `blank-${currentIndex}-${blankId}`;
+    const wasAlreadyOpened = openedTips.has(tipId);
+    
     // Check if help already exists for this blank
     const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.blanks?.[blankId];
     if (existingHelp) {
       setBlankHelperContent(prev => ({ ...prev, [blankId]: existingHelp }));
+      if (!wasAlreadyOpened && user?.role !== 'admin') {
+        const newTipsUsed = tipsUsed + 1;
+        setTipsUsed(newTipsUsed);
+        setOpenedTips(prev => new Set([...prev, tipId]));
+        
+        if (currentAttemptId) {
+          try {
+            await base44.entities.QuizAttempt.update(currentAttemptId, {
+              tips_used: newTipsUsed
+            });
+          } catch (err) {
+            console.error('Failed to update tips used:', err);
+          }
+        }
+      } else if (!wasAlreadyOpened) {
+        setOpenedTips(prev => new Set([...prev, tipId]));
+      }
       return;
     }
 
@@ -724,6 +751,9 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
   };
 
   const handleDropZoneHelp = async (zoneId, forceRegenerate = false) => {
+    const tipId = `dropzone-${currentIndex}-${zoneId}`;
+    const wasAlreadyOpened = openedTips.has(tipId);
+    
     // Check if help already exists for this zone
     if (!forceRegenerate) {
       const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.dropZones?.[zoneId];
@@ -731,6 +761,23 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
         setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
         if (existingHelp.passages) {
           setDropZoneHighlightedPassages(prev => ({ ...prev, [zoneId]: existingHelp.passages }));
+        }
+        if (!wasAlreadyOpened && user?.role !== 'admin') {
+          const newTipsUsed = tipsUsed + 1;
+          setTipsUsed(newTipsUsed);
+          setOpenedTips(prev => new Set([...prev, tipId]));
+          
+          if (currentAttemptId) {
+            try {
+              await base44.entities.QuizAttempt.update(currentAttemptId, {
+                tips_used: newTipsUsed
+              });
+            } catch (err) {
+              console.error('Failed to update tips used:', err);
+            }
+          }
+        } else if (!wasAlreadyOpened) {
+          setOpenedTips(prev => new Set([...prev, tipId]));
         }
         return;
       }
@@ -862,11 +909,12 @@ try {
         console.error('Failed to save drop zone helper data:', err);
       }
 
-      // Increment tips used (only for non-admins)
-      if (user?.role !== 'admin') {
+      // Increment tips used (only for non-admins and first time)
+      if (!wasAlreadyOpened && user?.role !== 'admin') {
         const newTipsUsed = tipsUsed + 1;
         setTipsUsed(newTipsUsed);
-        
+        setOpenedTips(prev => new Set([...prev, tipId]));
+
         if (currentAttemptId) {
           try {
             await base44.entities.QuizAttempt.update(currentAttemptId, {
@@ -876,25 +924,47 @@ try {
             console.error('Failed to update tips used:', err);
           }
         }
+      } else if (!wasAlreadyOpened) {
+        setOpenedTips(prev => new Set([...prev, tipId]));
       }
-    } catch (e) {
+      } catch (e) {
       console.error('Error generating drop zone help:', e);
       setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: "Unable to generate help at this time." }));
-    } finally {
+      } finally {
       setDropZoneHelperLoading(prev => ({ ...prev, [zoneId]: false }));
-    }
-  };
+      }
+      };
 
   const handleRegenerateDropZoneHelp = (zoneId) => {
     handleDropZoneHelp(zoneId, true);
   };
 
   const handleMatchingHelp = async (questionId, forceRegenerate = false) => {
+    const tipId = `matching-${currentIndex}-${questionId}`;
+    const wasAlreadyOpened = openedTips.has(tipId);
+    
     if (!forceRegenerate) {
       const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.matchingQuestions?.[questionId];
       if (existingHelp) {
         const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice;
         setMatchingHelperContent(prev => ({ ...prev, [questionId]: helpText }));
+        if (!wasAlreadyOpened && user?.role !== 'admin') {
+          const newTipsUsed = tipsUsed + 1;
+          setTipsUsed(newTipsUsed);
+          setOpenedTips(prev => new Set([...prev, tipId]));
+          
+          if (currentAttemptId) {
+            try {
+              await base44.entities.QuizAttempt.update(currentAttemptId, {
+                tips_used: newTipsUsed
+              });
+            } catch (err) {
+              console.error('Failed to update tips used:', err);
+            }
+          }
+        } else if (!wasAlreadyOpened) {
+          setOpenedTips(prev => new Set([...prev, tipId]));
+        }
         return;
       }
     }
@@ -984,9 +1054,10 @@ try {
         console.error('Failed to save matching helper data:', err);
       }
 
-      if (user?.role !== 'admin') {
+      if (!wasAlreadyOpened && user?.role !== 'admin') {
         const newTipsUsed = tipsUsed + 1;
         setTipsUsed(newTipsUsed);
+        setOpenedTips(prev => new Set([...prev, tipId]));
         
         if (currentAttemptId) {
           try {
@@ -997,6 +1068,8 @@ try {
             console.error('Failed to update tips used:', err);
           }
         }
+      } else if (!wasAlreadyOpened) {
+        setOpenedTips(prev => new Set([...prev, tipId]));
       }
     } catch (e) {
       console.error('Error generating matching help:', e);
@@ -1032,6 +1105,7 @@ try {
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}
           tipsUsed={tipsUsed}
+          tipOpened={openedTips.has(`rc-${currentIndex}`)}
         />
       );
     }
@@ -1123,7 +1197,9 @@ try {
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
             onRegenerateHelp={handleRegenerateMatchingHelp}
-          />
+            openedTips={openedTips}
+            currentIndex={currentIndex}
+            />
         );
       default:
         return null;

@@ -26,7 +26,9 @@ export default function InlineDropdownSameQuestion({
   aiHelperLoading = {},
   isAdmin = false,
   tipsAllowed = 999,
-  tipsUsed = 0
+  tipsUsed = 0,
+  openedTips = new Set(),
+  currentIndex = 0
 }) {
   const handleAnswer = (blankId, answer) => {
     if (showResults) return;

@@ -21,7 +21,9 @@ export default function DragDropQuestion({
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
-  onRegenerateHelp
+  onRegenerateHelp,
+  openedTips = new Set(),
+  currentIndex = 0
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
   
