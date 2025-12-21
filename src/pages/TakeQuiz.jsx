@@ -452,6 +452,7 @@ export default function TakeQuiz() {
       **CRITICAL RULES:**
       1. **Highlighting:** - Locate ALL specific sentences or phrases that prove the Correct Answer. 
          - Wrap EACH distinct piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>.
+         - Keep any existing formatting such as <strong> tags inside the highlighted sections.
          - You may highlight multiple separate sections if the proof is spread across the text.
       2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
          - Do NOT summarize, truncate, or alter the non-highlighted text.
