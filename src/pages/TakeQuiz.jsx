@@ -584,68 +584,15 @@ Output Format (JSON):${hasMultiplePassages ? `
             // Handle multiple highlights for multiple passages
             if (parsed.highlights && Array.isArray(parsed.highlights)) {
               const highlightMap = {};
-              for (const h of parsed.highlights) {
+              parsed.highlights.forEach(h => {
                 if (h.passageId && h.text) {
-                  const passage = q.passages?.find(p => p.id === h.passageId);
-                  if (passage) {
-                    const cleanPassage = passage.content?.replace(/<[^>]*>/g, '') || '';
-                    const cleanHighlight = h.text.trim();
-                    
-                    // Check if highlight exists in passage
-                    if (cleanPassage.includes(cleanHighlight)) {
-                      highlightMap[h.passageId] = h.text;
-                    } else {
-                      console.log('Highlight not found, using AI to match:', cleanHighlight);
-                      // Use AI to find matching text
-                      const matchPrompt = `Find the closest matching text in the passage below that corresponds to this text:
-
-Target: "${cleanHighlight}"
-
-Passage:
-${cleanPassage}
-
-Return ONLY the exact matching text from the passage, nothing else.`;
-                      
-                      const matchModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-                      const matchResult = await matchModel.generateContent(matchPrompt);
-                      const matchResponse = await matchResult.response;
-                      const matchedText = matchResponse.text().trim();
-                      
-                      console.log('AI matched text:', matchedText);
-                      highlightMap[h.passageId] = matchedText;
-                    }
-                  }
+                  highlightMap[h.passageId] = h.text;
                 }
-              }
+              });
               setHighlightedTexts(highlightMap);
               setHighlightedText('');
             } else if (parsed.highlightText) {
-              const cleanPassage = q.passage?.replace(/<[^>]*>/g, '') || '';
-              const cleanHighlight = parsed.highlightText.trim();
-              
-              // Check if highlight exists in passage
-              if (cleanPassage.includes(cleanHighlight)) {
-                setHighlightedText(parsed.highlightText);
-              } else {
-                console.log('Highlight not found, using AI to match:', cleanHighlight);
-                // Use AI to find matching text
-                const matchPrompt = `Find the closest matching text in the passage below that corresponds to this text:
-
-Target: "${cleanHighlight}"
-
-Passage:
-${cleanPassage}
-
-Return ONLY the exact matching text from the passage, nothing else.`;
-                
-                const matchModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-                const matchResult = await matchModel.generateContent(matchPrompt);
-                const matchResponse = await matchResult.response;
-                const matchedText = matchResponse.text().trim();
-                
-                console.log('AI matched text:', matchedText);
-                setHighlightedText(matchedText);
-              }
+              setHighlightedText(parsed.highlightText);
               setHighlightedTexts({});
             } else {
               setHighlightedText('');
@@ -657,7 +604,6 @@ Return ONLY the exact matching text from the passage, nothing else.`;
             setHighlightedTexts({});
           }
         } catch (e) {
-          console.error('Error parsing AI response:', e);
           setAiHelperContent(text);
           setHighlightedText('');
           setHighlightedTexts({});
