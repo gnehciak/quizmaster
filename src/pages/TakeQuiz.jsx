@@ -184,6 +184,9 @@ export default function TakeQuiz() {
       setDropZoneHelperContent({});
       setDropZoneHelperLoading({});
       setDropZoneHighlightedPassages({});
+      setMatchingHelperContent({});
+      setMatchingHelperLoading({});
+      setMatchingHighlightedPassages({});
     }
   };
 
