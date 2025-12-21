@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -23,17 +22,6 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
   const updateTimeoutRef = React.useRef(null);
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link'],
-      [{ 'background': [] }]
-    ]
-  };
-
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background'];
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
@@ -404,13 +392,10 @@ ${aiInput}`;
 
           <div className="space-y-2">
             <Label>Question</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
               placeholder="Enter your question..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
             />
           </div>
 
@@ -441,13 +426,11 @@ ${aiInput}`;
                 className="w-4 h-4 text-indigo-600"
               />
               <div className="flex-1">
-                <ReactQuill
+                <RichTextEditor
                   value={option}
                   onChange={(value) => updateOption(idx, value)}
                   placeholder={`Option ${idx + 1}`}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg"
+                  minHeight="60px"
                 />
               </div>
               <Button
@@ -627,13 +610,11 @@ ${aiInput}`;
                 
                 <div className="space-y-2">
                   <Label className="text-xs">Question</Label>
-                  <ReactQuill
+                  <RichTextEditor
                     value={cq.question}
                     onChange={(value) => updateComprehensionQuestion(qIdx, 'question', value)}
                     placeholder="Enter comprehension question..."
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white rounded-lg"
+                    minHeight="80px"
                   />
                 </div>
                 
@@ -775,25 +756,19 @@ ${aiInput}`;
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Left Pane Question (shown with passage)</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
               placeholder="Enter question text for left pane..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Right Pane Question (shown above drag & drop activity)</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.rightPaneQuestion || ''}
               onChange={(value) => updateField('rightPaneQuestion', value)}
               placeholder="Enter question text for right pane..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
             />
           </div>
 
@@ -994,13 +969,11 @@ ${aiInput}`;
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Question Text</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.textWithBlanks || ''}
               onChange={(value) => updateField('textWithBlanks', value)}
               placeholder="The {{blank_1}} is a type of {{blank_2}}..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg min-h-[100px]"
+              minHeight="100px"
             />
           </div>
 
@@ -1108,25 +1081,19 @@ ${aiInput}`;
         <div className="space-y-6">
           <div className="space-y-2">
             <Label>Left Pane Question (shown with passage)</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
               placeholder="Enter question text for left pane..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Right Pane Question (shown above matching list)</Label>
-            <ReactQuill
+            <RichTextEditor
               value={question.rightPaneQuestion || ''}
               onChange={(value) => updateField('rightPaneQuestion', value)}
               placeholder="Enter question text for right pane..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg"
             />
           </div>
 
@@ -1344,13 +1311,11 @@ ${aiInput}`;
             <p className="text-xs text-slate-500">
               Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
             </p>
-            <ReactQuill
+            <RichTextEditor
               value={question.textWithBlanks || ''}
               onChange={(value) => updateField('textWithBlanks', value)}
               placeholder="The {{blank_1}} is a type of {{blank_2}}..."
-              modules={quillModules}
-              formats={quillFormats}
-              className="bg-white rounded-lg min-h-[100px]"
+              minHeight="100px"
             />
           </div>
 
