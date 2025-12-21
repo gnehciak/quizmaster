@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2 } from 'lucide-react';
 
 export default function ReadingComprehensionQuestion({ 
   question, 
@@ -11,7 +11,9 @@ export default function ReadingComprehensionQuestion({
   showResults,
   singleQuestion = false,
   subQuestion = null,
-  highlightedPassages = {}
+  highlightedPassages = {},
+  aiHelperContent = '',
+  aiHelperLoading = false
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -196,7 +198,22 @@ export default function ReadingComprehensionQuestion({
                   />
                 </div>
               )}
-            </div>
+
+              {!showResults && aiHelperLoading && (
+                <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-purple-600 animate-spin mr-2" />
+                  <span className="text-sm text-slate-600">Loading help...</span>
+                </div>
+              )}
+
+              {!showResults && aiHelperContent && (
+                <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    {aiHelperContent}
+                  </p>
+                </div>
+              )}
+              </div>
           ) : (
             question.comprehensionQuestions?.map((q, qIdx) => (
               <div key={q.id} className="space-y-3">

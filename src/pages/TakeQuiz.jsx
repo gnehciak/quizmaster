@@ -579,6 +579,8 @@ export default function TakeQuiz() {
           singleQuestion={true}
           subQuestion={currentQuestion.subQuestion}
           highlightedPassages={highlightedPassages}
+          aiHelperContent={aiHelperContent}
+          aiHelperLoading={aiHelperLoading}
         />
       );
     }
@@ -1010,55 +1012,7 @@ export default function TakeQuiz() {
           )}
         </AnimatePresence>
 
-        {/* AI Helper Popup */}
-        <AnimatePresence>
-          {aiHelperOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setAiHelperOpen(false)}
-                className="fixed inset-0 bg-black/20 z-30"
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="fixed right-24 top-1/2 -translate-y-1/2 w-96 max-h-[80vh] bg-white rounded-2xl shadow-2xl z-40 flex flex-col border border-slate-200"
-              >
-                <div className="p-6 border-b border-slate-200">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-purple-600" />
-                      AI Helper
-                    </h3>
-                    <button
-                      onClick={() => setAiHelperOpen(false)}
-                      className="p-1 hover:bg-slate-100 rounded transition-colors"
-                    >
-                      <X className="w-5 h-5 text-slate-600" />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="flex-1 overflow-y-auto p-6">
-                  {aiHelperLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-                    </div>
-                  ) : aiHelperContent ? (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                        {aiHelperContent}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Bottom Navigation */}
