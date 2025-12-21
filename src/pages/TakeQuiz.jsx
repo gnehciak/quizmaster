@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -52,6 +52,7 @@ export default function TakeQuiz() {
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [highlightedPassages, setHighlightedPassages] = useState({});
   const [aiHelperCache, setAiHelperCache] = useState({});
+  const [aiHelperData, setAiHelperData] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -249,9 +250,15 @@ export default function TakeQuiz() {
         score: 0,
         total: getTotalPoints(),
         percentage: 0,
-        time_taken: 0
+        time_taken: 0,
+        ai_helper_tips: {}
       });
       setCurrentAttemptId(newAttempt.id);
+      
+      // Load any existing AI helper tips
+      if (newAttempt.ai_helper_tips) {
+        setAiHelperData(newAttempt.ai_helper_tips);
+      }
     } catch (e) {
       console.error('Failed to create attempt:', e);
     }
@@ -443,7 +450,15 @@ export default function TakeQuiz() {
 
 
 
-  const getAiHelp = async () => {
+  const getAiHelp = async (forceRegenerate = false) => {
+    // Check if we already have AI help stored for this question
+    if (!forceRegenerate && aiHelperData[currentIndex]) {
+      const stored = aiHelperData[currentIndex];
+      setAiHelperContent(stored.advice);
+      setHighlightedPassages(stored.passages || {});
+      return;
+    }
+
     setAiHelperLoading(true);
 
     try {
@@ -517,46 +532,61 @@ export default function TakeQuiz() {
         ]
       }`;
 
-      console.log('AI Helper Prompt:', prompt);
-
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
-      console.log('AI Helper Response:', text);
-
       // Parse JSON response
+      let advice = text;
+      let passages = {};
+      
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          setAiHelperContent(parsed.advice || text);
+          advice = parsed.advice || text;
 
           // Handle highlighted passages
           if (parsed.passages && Array.isArray(parsed.passages)) {
-            const passageMap = {};
             parsed.passages.forEach(p => {
               if (p.passageId && p.highlightedContent) {
-                passageMap[p.passageId] = p.highlightedContent;
+                passages[p.passageId] = p.highlightedContent;
               }
             });
-            setHighlightedPassages(passageMap);
           } else if (parsed.highlightedContent) {
             const passageId = passagesForPrompt[0]?.id || 'main';
-            setHighlightedPassages({ [passageId]: parsed.highlightedContent });
-          } else {
-            setHighlightedPassages({});
+            passages[passageId] = parsed.highlightedContent;
           }
-        } else {
-          setAiHelperContent(text);
-          setHighlightedPassages({});
         }
       } catch (e) {
         console.error('Error parsing AI response:', e);
-        setAiHelperContent(text);
-        setHighlightedPassages({});
+      }
+
+      setAiHelperContent(advice);
+      setHighlightedPassages(passages);
+
+      // Store in local state and save to database
+      const helperData = { advice, passages };
+      setAiHelperData(prev => ({
+        ...prev,
+        [currentIndex]: helperData
+      }));
+
+      // Save to database if we have an attempt
+      if (currentAttemptId) {
+        try {
+          const existingData = aiHelperData || {};
+          await base44.entities.QuizAttempt.update(currentAttemptId, {
+            ai_helper_tips: {
+              ...existingData,
+              [currentIndex]: helperData
+            }
+          });
+        } catch (err) {
+          console.error('Failed to save AI helper data:', err);
+        }
       }
     } catch (e) {
       setAiHelperContent("Unable to generate help at this time. Please try again.");
@@ -572,9 +602,18 @@ export default function TakeQuiz() {
     if (cached) {
       setAiHelperContent(cached.content);
       setHighlightedPassages(cached.highlightedPassages || {});
-    } else if (!aiHelperContent) {
+    } else if (!aiHelperContent && !aiHelperData[currentIndex]) {
       getAiHelp();
+    } else if (aiHelperData[currentIndex]) {
+      // Load from stored data
+      const stored = aiHelperData[currentIndex];
+      setAiHelperContent(stored.advice);
+      setHighlightedPassages(stored.passages || {});
     }
+  };
+
+  const handleRegenerateAiHelp = () => {
+    getAiHelp(true);
   };
 
   const renderQuestion = () => {
@@ -594,6 +633,8 @@ export default function TakeQuiz() {
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
           onRequestHelp={handleAiHelperOpen}
+          onRegenerateHelp={handleRegenerateAiHelp}
+          isAdmin={user?.role === 'admin'}
         />
       );
     }

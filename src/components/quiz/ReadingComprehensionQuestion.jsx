@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
@@ -15,7 +15,9 @@ export default function ReadingComprehensionQuestion({
   highlightedPassages = {},
   aiHelperContent = '',
   aiHelperLoading = false,
-  onRequestHelp = null
+  onRequestHelp = null,
+  onRegenerateHelp = null,
+  isAdmin = false
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -221,11 +223,23 @@ export default function ReadingComprehensionQuestion({
               )}
 
               {!showResults && aiHelperContent && (
-                <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg relative">
                   <div 
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
+                  {isAdmin && onRegenerateHelp && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={onRegenerateHelp}
+                      className="absolute top-2 right-2 h-8 w-8 p-0"
+                      title="Regenerate AI tip"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               )}
               </div>
