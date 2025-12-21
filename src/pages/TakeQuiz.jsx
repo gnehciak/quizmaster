@@ -589,8 +589,6 @@ Output Format (JSON):${hasMultiplePassages ? `
                   highlightMap[h.passageId] = h.text;
                 }
               });
-              console.log('Setting highlights:', highlightMap);
-              console.log('Available passage IDs:', q.passages?.map(p => p.id) || ['main']);
               setHighlightedTexts(highlightMap);
               setHighlightedText('');
             } else if (parsed.highlightText) {
@@ -606,7 +604,6 @@ Output Format (JSON):${hasMultiplePassages ? `
             setHighlightedTexts({});
           }
         } catch (e) {
-          console.error('Failed to parse AI response:', e);
           setAiHelperContent(text);
           setHighlightedText('');
           setHighlightedTexts({});
