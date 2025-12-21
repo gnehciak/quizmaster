@@ -711,15 +711,17 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
     }
   };
 
-  const handleDropZoneHelp = async (zoneId) => {
+  const handleDropZoneHelp = async (zoneId, forceRegenerate = false) => {
     // Check if help already exists for this zone
-    const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.dropZones?.[zoneId];
-    if (existingHelp) {
-      setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
-      if (existingHelp.passages) {
-        setDropZoneHighlightedPassages(existingHelp.passages);
+    if (!forceRegenerate) {
+      const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.dropZones?.[zoneId];
+      if (existingHelp) {
+        setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
+        if (existingHelp.passages) {
+          setDropZoneHighlightedPassages(existingHelp.passages);
+        }
+        return;
       }
-      return;
     }
 
     setDropZoneHelperLoading(prev => ({ ...prev, [zoneId]: true }));
@@ -864,6 +866,10 @@ ${hasPassages ? `[For passages]
     }
   };
 
+  const handleRegenerateDropZoneHelp = (zoneId) => {
+    handleDropZoneHelp(zoneId, true);
+  };
+
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
@@ -917,6 +923,7 @@ ${hasPassages ? `[For passages]
             isAdmin={user?.role === 'admin'}
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
+            onRegenerateHelp={handleRegenerateDropZoneHelp}
           />
         );
       case 'drag_drop_dual':
@@ -932,6 +939,7 @@ ${hasPassages ? `[For passages]
             isAdmin={user?.role === 'admin'}
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
+            onRegenerateHelp={handleRegenerateDropZoneHelp}
           />
         );
       case 'inline_dropdown_separate':

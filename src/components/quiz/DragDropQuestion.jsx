@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
+import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -20,7 +20,8 @@ export default function DragDropQuestion({
   highlightedPassages = {},
   isAdmin = false,
   tipsAllowed = 999,
-  tipsUsed = 0
+  tipsUsed = 0,
+  onRegenerateHelp
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
   
@@ -203,7 +204,20 @@ export default function DragDropQuestion({
                       {helpContent && (
                         <PopoverContent className="w-80 max-h-96 overflow-y-auto">
                           <div className="space-y-3">
-                            <h4 className="font-semibold text-sm text-slate-800">Clue</h4>
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-sm text-slate-800">Clue</h4>
+                              {isAdmin && onRegenerateHelp && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onRegenerateHelp(zone.id)}
+                                  className="h-7 px-2 gap-1"
+                                >
+                                  <RefreshCw className="w-3 h-3" />
+                                  Regenerate
+                                </Button>
+                              )}
+                            </div>
                             <div 
                               className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                               dangerouslySetInnerHTML={{ __html: helpContent }}
