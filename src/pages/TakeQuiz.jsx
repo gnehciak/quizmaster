@@ -727,10 +727,11 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
         console.error('Failed to save blank helper data:', err);
       }
 
-      // Increment tips used (only for non-admins)
-      if (user?.role !== 'admin') {
+      // Increment tips used (only for non-admins and first time)
+      if (!wasAlreadyOpened && user?.role !== 'admin') {
         const newTipsUsed = tipsUsed + 1;
         setTipsUsed(newTipsUsed);
+        setOpenedTips(prev => new Set([...prev, tipId]));
         
         if (currentAttemptId) {
           try {
@@ -741,6 +742,8 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
             console.error('Failed to update tips used:', err);
           }
         }
+      } else if (!wasAlreadyOpened) {
+        setOpenedTips(prev => new Set([...prev, tipId]));
       }
     } catch (e) {
       console.error('Error generating blank help:', e);
@@ -1138,6 +1141,8 @@ try {
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
             onRegenerateHelp={handleRegenerateDropZoneHelp}
+            openedTips={openedTips}
+            currentIndex={currentIndex}
           />
         );
       case 'drag_drop_dual':
@@ -1154,6 +1159,8 @@ try {
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
             onRegenerateHelp={handleRegenerateDropZoneHelp}
+            openedTips={openedTips}
+            currentIndex={currentIndex}
           />
         );
       case 'inline_dropdown_separate':
@@ -1168,6 +1175,8 @@ try {
             isAdmin={user?.role === 'admin'}
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
+            openedTips={openedTips}
+            currentIndex={currentIndex}
           />
         );
       case 'inline_dropdown_same':
@@ -1182,6 +1191,8 @@ try {
             isAdmin={user?.role === 'admin'}
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
+            openedTips={openedTips}
+            currentIndex={currentIndex}
           />
         );
       case 'matching_list_dual':
