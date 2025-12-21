@@ -194,67 +194,189 @@ export default function Profile() {
           </Card>
         </div>
 
-        {/* Progress Charts by Course */}
+        {/* Progress Charts */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-slate-800">Progress by Course</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-800">Performance Tracking</h2>
+          </div>
 
-          {chartData.length > 0 ? (
-            chartData.map((courseData, idx) => (
-              <Card key={idx}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-indigo-500" />
-                    {courseData.courseName}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={courseData.data}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="attempt" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
-                                <p className="text-sm font-medium text-slate-800">
-                                  Score: {payload[0].value}%
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {payload[0].payload.date}
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="score" 
-                        stroke="#6366f1" 
-                        strokeWidth={2}
-                        dot={{ fill: '#6366f1', r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-600 mb-4">No quiz attempts yet</p>
-                <Link to={createPageUrl('Home')}>
-                  <Button>Browse Courses</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+          <Tabs value={viewMode} onValueChange={setViewMode}>
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="course" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                By Course
+              </TabsTrigger>
+              <TabsTrigger value="category" className="gap-2">
+                <FolderOpen className="w-4 h-4" />
+                By Category
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="course" className="space-y-6 mt-6">
+              {courseChartData.length > 0 ? (
+                courseChartData.map((courseData, idx) => (
+                  <Card key={idx}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-indigo-500" />
+                          {courseData.courseName}
+                        </CardTitle>
+                        {courseData.last5Avg && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-slate-600">Last 5 avg:</span>
+                            <span className="font-bold text-emerald-600">{courseData.last5Avg}%</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500">{courseData.category}</p>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={courseData.data}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="attempt" />
+                          <YAxis domain={[0, 100]} />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                                    <p className="text-sm font-medium text-slate-800">
+                                      Score: {payload[0].value}%
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      {payload[0].payload.date}
+                                    </p>
+                                    {payload[0].payload.avgLast5 && (
+                                      <p className="text-xs text-emerald-600 mt-1">
+                                        Last 5 avg: {payload[0].payload.avgLast5}%
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Legend />
+                          {courseData.last5Avg && (
+                            <ReferenceLine 
+                              y={courseData.last5Avg} 
+                              stroke="#10b981" 
+                              strokeDasharray="3 3"
+                              label={{ value: `Avg: ${courseData.last5Avg}%`, position: 'right', fill: '#10b981' }}
+                            />
+                          )}
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#6366f1" 
+                            strokeWidth={2}
+                            dot={{ fill: '#6366f1', r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="Score"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-600 mb-4">No quiz attempts yet</p>
+                    <Link to={createPageUrl('Home')}>
+                      <Button>Browse Courses</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="category" className="space-y-6 mt-6">
+              {categoryChartData.length > 0 ? (
+                categoryChartData.map((categoryData, idx) => (
+                  <Card key={idx}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <FolderOpen className="w-5 h-5 text-purple-500" />
+                          {categoryData.categoryName}
+                        </CardTitle>
+                        {categoryData.last5Avg && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-slate-600">Last 5 avg:</span>
+                            <span className="font-bold text-emerald-600">{categoryData.last5Avg}%</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={categoryData.data}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="attempt" />
+                          <YAxis domain={[0, 100]} />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                                    <p className="text-sm font-medium text-slate-800">
+                                      Score: {payload[0].value}%
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      {payload[0].payload.date}
+                                    </p>
+                                    {payload[0].payload.avgLast5 && (
+                                      <p className="text-xs text-emerald-600 mt-1">
+                                        Last 5 avg: {payload[0].payload.avgLast5}%
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Legend />
+                          {categoryData.last5Avg && (
+                            <ReferenceLine 
+                              y={categoryData.last5Avg} 
+                              stroke="#10b981" 
+                              strokeDasharray="3 3"
+                              label={{ value: `Avg: ${categoryData.last5Avg}%`, position: 'right', fill: '#10b981' }}
+                            />
+                          )}
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#9333ea" 
+                            strokeWidth={2}
+                            dot={{ fill: '#9333ea', r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="Score"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Target className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-600 mb-4">No quiz attempts yet</p>
+                    <Link to={createPageUrl('Home')}>
+                      <Button>Browse Courses</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Recent Attempts */}
