@@ -178,6 +178,9 @@ export default function TakeQuiz() {
       setHighlightedPassages({});
       setBlankHelperContent({});
       setBlankHelperLoading({});
+      setDropZoneHelperContent({});
+      setDropZoneHelperLoading({});
+      setDropZoneHighlightedPassages({});
     }
   };
 
@@ -199,6 +202,9 @@ export default function TakeQuiz() {
       setHighlightedPassages({});
       setBlankHelperContent({});
       setBlankHelperLoading({});
+      setDropZoneHelperContent({});
+      setDropZoneHelperLoading({});
+      setDropZoneHighlightedPassages({});
     }
   };
 
