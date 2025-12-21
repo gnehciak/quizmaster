@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -16,7 +22,15 @@ export default function MatchingListQuestion({
   onAnswer, 
   showResults,
   singleQuestion = false,
-  subQuestion = null
+  subQuestion = null,
+  onRequestHelp = null,
+  aiHelperContent = {},
+  aiHelperLoading = {},
+  highlightedPassages = {},
+  isAdmin = false,
+  tipsAllowed = 999,
+  tipsUsed = 0,
+  onRegenerateHelp = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -196,6 +210,9 @@ export default function MatchingListQuestion({
                 const selectedAnswerItem = selectedAnswers[q.id];
                 const isCorrect = showResults && selectedAnswerItem === q.correctAnswer;
                 const isWrong = showResults && selectedAnswerItem && selectedAnswerItem !== q.correctAnswer;
+                const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+                const helpContent = aiHelperContent[q.id];
+                const isLoadingHelp = aiHelperLoading[q.id];
 
                 return (
                   <div
@@ -213,6 +230,60 @@ export default function MatchingListQuestion({
                     />
                     
                     <div className="flex items-center gap-3 min-w-[200px]">
+                      {canShowHelp && (
+                        <Popover onOpenChange={(open) => {
+                          setActiveHelpQuestion(open ? q.id : null);
+                          if (!helpContent && open) onRequestHelp(q.id);
+                        }}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                            >
+                              {isLoadingHelp ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                              ) : (
+                                <Sparkles className="w-4 h-4 text-indigo-500" />
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          {helpContent && (
+                            <PopoverContent className="w-80 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-sm text-slate-800">Clue</h4>
+                                  {isAdmin && onRegenerateHelp && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => onRegenerateHelp(q.id)}
+                                      className="h-7 px-2 gap-1"
+                                    >
+                                      <RefreshCw className="w-3 h-3" />
+                                      Regenerate
+                                    </Button>
+                                  )}
+                                </div>
+                                <div 
+                                  className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={{ __html: helpContent }}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full gap-2"
+                                  onClick={() => setActiveHelpQuestion(q.id)}
+                                >
+                                  <Sparkles className="w-4 h-4" />
+                                  Show Highlights
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          )}
+                        </Popover>
+                      )}
+                      
                       <Select
                         value={selectedAnswerItem || ''}
                         onValueChange={(value) => handleAnswer(q.id, value)}
