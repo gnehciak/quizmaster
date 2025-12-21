@@ -54,6 +54,9 @@ export default function TakeQuiz() {
   const [tipsUsed, setTipsUsed] = useState(0);
   const [blankHelperContent, setBlankHelperContent] = useState({});
   const [blankHelperLoading, setBlankHelperLoading] = useState({});
+  const [dropZoneHelperContent, setDropZoneHelperContent] = useState({});
+  const [dropZoneHelperLoading, setDropZoneHelperLoading] = useState({});
+  const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -702,6 +705,152 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
     }
   };
 
+  const handleDropZoneHelp = async (zoneId) => {
+    // Check if help already exists for this zone
+    const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.dropZones?.[zoneId];
+    if (existingHelp) {
+      setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
+      if (existingHelp.passages) {
+        setDropZoneHighlightedPassages(existingHelp.passages);
+      }
+      return;
+    }
+
+    setDropZoneHelperLoading(prev => ({ ...prev, [zoneId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const zone = q.dropZones?.find(z => z.id === zoneId);
+      
+      if (!zone) {
+        throw new Error('Drop zone not found');
+      }
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+      let passagesForPrompt = [];
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passagesForPrompt = q.passages.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content
+          }));
+          passageContext = '\n\nPassages:\n' + passagesForPrompt.map(p => 
+            `[${p.id}] ${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passagesForPrompt = [{ id: 'main', title: 'Passage', content: q.passage }];
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student with a drag-and-drop exercise.
+
+**CRITICAL RULES:**
+1. Give contextual clues about what belongs in the gap labeled "${zone.label}"
+2. Explain what type of information fits (e.g., "starting sentence", "connecting sentence", "conclusion")
+3. If it's a sentence, mention connectives or opening words that might help (e.g., "Look for sentences that start with 'However' or 'In addition'")
+4. Do NOT reveal the actual answer: "${zone.correctAnswer}"
+5. If there's a passage, highlight relevant sections with <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>
+6. Return the ENTIRE passage text with highlights if applicable
+
+**INPUT DATA:**
+Gap Label: ${zone.label}
+Correct Answer (DO NOT REVEAL): ${zone.correctAnswer}
+Available Options: ${q.options?.join(', ')}
+${passageContext}
+
+**OUTPUT FORMAT (JSON):**
+
+${hasPassages ? `[For passages]
+{
+  "advice": "Explain what type of content fits in ${zone.label}. Give clues about sentence structure or connectives. Do NOT state the answer.",
+  "passages": [
+    {"passageId": "passage_id", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around relevant sections"}
+  ]
+}` : `[No passage]
+{
+  "advice": "Explain what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
+}`}`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      let advice = text;
+      let passages = {};
+      
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          advice = parsed.advice || text;
+
+          if (parsed.passages && Array.isArray(parsed.passages)) {
+            parsed.passages.forEach(p => {
+              if (p.passageId && p.highlightedContent) {
+                passages[p.passageId] = p.highlightedContent;
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing AI response:', e);
+      }
+
+      setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: advice }));
+      setDropZoneHighlightedPassages(passages);
+
+      // Save to quiz entity
+      try {
+        const existingTips = quiz?.ai_helper_tips || {};
+        const questionTips = existingTips[currentIndex] || {};
+        const dropZoneTips = questionTips.dropZones || {};
+        
+        await base44.entities.Quiz.update(quizId, {
+          ai_helper_tips: {
+            ...existingTips,
+            [currentIndex]: {
+              ...questionTips,
+              dropZones: {
+                ...dropZoneTips,
+                [zoneId]: { advice, passages }
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      } catch (err) {
+        console.error('Failed to save drop zone helper data:', err);
+      }
+
+      // Increment tips used (only for non-admins)
+      if (user?.role !== 'admin') {
+        const newTipsUsed = tipsUsed + 1;
+        setTipsUsed(newTipsUsed);
+        
+        if (currentAttemptId) {
+          try {
+            await base44.entities.QuizAttempt.update(currentAttemptId, {
+              tips_used: newTipsUsed
+            });
+          } catch (err) {
+            console.error('Failed to update tips used:', err);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error generating drop zone help:', e);
+      setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: "Unable to generate help at this time." }));
+    } finally {
+      setDropZoneHelperLoading(prev => ({ ...prev, [zoneId]: false }));
+    }
+  };
+
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
@@ -748,6 +897,13 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
+            onRequestHelp={quiz?.allow_tips ? handleDropZoneHelp : null}
+            aiHelperContent={dropZoneHelperContent}
+            aiHelperLoading={dropZoneHelperLoading}
+            highlightedPassages={dropZoneHighlightedPassages}
+            isAdmin={user?.role === 'admin'}
+            tipsAllowed={quiz?.tips_allowed || 999}
+            tipsUsed={tipsUsed}
           />
         );
       case 'drag_drop_dual':
@@ -756,6 +912,13 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
+            onRequestHelp={quiz?.allow_tips ? handleDropZoneHelp : null}
+            aiHelperContent={dropZoneHelperContent}
+            aiHelperLoading={dropZoneHelperLoading}
+            highlightedPassages={dropZoneHighlightedPassages}
+            isAdmin={user?.role === 'admin'}
+            tipsAllowed={quiz?.tips_allowed || 999}
+            tipsUsed={tipsUsed}
           />
         );
       case 'inline_dropdown_separate':

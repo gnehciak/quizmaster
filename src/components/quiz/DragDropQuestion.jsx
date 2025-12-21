@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GripVertical, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function DragDropQuestion({ 
   question, 
   selectedAnswers = {}, 
   onAnswer, 
-  showResults 
+  showResults,
+  onRequestHelp,
+  aiHelperContent = {},
+  aiHelperLoading = {},
+  highlightedPassages = {},
+  isAdmin = false,
+  tipsAllowed = 999,
+  tipsUsed = 0
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
   
@@ -149,6 +161,9 @@ export default function DragDropQuestion({
           const isCorrect = showResults && placedAnswer === zone.correctAnswer;
           const isWrong = showResults && placedAnswer && placedAnswer !== zone.correctAnswer;
           const showCorrectAnswer = showResults && !isCorrect;
+          const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+          const helpContent = aiHelperContent[zone.id];
+          const isLoadingHelp = aiHelperLoading[zone.id];
           
           return (
             <motion.div
@@ -168,12 +183,44 @@ export default function DragDropQuestion({
                   {zone.label}
                 </span>
                 
-                {showResults && isCorrect && (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                )}
-                {showResults && isWrong && (
-                  <XCircle className="w-5 h-5 text-red-500" />
-                )}
+                <div className="flex items-center gap-2">
+                  {canShowHelp && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => !helpContent && onRequestHelp(zone.id)}
+                        >
+                          {isLoadingHelp ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                          ) : (
+                            <Sparkles className="w-4 h-4 text-indigo-500" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      {helpContent && (
+                        <PopoverContent className="w-80 max-h-96 overflow-y-auto">
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-slate-800">Clue</h4>
+                            <div 
+                              className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: helpContent }}
+                            />
+                          </div>
+                        </PopoverContent>
+                      )}
+                    </Popover>
+                  )}
+                  
+                  {showResults && isCorrect && (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  )}
+                  {showResults && isWrong && (
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  )}
+                </div>
               </div>
               
               {placedAnswer ? (
