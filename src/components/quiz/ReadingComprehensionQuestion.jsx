@@ -10,11 +10,24 @@ export default function ReadingComprehensionQuestion({
   onAnswer, 
   showResults,
   singleQuestion = false,
-  subQuestion = null
+  subQuestion = null,
+  highlightedText = ''
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
     : [{ id: 'main', title: 'Passage', content: question.passage }];
+
+  const highlightPassageText = (text) => {
+    if (!highlightedText || !text) return text;
+    
+    const cleanText = text.replace(/<[^>]*>/g, '');
+    const cleanHighlight = highlightedText.trim();
+    
+    if (!cleanText.includes(cleanHighlight)) return text;
+    
+    const regex = new RegExp(`(${cleanHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+  };
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
   const [leftWidth, setLeftWidth] = useState(50);
@@ -105,7 +118,7 @@ export default function ReadingComprehensionQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1"
-              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
+              dangerouslySetInnerHTML={{ __html: highlightPassageText(activePassage?.content) }}
             />
           </div>
         </div>
