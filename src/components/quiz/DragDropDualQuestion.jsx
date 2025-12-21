@@ -30,6 +30,7 @@ export default function DragDropDualQuestion({
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [activeHelpZone, setActiveHelpZone] = useState(null);
   const containerRef = useRef(null);
 
   const activePassage = passages.find(p => p.id === activeTab) || passages[0];
@@ -154,7 +155,11 @@ export default function DragDropDualQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: highlightedPassages[activePassage?.id] || activePassage?.content }}
+              dangerouslySetInnerHTML={{ 
+                __html: activeHelpZone && highlightedPassages[activePassage?.id] 
+                  ? highlightedPassages[activePassage?.id] 
+                  : activePassage?.content 
+              }}
             />
           </div>
         </div>
@@ -241,13 +246,15 @@ export default function DragDropDualQuestion({
                     <span className="text-sm font-medium text-slate-700">{zone.label}</span>
                     <div className="flex items-center gap-2">
                       {canShowHelp && (
-                        <Popover>
+                        <Popover onOpenChange={(open) => {
+                          setActiveHelpZone(open ? zone.id : null);
+                          if (!helpContent && open) onRequestHelp(zone.id);
+                        }}>
                           <PopoverTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0"
-                              onClick={() => !helpContent && onRequestHelp(zone.id)}
                             >
                               {isLoadingHelp ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
