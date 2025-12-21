@@ -450,35 +450,63 @@ export default function TakeQuiz() {
 
       let prompt = '';
       if (stage === 1) {
-        prompt = `You are a Year 6 teacher guiding a student. Use simple, clear language. Get straight to the point - no phrases like "Great question!" or "Let me help you". Focus on teaching them HOW to think about finding the answer.
+        prompt = `You are a Year 6 teacher guiding a student.
+Tone: Simple, clear, direct.
+Rules:
+1. Do NOT use filler phrases like "Great question" or "Let me help".
+2. Do NOT reveal the answer or the specific location in the text yet.
+3. Focus on the STRATEGY (e.g., "Look for keywords," "Think about the character's feelings," "Check the beginning of the text").
+4. Return valid JSON only. Do not use markdown formatting.
 
-Question: ${questionText}${passageContext}${optionsContext}
+Input Data:
+Question: ${questionText}
+Passage: ${passageContext}
+Options: ${optionsContext}
 
-Give a brief teaching hint in simple language (2-3 sentences) that guides their thinking process:`;
+Output Format (JSON):
+{
+  "advice": "A brief teaching hint (2-3 sentences) guiding their thinking process."
+}`;
       } else if (stage === 2) {
-        prompt = `You are a Year 6 teacher helping a student learn. Use simple language. Get straight to the point. ${passageContext ? 'Teach them WHERE to look. Highlight a BROADER section (paragraph or multiple sentences) that contains the clues. Return your response as JSON.' : 'Teach them more specifically what to look for.'}
+        prompt = `You are a Year 6 teacher helping a student find evidence.
+Tone: Simple, direct.
+Rules:
+1. Identify the specific paragraph or section (3-5 sentences) that contains the answer.
+2. The 'highlightText' must be an EXACT copy-paste from the passage. Do not summarize or alter it.
+3. The 'advice' should tell them what to look for within this section.
+4. Return valid JSON only. Do not use markdown formatting.
 
-Question: ${questionText}${passageContext}${optionsContext}
+Input Data:
+Question: ${questionText}
+Passage: ${passageContext}
+Options: ${optionsContext}
 
-${passageContext ? `Return JSON in this exact format:
+Output Format (JSON):
 {
-  "advice": "Teaching guidance about what to look for in the highlighted section (2-3 sentences)",
-  "highlightText": "A paragraph or several sentences from the passage that contain the clues"
-}
-
-Find a BROADER section (paragraph or multiple sentences) from the passage. This should give them the general area to focus on. Copy the text EXACTLY as it appears, including multiple sentences if needed.` : 'Teach them what specific clues to look for (2-3 sentences):'}`;
+  "advice": "Teaching guidance about what to scan for in the text below (2-3 sentences).",
+  "highlightText": "The exact broad section text from the passage."
+}`;
       } else if (stage === 3) {
-        prompt = `You are a Year 6 teacher. Use simple language. Get straight to the point. ${passageContext ? 'Now TELL them the correct answer directly and TEACH them how to find it by highlighting the specific words/sentence. Return your response as JSON.' : 'Tell them the correct answer and explain.'}
+        prompt = `You are a Year 6 teacher revealing the answer.
+Tone: Simple, direct.
+Rules:
+1. State the correct answer clearly.
+2. Identify the SPECIFIC sentence or phrase that proves the answer.
+3. The 'highlightText' must be an EXACT copy-paste of that specific sentence/phrase from the passage.
+4. The 'advice' must explain the link between the text and the correct option.
+5. Return valid JSON only. Do not use markdown formatting.
 
-Question: ${questionText}${passageContext}${optionsContext}${answerContext}
+Input Data:
+Question: ${questionText}
+Passage: ${passageContext}
+Options: ${optionsContext}
+Correct Answer: ${answerContext}
 
-${passageContext ? `Return JSON in this exact format:
+Output Format (JSON):
 {
-  "advice": "The correct answer is [state the answer]. Explain in simple language how to find this answer from the highlighted text (2-3 sentences)",
-  "highlightText": "The specific sentence or key words that contain the answer"
-}
-
-Highlight the SPECIFIC sentence or key words that directly give the answer. Copy it EXACTLY from the passage.` : `State the correct answer directly and teach them how to recognize it (2-3 sentences):`}`;
+  "advice": "The correct answer is [Option]. Explain simply why this sentence proves the answer (2-3 sentences).",
+  "highlightText": "The specific sentence or phrase from the text."
+}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
