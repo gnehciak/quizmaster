@@ -16,6 +16,7 @@ export default function ReadingComprehensionQuestion({
   aiHelperContent = '',
   aiHelperLoading = false,
   onRequestHelp = null,
+  onGenerateHelp = null,
   onRegenerateHelp = null,
   isAdmin = false
 }) {
@@ -203,15 +204,27 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
-              {!showResults && onRequestHelp && !aiHelperContent && !aiHelperLoading && (
-                <div className="mt-4">
-                  <Button
-                    onClick={onRequestHelp}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    I need help
-                  </Button>
+              {!showResults && !aiHelperLoading && !aiHelperContent && (
+                <div className="mt-4 flex gap-2">
+                  {onRequestHelp && (
+                    <Button
+                      onClick={onRequestHelp}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      I need help
+                    </Button>
+                  )}
+                  {isAdmin && onGenerateHelp && (
+                    <Button
+                      onClick={onGenerateHelp}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      AI Generate Tip
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -234,10 +247,15 @@ export default function ReadingComprehensionQuestion({
                       variant="ghost"
                       size="sm"
                       onClick={onRegenerateHelp}
+                      disabled={aiHelperLoading}
                       className="absolute top-2 right-2 h-8 w-8 p-0"
                       title="Regenerate AI tip"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      {aiHelperLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
                     </Button>
                   )}
                 </div>

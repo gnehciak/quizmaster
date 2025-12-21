@@ -596,20 +596,16 @@ export default function TakeQuiz() {
   };
 
   const handleAiHelperOpen = () => {
-    setAiHelperOpen(true);
-    // Check if we have cached content for this question
-    const cached = aiHelperCache[currentIndex];
-    if (cached) {
-      setAiHelperContent(cached.content);
-      setHighlightedPassages(cached.highlightedPassages || {});
-    } else if (!aiHelperContent && !aiHelperData[currentIndex]) {
-      getAiHelp();
-    } else if (aiHelperData[currentIndex]) {
-      // Load from stored data
+    // Check if we have stored data for this question
+    if (aiHelperData[currentIndex]) {
       const stored = aiHelperData[currentIndex];
       setAiHelperContent(stored.advice);
       setHighlightedPassages(stored.passages || {});
     }
+  };
+
+  const handleGenerateAiHelp = () => {
+    getAiHelp(false);
   };
 
   const handleRegenerateAiHelp = () => {
@@ -633,6 +629,7 @@ export default function TakeQuiz() {
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
           onRequestHelp={handleAiHelperOpen}
+          onGenerateHelp={handleGenerateAiHelp}
           onRegenerateHelp={handleRegenerateAiHelp}
           isAdmin={user?.role === 'admin'}
         />
