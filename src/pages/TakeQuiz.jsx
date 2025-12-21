@@ -909,8 +909,30 @@ export default function TakeQuiz() {
                                   <button
                                     key={idx}
                                     onClick={() => {
+                                      // Save current AI helper state before navigating
+                                      if (aiHelperContent) {
+                                        setAiHelperCache(prev => ({
+                                          ...prev,
+                                          [currentIndex]: {
+                                            content: aiHelperContent,
+                                            highlightedPassages
+                                          }
+                                        }));
+                                      }
+
                                       setCurrentIndex(idx);
                                       setOverviewOpen(false);
+                                      setAiHelperOpen(false);
+
+                                      // Restore cached AI helper state for selected question
+                                      const cached = aiHelperCache[idx];
+                                      if (cached) {
+                                        setAiHelperContent(cached.content);
+                                        setHighlightedPassages(cached.highlightedPassages || {});
+                                      } else {
+                                        setAiHelperContent('');
+                                        setHighlightedPassages({});
+                                      }
                                     }}
                                     className={cn(
                                       "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
@@ -942,8 +964,30 @@ export default function TakeQuiz() {
                                 <button
                                   key={idx}
                                   onClick={() => {
+                                    // Save current AI helper state before navigating
+                                    if (aiHelperContent) {
+                                      setAiHelperCache(prev => ({
+                                        ...prev,
+                                        [currentIndex]: {
+                                          content: aiHelperContent,
+                                          highlightedPassages
+                                        }
+                                      }));
+                                    }
+
                                     setCurrentIndex(idx);
                                     setOverviewOpen(false);
+                                    setAiHelperOpen(false);
+
+                                    // Restore cached AI helper state for selected question
+                                    const cached = aiHelperCache[idx];
+                                    if (cached) {
+                                      setAiHelperContent(cached.content);
+                                      setHighlightedPassages(cached.highlightedPassages || {});
+                                    } else {
+                                      setAiHelperContent('');
+                                      setHighlightedPassages({});
+                                    }
                                   }}
                                   className={cn(
                                     "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
