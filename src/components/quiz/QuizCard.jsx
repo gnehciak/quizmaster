@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 
@@ -114,7 +114,18 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index }) {
               Start Quiz
             </Button>
           </Link>
-          
+
+          <Link to={createPageUrl(`QuizAttempts?id=${quiz.id}`)}>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600"
+              title="View Analytics"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+          </Link>
+
           <Button 
             variant="outline" 
             size="icon"
@@ -124,7 +135,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index }) {
           >
             <Download className="w-4 h-4" />
           </Button>
-          
+
           <Button 
             variant="outline" 
             size="icon"
@@ -133,7 +144,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index }) {
           >
             <FileEdit className="w-4 h-4" />
           </Button>
-          
+
           <Button 
             variant="outline" 
             size="icon"

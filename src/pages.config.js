@@ -12,6 +12,7 @@ import UserManagement from './pages/UserManagement';
 import UserDetails from './pages/UserDetails';
 import MyCourses from './pages/MyCourses';
 import ReviewAnswers from './pages/ReviewAnswers';
+import QuizAttempts from './pages/QuizAttempts';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "UserDetails": UserDetails,
     "MyCourses": MyCourses,
     "ReviewAnswers": ReviewAnswers,
+    "QuizAttempts": QuizAttempts,
 }
 
 export const pagesConfig = {
