@@ -24,13 +24,28 @@ export default function DragDropDualQuestion({
     
     if (!textToHighlight) return text;
     
+    // Normalize whitespace for matching
+    const normalizeWhitespace = (str) => str.replace(/\s+/g, ' ').trim();
+    
     const cleanText = text.replace(/<[^>]*>/g, '');
-    const cleanHighlight = textToHighlight.trim();
+    const cleanHighlight = normalizeWhitespace(textToHighlight);
+    const normalizedCleanText = normalizeWhitespace(cleanText);
     
-    if (!cleanText.includes(cleanHighlight)) return text;
+    console.log('Highlighting attempt:', { passageId, textToHighlight: cleanHighlight.substring(0, 100) });
     
-    const regex = new RegExp(`(${cleanHighlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+    // Try exact match first
+    if (normalizedCleanText.includes(cleanHighlight)) {
+      // Find the actual text in the original (with normalized whitespace pattern)
+      const words = cleanHighlight.split(' ');
+      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
+      const regex = new RegExp(`(${pattern})`, 'gi');
+      const highlighted = text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
+      console.log('Highlight applied successfully');
+      return highlighted;
+    }
+    
+    console.log('Highlight text not found in passage');
+    return text;
   };
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
