@@ -914,6 +914,7 @@ export default function TakeQuiz() {
                       </button>
                     );
                   })}
+                </div>
                 
                 <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
                   <div className="flex items-center gap-2">
