@@ -3,6 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -60,6 +62,7 @@ export default function TakeQuiz() {
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [matchingHelperLoading, setMatchingHelperLoading] = useState({});
   const [openedTips, setOpenedTips] = useState(new Set());
+  const [practiceTipsEnabled, setPracticeTipsEnabled] = useState(true);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -1102,7 +1105,7 @@ try {
           highlightedPassages={highlightedPassages}
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
-          onRequestHelp={quiz?.allow_tips ? handleAiHelperOpen : null}
+          onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleAiHelperOpen : null}
           onRegenerateHelp={handleRegenerateAiHelp}
           onDeleteHelp={handleDeleteAiHelp}
           isAdmin={user?.role === 'admin'}
@@ -1133,7 +1136,7 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            onRequestHelp={quiz?.allow_tips ? handleDropZoneHelp : null}
+            onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleDropZoneHelp : null}
             aiHelperContent={dropZoneHelperContent}
             aiHelperLoading={dropZoneHelperLoading}
             highlightedPassages={dropZoneHighlightedPassages}
@@ -1151,7 +1154,7 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            onRequestHelp={quiz?.allow_tips ? handleDropZoneHelp : null}
+            onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleDropZoneHelp : null}
             aiHelperContent={dropZoneHelperContent}
             aiHelperLoading={dropZoneHelperLoading}
             highlightedPassages={dropZoneHighlightedPassages}
@@ -1169,7 +1172,7 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            onRequestHelp={quiz?.allow_tips ? handleBlankHelp : null}
+            onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleBlankHelp : null}
             aiHelperContent={blankHelperContent}
             aiHelperLoading={blankHelperLoading}
             isAdmin={user?.role === 'admin'}
@@ -1185,7 +1188,7 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            onRequestHelp={quiz?.allow_tips ? handleBlankHelp : null}
+            onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleBlankHelp : null}
             aiHelperContent={blankHelperContent}
             aiHelperLoading={blankHelperLoading}
             isAdmin={user?.role === 'admin'}
@@ -1201,7 +1204,7 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            onRequestHelp={quiz?.allow_tips ? handleMatchingHelp : null}
+            onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleMatchingHelp : null}
             aiHelperContent={matchingHelperContent}
             aiHelperLoading={matchingHelperLoading}
             isAdmin={user?.role === 'admin'}
@@ -1301,7 +1304,28 @@ try {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+
+            {quiz.allow_tips && (
+            <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+                <div>
+                  <Label htmlFor="practice-tips" className="font-semibold text-slate-800 cursor-pointer">
+                    Practice Tips Mode
+                  </Label>
+                  <div className="text-sm text-slate-600">
+                    Get AI-powered hints during the quiz
+                  </div>
+                </div>
+              </div>
+              <Switch
+                id="practice-tips"
+                checked={practiceTipsEnabled}
+                onCheckedChange={setPracticeTipsEnabled}
+              />
+            </div>
+            )}
 
           {canTakeQuiz ? (
             <Button
@@ -1401,7 +1425,7 @@ try {
           <h2 className="text-xl font-semibold text-slate-800">
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
-          {quiz?.allow_tips && !showResults && (
+          {quiz?.allow_tips && practiceTipsEnabled && !showResults && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 border border-purple-300 rounded-lg">
               <Sparkles className="w-4 h-4 text-purple-600" />
               <span className="text-sm font-medium text-purple-800">
