@@ -33,27 +33,47 @@ export default function MatchingListQuestion({
     
     if (!textToHighlight) return text;
     
-    // Normalize whitespace for matching
-    const normalizeWhitespace = (str) => str.replace(/\s+/g, ' ').trim();
+    // Normalize text for matching - handle unicode, HTML entities, and whitespace
+    const normalizeText = (str) => {
+      return str
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace HTML entities
+        .replace(/\u00a0/g, ' ') // Replace non-breaking space
+        .replace(/\u2019/g, "'") // Replace smart quotes
+        .replace(/\u2018/g, "'")
+        .replace(/\u201c/g, '"')
+        .replace(/\u201d/g, '"')
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    };
     
-    const cleanText = text.replace(/<[^>]*>/g, '');
-    const cleanHighlight = normalizeWhitespace(textToHighlight);
-    const normalizedCleanText = normalizeWhitespace(cleanText);
+    const normalizedPassage = normalizeText(text);
+    const normalizedHighlight = normalizeText(textToHighlight);
     
-    console.log('Highlighting attempt:', { passageId, textToHighlight: cleanHighlight.substring(0, 100) });
+    console.log('Highlighting attempt:', { 
+      passageId, 
+      highlightLength: normalizedHighlight.length,
+      highlightPreview: normalizedHighlight.substring(0, 100),
+      passagePreview: normalizedPassage.substring(0, 100)
+    });
     
-    // Try exact match first
-    if (normalizedCleanText.includes(cleanHighlight)) {
-      // Find the actual text in the original (with normalized whitespace pattern)
-      const words = cleanHighlight.split(' ');
-      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
+    // Try to find the highlight in the normalized text
+    if (normalizedPassage.includes(normalizedHighlight)) {
+      // Create a flexible regex pattern that matches across different whitespace/character variations
+      const words = normalizedHighlight.split(' ').filter(w => w.length > 0);
+      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s\\u00a0&nbsp;]+');
       const regex = new RegExp(`(${pattern})`, 'gi');
       const highlighted = text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
-      console.log('Highlight applied successfully');
-      return highlighted;
+      
+      if (highlighted !== text) {
+        console.log('✓ Highlight applied successfully');
+        return highlighted;
+      }
     }
     
-    console.log('Highlight text not found in passage');
+    console.warn('✗ Highlight text not found in passage');
+    console.log('Expected:', normalizedHighlight.substring(0, 200));
+    console.log('In passage:', normalizedPassage.substring(0, 200));
     return text;
   };
   
