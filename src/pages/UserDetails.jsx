@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ChevronLeft, User, Loader2, Save, BookOpen, Award, Target, Plus, X, Trash2, TrendingUp } from 'lucide-react';
+import { ChevronLeft, User, Loader2, Save, BookOpen, Award, Target, Plus, UserMinus, Trash2, TrendingUp, Eye } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -436,9 +436,14 @@ export default function UserDetails() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleUnenroll(access.id)}
+                            disabled={unenrollMutation.isPending}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            <X className="w-4 h-4" />
+                            {unenrollMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <UserMinus className="w-4 h-4" />
+                            )}
                           </Button>
                         </div>
                       );
@@ -549,26 +554,35 @@ export default function UserDetails() {
                                     {format(new Date(attempt.created_date), 'MMM d, yyyy h:mm a')}
                                   </p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="text-right">
-                                    <div className={cn(
-                                      "text-sm font-bold",
-                                      attempt.percentage >= 80 ? "text-emerald-600" :
-                                      attempt.percentage >= 60 ? "text-amber-600" :
-                                      "text-red-600"
-                                    )}>
-                                      {attempt.percentage}%
-                                    </div>
-                                    <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
-                                  </div>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => handleDeleteAttempt(attempt.id)}
-                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
+                                <div className="flex items-center gap-2">
+                                 <div className="text-right">
+                                   <div className={cn(
+                                     "text-sm font-bold",
+                                     attempt.percentage >= 80 ? "text-emerald-600" :
+                                     attempt.percentage >= 60 ? "text-amber-600" :
+                                     "text-red-600"
+                                   )}>
+                                     {attempt.percentage}%
+                                   </div>
+                                   <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
+                                 </div>
+                                 <Link to={createPageUrl(`ReviewAnswers?id=${attempt.quiz_id}&courseId=${attempt.course_id}&attemptId=${attempt.id}`)}>
+                                   <Button
+                                     size="icon"
+                                     variant="ghost"
+                                     className="h-8 w-8 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50"
+                                   >
+                                     <Eye className="w-4 h-4" />
+                                   </Button>
+                                 </Link>
+                                 <Button
+                                   size="icon"
+                                   variant="ghost"
+                                   onClick={() => handleDeleteAttempt(attempt.id)}
+                                   className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                 >
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
                                 </div>
                               </div>
                             );
@@ -610,7 +624,7 @@ export default function UserDetails() {
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <div className="text-right">
                               <div className={cn(
                                 "text-lg font-bold",
@@ -622,6 +636,15 @@ export default function UserDetails() {
                               </div>
                               <p className="text-xs text-slate-500">{attempt.score}/{attempt.total}</p>
                             </div>
+                            <Link to={createPageUrl(`ReviewAnswers?id=${attempt.quiz_id}&courseId=${attempt.course_id}&attemptId=${attempt.id}`)}>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Link>
                             <Button
                               size="icon"
                               variant="ghost"
