@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -9,12 +10,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function InlineDropdownSameQuestion({ 
   question, 
   selectedAnswers = {}, 
   onAnswer, 
-  showResults 
+  showResults,
+  onRequestHelp,
+  aiHelperContent = {},
+  aiHelperLoading = {},
+  isAdmin = false,
+  tipsAllowed = 999,
+  tipsUsed = 0
 }) {
   const handleAnswer = (blankId, answer) => {
     if (showResults) return;
@@ -47,8 +59,12 @@ export default function InlineDropdownSameQuestion({
         const isCorrect = showResults && selectedAnswer === blank?.correctAnswer;
         const isWrong = showResults && selectedAnswer && selectedAnswer !== blank?.correctAnswer;
         
+        const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+        const helpContent = aiHelperContent[blankId];
+        const isLoadingHelp = aiHelperLoading[blankId];
+        
         return (
-          <span key={idx} className="inline-block mx-1 align-middle">
+          <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
             {showResults ? (
               <span className={cn(
                 "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-medium",
@@ -61,21 +77,53 @@ export default function InlineDropdownSameQuestion({
                 {isWrong && <XCircle className="w-4 h-4" />}
               </span>
             ) : (
-              <Select
-                value={selectedAnswer || ''}
-                onValueChange={(value) => handleAnswer(blankId, value)}
-              >
-                <SelectTrigger className="w-[200px] h-9 inline-flex">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {question.options?.filter(o => o).map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <Select
+                  value={selectedAnswer || ''}
+                  onValueChange={(value) => handleAnswer(blankId, value)}
+                >
+                  <SelectTrigger className="w-[200px] h-9 inline-flex">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {question.options?.filter(o => o).map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {canShowHelp && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => !helpContent && onRequestHelp(blankId)}
+                      >
+                        {isLoadingHelp ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-indigo-500" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    {helpContent && (
+                      <PopoverContent className="w-80 max-h-96 overflow-y-auto">
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-slate-800">Word Definitions</h4>
+                          <div 
+                            className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: helpContent }}
+                          />
+                        </div>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                )}
+              </>
             )}
           </span>
         );

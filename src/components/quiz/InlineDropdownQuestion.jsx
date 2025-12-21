@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -8,12 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function InlineDropdownQuestion({ 
   question, 
   selectedAnswers = {}, 
   onAnswer, 
-  showResults 
+  showResults,
+  onRequestHelp,
+  aiHelperContent = {},
+  aiHelperLoading = {},
+  isAdmin = false,
+  tipsAllowed = 999,
+  tipsUsed = 0
 }) {
   const handleSelect = (blankId, value) => {
     if (showResults) return;
@@ -50,6 +62,10 @@ export default function InlineDropdownQuestion({
         const isCorrect = showResults && selectedValue === blank.correctAnswer;
         const isWrong = showResults && selectedValue && selectedValue !== blank.correctAnswer;
         
+        const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+        const helpContent = aiHelperContent[blankId];
+        const isLoadingHelp = aiHelperLoading[blankId];
+
         return (
           <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
             <Select
@@ -77,6 +93,36 @@ export default function InlineDropdownQuestion({
                 ))}
               </SelectContent>
             </Select>
+            
+            {canShowHelp && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => !helpContent && onRequestHelp(blankId)}
+                  >
+                    {isLoadingHelp ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 text-indigo-500" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                {helpContent && (
+                  <PopoverContent className="w-80 max-h-96 overflow-y-auto">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-slate-800">Word Definitions</h4>
+                      <div 
+                        className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: helpContent }}
+                      />
+                    </div>
+                  </PopoverContent>
+                )}
+              </Popover>
+            )}
             
             {showResults && isCorrect && (
               <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
