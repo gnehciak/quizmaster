@@ -503,6 +503,7 @@ export default function TakeQuiz() {
       const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
       const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
 
+      console.log('=== AI Helper Stage', stage, '===');
       let prompt = '';
       if (stage === 1) {
         prompt = `You are a Year 6 teacher helping a student find evidence.
@@ -562,11 +563,15 @@ Output Format (JSON):${hasMultiplePassages ? `
 }`}`;
       }
 
+      console.log('AI Helper Prompt:', prompt);
+      
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+      
+      console.log('AI Helper Response:', text);
 
       // Parse JSON for stages 1 and 2 with passages
       if (stage >= 1 && passageContext) {
