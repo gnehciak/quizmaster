@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
@@ -17,6 +17,7 @@ export default function ReadingComprehensionQuestion({
   aiHelperLoading = false,
   onRequestHelp = null,
   onRegenerateHelp = null,
+  onDeleteHelp = null,
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0
@@ -209,12 +210,12 @@ export default function ReadingComprehensionQuestion({
                 <div className="mt-4">
                   <Button
                     onClick={onRequestHelp}
-                    disabled={tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
+                    disabled={!isAdmin && tipsAllowed !== 999 && tipsUsed >= tipsAllowed}
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles className="w-4 h-4" />
                     I need help
-                    {tipsAllowed !== 999 && (
+                    {!isAdmin && tipsAllowed !== 999 && (
                       <span className="ml-2 text-xs opacity-90">
                         ({tipsAllowed - tipsUsed} left)
                       </span>
@@ -236,22 +237,38 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && onRegenerateHelp && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onRegenerateHelp}
-                      disabled={aiHelperLoading}
-                      className="absolute top-2 right-2 h-8 w-8 p-0"
-                      title="Regenerate AI tip"
-                    >
-                      {aiHelperLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4" />
+                  {isAdmin && (onRegenerateHelp || onDeleteHelp) && (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {onDeleteHelp && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={onDeleteHelp}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          title="Delete AI tip"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       )}
-                    </Button>
+                      {onRegenerateHelp && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={onRegenerateHelp}
+                          disabled={aiHelperLoading}
+                          className="h-8 w-8 p-0"
+                          title="Regenerate AI tip"
+                        >
+                          {aiHelperLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -558,24 +558,47 @@ export default function TakeQuiz() {
       await getAiHelp(false);
     }
     
-    // Increment tips used
-    const newTipsUsed = tipsUsed + 1;
-    setTipsUsed(newTipsUsed);
-    
-    // Save to attempt
-    if (currentAttemptId) {
-      try {
-        await base44.entities.QuizAttempt.update(currentAttemptId, {
-          tips_used: newTipsUsed
-        });
-      } catch (err) {
-        console.error('Failed to update tips used:', err);
+    // Increment tips used (only for non-admins)
+    if (user?.role !== 'admin') {
+      const newTipsUsed = tipsUsed + 1;
+      setTipsUsed(newTipsUsed);
+      
+      // Save to attempt
+      if (currentAttemptId) {
+        try {
+          await base44.entities.QuizAttempt.update(currentAttemptId, {
+            tips_used: newTipsUsed
+          });
+        } catch (err) {
+          console.error('Failed to update tips used:', err);
+        }
       }
     }
   };
 
   const handleRegenerateAiHelp = () => {
     getAiHelp(true);
+  };
+
+  const handleDeleteAiHelp = async () => {
+    try {
+      const existingTips = quiz?.ai_helper_tips || {};
+      const updatedTips = { ...existingTips };
+      delete updatedTips[currentIndex];
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: updatedTips
+      });
+      
+      // Clear local state
+      setAiHelperContent('');
+      setHighlightedPassages({});
+      
+      // Invalidate quiz query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+    } catch (err) {
+      console.error('Failed to delete AI helper data:', err);
+    }
   };
 
   const renderQuestion = () => {
@@ -596,6 +619,7 @@ export default function TakeQuiz() {
           aiHelperLoading={aiHelperLoading}
           onRequestHelp={quiz?.allow_tips ? handleAiHelperOpen : null}
           onRegenerateHelp={handleRegenerateAiHelp}
+          onDeleteHelp={handleDeleteAiHelp}
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}
           tipsUsed={tipsUsed}
