@@ -24,7 +24,8 @@ import {
   Loader2,
   Clock,
   Eye,
-  GripVertical
+  GripVertical,
+  PlayCircle
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -192,6 +193,17 @@ export default function CreateQuiz() {
                 <Eye className="w-4 h-4" />
                 {previewMode ? 'Edit' : 'Preview'}
               </Button>
+              {quizId && (
+                <Link to={createPageUrl(`TakeQuiz?id=${quizId}${courseId ? `&courseId=${courseId}` : ''}`)}>
+                  <Button 
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    Start Quiz
+                  </Button>
+                </Link>
+              )}
               <Button 
                 onClick={handleSave}
                 disabled={saving || !quiz.title}
@@ -515,6 +527,25 @@ export default function CreateQuiz() {
         </div>
         </>
         )}
+      </div>
+
+      {/* Sticky Save Button */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <Button 
+          onClick={handleSave}
+          disabled={saving || !quiz.title}
+          size="lg"
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg"
+        >
+          {saving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : saved ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          {saved ? 'Saved!' : 'Save Quiz'}
+        </Button>
       </div>
     </div>
   );
