@@ -1171,11 +1171,25 @@ try {
           )}
         </div>
 
-        {/* Question Counter */}
+        {/* Question Counter & Tips */}
         <div className="text-center flex items-center justify-center gap-3">
           <h2 className="text-xl font-semibold text-slate-800">
             Question {currentIndex + 1} of {totalQuestions}
           </h2>
+          {quiz?.allow_tips && !showResults && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 border border-purple-300 rounded-lg">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-800">
+                {user?.role === 'admin' ? (
+                  'Unlimited tips'
+                ) : quiz?.tips_allowed >= 999 ? (
+                  'Unlimited tips'
+                ) : (
+                  `${Math.max(0, (quiz?.tips_allowed || 0) - tipsUsed)} tips left`
+                )}
+              </span>
+            </div>
+          )}
           <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">

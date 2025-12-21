@@ -215,11 +215,6 @@ export default function ReadingComprehensionQuestion({
                   >
                     <Sparkles className="w-4 h-4" />
                     I need help
-                    {!isAdmin && tipsAllowed !== 999 && (
-                      <span className="ml-2 text-xs opacity-90">
-                        ({tipsAllowed - tipsUsed} left)
-                      </span>
-                    )}
                   </Button>
                 </div>
               )}
