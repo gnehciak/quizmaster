@@ -30,17 +30,18 @@ export default function ReadingComprehensionQuestion({
     // Normalize whitespace for matching
     const normalizeWhitespace = (str) => str.replace(/\s+/g, ' ').trim();
     
+    // Strip HTML from both text and highlight for comparison
     const cleanText = text.replace(/<[^>]*>/g, '');
-    const cleanHighlight = normalizeWhitespace(textToHighlight);
+    const cleanHighlight = normalizeWhitespace(textToHighlight.replace(/<[^>]*>/g, ''));
     const normalizedCleanText = normalizeWhitespace(cleanText);
     
     console.log('Highlighting attempt:', { passageId, textToHighlight: cleanHighlight.substring(0, 100) });
     
-    // Try exact match first
+    // Try exact match
     if (normalizedCleanText.includes(cleanHighlight)) {
-      // Find the actual text in the original (with normalized whitespace pattern)
+      // Build a pattern that allows HTML tags between words
       const words = cleanHighlight.split(' ');
-      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
+      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(?:<[^>]*>)*\\s+(?:<[^>]*>)*');
       const regex = new RegExp(`(${pattern})`, 'gi');
       const highlighted = text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
       console.log('Highlight applied successfully');
