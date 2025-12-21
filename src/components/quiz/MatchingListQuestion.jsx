@@ -23,11 +23,17 @@ export default function MatchingListQuestion({
     ? question.passages 
     : [{ id: 'main', title: 'Passage', content: question.passage }];
 
-  const highlightPassageText = (text) => {
-    if (!highlightedText || !text) return text;
+  const highlightPassageText = (text, passageId) => {
+    if (!text) return text;
+    
+    // Check for passage-specific highlight
+    const highlightForPassage = highlightedTexts[passageId];
+    const textToHighlight = highlightForPassage || highlightedText;
+    
+    if (!textToHighlight) return text;
     
     const cleanText = text.replace(/<[^>]*>/g, '');
-    const cleanHighlight = highlightedText.trim();
+    const cleanHighlight = textToHighlight.trim();
     
     if (!cleanText.includes(cleanHighlight)) return text;
     
@@ -123,7 +129,7 @@ export default function MatchingListQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: highlightPassageText(activePassage?.content) }}
+              dangerouslySetInnerHTML={{ __html: highlightPassageText(activePassage?.content, activePassage?.id) }}
             />
           </div>
         </div>

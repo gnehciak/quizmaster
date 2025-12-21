@@ -54,6 +54,7 @@ export default function TakeQuiz() {
   const [stageUnlockTime, setStageUnlockTime] = useState(null);
   const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
   const [highlightedText, setHighlightedText] = useState('');
+  const [highlightedTexts, setHighlightedTexts] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -431,11 +432,12 @@ export default function TakeQuiz() {
       let questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
       questionText = questionText?.replace(/<[^>]*>/g, '');
 
+      const hasMultiplePassages = q.passages?.length > 1;
       let passageContext = '';
       if (q.passage || q.passages?.length > 0) {
         if (q.passages?.length > 0) {
           passageContext = '\n\nPassages:\n' + q.passages.map(p => 
-            `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+            `[${p.id}] ${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
           ).join('\n\n');
         } else {
           passageContext = '\n\nPassage:\n' + q.passage?.replace(/<[^>]*>/g, '');
@@ -472,29 +474,38 @@ Output Format (JSON):
 Tone: Simple, direct.
 Rules:
 1. Identify the specific paragraph or section (3-5 sentences) that contains the answer.
-2. The 'highlightText' must be an EXACT copy-paste from the passage. Do not summarize or alter it.
+2. The highlighted text must be an EXACT copy-paste from the passage(s). Do not summarize or alter it.
 3. The 'advice' should tell them what to look for within this section.
-4. Return valid JSON only. Do not use markdown formatting.
+4. ${hasMultiplePassages ? 'If the answer requires evidence from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
+5. Return valid JSON only. Do not use markdown formatting.
 
 Input Data:
 Question: ${questionText}
 Passage: ${passageContext}
 Options: ${optionsContext}
 
-Output Format (JSON):
+Output Format (JSON):${hasMultiplePassages ? `
+{
+  "advice": "Teaching guidance about what to scan for in the texts (2-3 sentences).",
+  "highlights": [
+    {"passageId": "passage_123", "text": "The exact broad section from first passage"},
+    {"passageId": "passage_456", "text": "The exact broad section from second passage (if needed)"}
+  ]
+}` : `
 {
   "advice": "Teaching guidance about what to scan for in the text below (2-3 sentences).",
   "highlightText": "The exact broad section text from the passage."
-}`;
+}`}`;
       } else if (stage === 3) {
         prompt = `You are a Year 6 teacher revealing the answer.
 Tone: Simple, direct.
 Rules:
 1. State the correct answer clearly.
 2. Identify the SPECIFIC sentence or phrase that proves the answer.
-3. The 'highlightText' must be an EXACT copy-paste of that specific sentence/phrase from the passage.
+3. The highlighted text must be an EXACT copy-paste of that specific sentence/phrase from the passage(s).
 4. The 'advice' must explain the link between the text and the correct option.
-5. Return valid JSON only. Do not use markdown formatting.
+5. ${hasMultiplePassages ? 'If evidence is needed from BOTH passages, provide highlights for both. Use passage IDs like [passage_123].' : ''}
+6. Return valid JSON only. Do not use markdown formatting.
 
 Input Data:
 Question: ${questionText}
@@ -502,11 +513,18 @@ Passage: ${passageContext}
 Options: ${optionsContext}
 Correct Answer: ${answerContext}
 
-Output Format (JSON):
+Output Format (JSON):${hasMultiplePassages ? `
+{
+  "advice": "The correct answer is [Option]. Explain simply why these sentences prove the answer (2-3 sentences).",
+  "highlights": [
+    {"passageId": "passage_123", "text": "The specific sentence from first passage"},
+    {"passageId": "passage_456", "text": "The specific sentence from second passage (if needed)"}
+  ]
+}` : `
 {
   "advice": "The correct answer is [Option]. Explain simply why this sentence proves the answer (2-3 sentences).",
   "highlightText": "The specific sentence or phrase from the text."
-}`;
+}`}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
@@ -522,18 +540,38 @@ Output Format (JSON):
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             setAiHelperContent(parsed.advice || text);
-            setHighlightedText(parsed.highlightText || '');
+            
+            // Handle multiple highlights for multiple passages
+            if (parsed.highlights && Array.isArray(parsed.highlights)) {
+              const highlightMap = {};
+              parsed.highlights.forEach(h => {
+                if (h.passageId && h.text) {
+                  highlightMap[h.passageId] = h.text;
+                }
+              });
+              setHighlightedTexts(highlightMap);
+              setHighlightedText('');
+            } else if (parsed.highlightText) {
+              setHighlightedText(parsed.highlightText);
+              setHighlightedTexts({});
+            } else {
+              setHighlightedText('');
+              setHighlightedTexts({});
+            }
           } else {
             setAiHelperContent(text);
             setHighlightedText('');
+            setHighlightedTexts({});
           }
         } catch (e) {
           setAiHelperContent(text);
           setHighlightedText('');
+          setHighlightedTexts({});
         }
       } else {
         setAiHelperContent(text);
         setHighlightedText('');
+        setHighlightedTexts({});
       }
       
       setAiHelperStage(stage);
@@ -571,6 +609,7 @@ Output Format (JSON):
           singleQuestion={true}
           subQuestion={currentQuestion.subQuestion}
           highlightedText={highlightedText}
+          highlightedTexts={highlightedTexts}
         />
       );
     }
@@ -604,6 +643,7 @@ Output Format (JSON):
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
             highlightedText={highlightedText}
+            highlightedTexts={highlightedTexts}
           />
         );
       case 'inline_dropdown_separate':
@@ -629,6 +669,7 @@ Output Format (JSON):
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
             highlightedText={highlightedText}
+            highlightedTexts={highlightedTexts}
           />
         );
       default:
