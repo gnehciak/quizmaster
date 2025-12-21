@@ -292,7 +292,7 @@ export default function DragDropDualQuestion({
                                   onClick={() => setActiveHelpZone(zone.id)}
                                 >
                                   <Sparkles className="w-4 h-4" />
-                                  {highlightedPassages && highlightedPassages[zone.id] && highlightedPassages[zone.id][activePassage?.id] ? 'Show Highlights' : 'No Highlights Available'}
+                                  Show Highlights
                                 </Button>
                               </div>
                             </PopoverContent>

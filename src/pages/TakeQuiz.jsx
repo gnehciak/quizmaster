@@ -57,6 +57,9 @@ export default function TakeQuiz() {
   const [dropZoneHelperContent, setDropZoneHelperContent] = useState({});
   const [dropZoneHelperLoading, setDropZoneHelperLoading] = useState({});
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
+  const [matchingHelperContent, setMatchingHelperContent] = useState({});
+  const [matchingHelperLoading, setMatchingHelperLoading] = useState({});
+  const [matchingHighlightedPassages, setMatchingHighlightedPassages] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -205,6 +208,9 @@ export default function TakeQuiz() {
       setDropZoneHelperContent({});
       setDropZoneHelperLoading({});
       setDropZoneHighlightedPassages({});
+      setMatchingHelperContent({});
+      setMatchingHelperLoading({});
+      setMatchingHighlightedPassages({});
     }
   };
 
@@ -790,15 +796,11 @@ ${hasPassages ? `[For passages]
   "advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
 }`}`;
 
-console.log('Drop Zone Help Prompt:', prompt);
-
 const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
 const result = await model.generateContent(prompt);
 const response = await result.response;
 const text = response.text();
-
-console.log('Drop Zone Help Response:', text);
 
 let advice = text;
 let passages = {};
@@ -814,10 +816,8 @@ try {
       if (parsed.passages.length > 0 && passagesForPrompt.length > 0) {
         const firstPassageData = parsed.passages[0];
         if (firstPassageData && firstPassageData.highlightedContent) {
-          // Use the actual passage ID from the question
           const actualPassageId = passagesForPrompt[0].id;
           passages[actualPassageId] = firstPassageData.highlightedContent;
-          console.log('Set highlighted passage for:', actualPassageId);
         }
       }
     }
@@ -877,6 +877,162 @@ try {
 
   const handleRegenerateDropZoneHelp = (zoneId) => {
     handleDropZoneHelp(zoneId, true);
+  };
+
+  const handleMatchingHelp = async (questionId, forceRegenerate = false) => {
+    if (!forceRegenerate) {
+      const existingHelp = quiz?.ai_helper_tips?.[currentIndex]?.matchingQuestions?.[questionId];
+      if (existingHelp) {
+        setMatchingHelperContent(prev => ({ ...prev, [questionId]: existingHelp.advice }));
+        if (existingHelp.passages) {
+          setMatchingHighlightedPassages(prev => ({ ...prev, [questionId]: existingHelp.passages }));
+        }
+        return;
+      }
+    }
+
+    setMatchingHelperLoading(prev => ({ ...prev, [questionId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const matchingQ = q.matchingQuestions?.find(mq => mq.id === questionId);
+      
+      if (!matchingQ) {
+        throw new Error('Matching question not found');
+      }
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+      let passagesForPrompt = [];
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passagesForPrompt = q.passages.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content
+          }));
+          passageContext = '\n\nPassages:\n' + passagesForPrompt.map(p => 
+            `[${p.id}] ${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passagesForPrompt = [{ id: 'main', title: 'Passage', content: q.passage }];
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student with a matching question.
+
+**CRITICAL RULES:**
+1. **Highlighting (if passage exists):** - Locate specific keywords, phrases, or sentences that give clues about the answer to "${matchingQ.question}"
+   - Wrap EACH piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>
+   - Keep any existing formatting such as <strong>, <p>, <em> tags inside the highlighted sections
+   - You may highlight multiple separate sections if the clues are spread across the text
+2. **Text Integrity:** - You MUST return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure
+   - Do NOT summarize, truncate, or alter the non-highlighted text
+3. **Advice (2-3 sentences only):** - Explain what type of answer to look for or what key concept to understand
+   - Give strategic hints without revealing the actual answer: "${matchingQ.correctAnswer}"
+4. **JSON Logic:**
+   - If there's a passage, use the [For passages] format with full highlighted content
+   - If no passage, use the [No passage] format
+   - Return valid raw JSON only
+
+**INPUT DATA:**
+Question: ${matchingQ.question}
+Correct Answer (DO NOT REVEAL): ${matchingQ.correctAnswer}
+${passageContext}
+
+**OUTPUT FORMAT (JSON):**
+
+${hasPassages ? `[For passages]
+{
+  "advice": "2-3 sentences explaining what to look for to answer this question. Give hints about concepts or connections. Do NOT state the answer.",
+  "passages": [
+    {"passageId": "passage_id", "highlightedContent": "FULL COMPLETE passage text with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around clues/keywords"}
+  ]
+}` : `[No passage]
+{
+  "advice": "2-3 sentences explaining what to look for or consider to answer this question. Do NOT state the answer."
+}`}`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      let advice = text;
+      let passages = {};
+
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          advice = parsed.advice || text;
+
+          if (parsed.passages && Array.isArray(parsed.passages)) {
+            if (parsed.passages.length > 0 && passagesForPrompt.length > 0) {
+              const firstPassageData = parsed.passages[0];
+              if (firstPassageData && firstPassageData.highlightedContent) {
+                const actualPassageId = passagesForPrompt[0].id;
+                passages[actualPassageId] = firstPassageData.highlightedContent;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing AI response:', e);
+      }
+
+      setMatchingHelperContent(prev => ({ ...prev, [questionId]: advice }));
+      setMatchingHighlightedPassages(prev => ({ ...prev, [questionId]: passages }));
+
+      try {
+        const existingTips = quiz?.ai_helper_tips || {};
+        const questionTips = existingTips[currentIndex] || {};
+        const matchingTips = questionTips.matchingQuestions || {};
+        
+        await base44.entities.Quiz.update(quizId, {
+          ai_helper_tips: {
+            ...existingTips,
+            [currentIndex]: {
+              ...questionTips,
+              matchingQuestions: {
+                ...matchingTips,
+                [questionId]: { advice, passages }
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      } catch (err) {
+        console.error('Failed to save matching helper data:', err);
+      }
+
+      if (user?.role !== 'admin') {
+        const newTipsUsed = tipsUsed + 1;
+        setTipsUsed(newTipsUsed);
+        
+        if (currentAttemptId) {
+          try {
+            await base44.entities.QuizAttempt.update(currentAttemptId, {
+              tips_used: newTipsUsed
+            });
+          } catch (err) {
+            console.error('Failed to update tips used:', err);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error generating matching help:', e);
+      setMatchingHelperContent(prev => ({ ...prev, [questionId]: "Unable to generate help at this time." }));
+    } finally {
+      setMatchingHelperLoading(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
+  const handleRegenerateMatchingHelp = (questionId) => {
+    handleMatchingHelp(questionId, true);
   };
 
   const renderQuestion = () => {
@@ -985,6 +1141,14 @@ try {
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
+            onRequestHelp={quiz?.allow_tips ? handleMatchingHelp : null}
+            aiHelperContent={matchingHelperContent}
+            aiHelperLoading={matchingHelperLoading}
+            highlightedPassages={matchingHighlightedPassages}
+            isAdmin={user?.role === 'admin'}
+            tipsAllowed={quiz?.tips_allowed || 999}
+            tipsUsed={tipsUsed}
+            onRegenerateHelp={handleRegenerateMatchingHelp}
           />
         );
       default:

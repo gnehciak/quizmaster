@@ -25,6 +25,7 @@ export default function MatchingListQuestion({
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeHelpQuestion, setActiveHelpQuestion] = useState(null);
   const containerRef = useRef(null);
 
   const handleAnswer = (questionId, answer) => {
@@ -110,7 +111,11 @@ export default function MatchingListQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
+              dangerouslySetInnerHTML={{ 
+                __html: (activeHelpQuestion && highlightedPassages && highlightedPassages[activeHelpQuestion] && highlightedPassages[activeHelpQuestion][activePassage?.id])
+                  ? highlightedPassages[activeHelpQuestion][activePassage?.id] 
+                  : activePassage?.content 
+              }}
             />
           </div>
         </div>
