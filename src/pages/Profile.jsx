@@ -43,6 +43,13 @@ export default function Profile() {
     queryFn: () => base44.entities.Course.list(),
   });
 
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => base44.entities.Quiz.list(),
+  });
+
+  const [viewMode, setViewMode] = useState('course');
+
   if (userLoading || attemptsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
