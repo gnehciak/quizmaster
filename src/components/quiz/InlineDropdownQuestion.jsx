@@ -64,9 +64,11 @@ export default function InlineDropdownQuestion({
         const isCorrect = showResults && selectedValue === blank.correctAnswer;
         const isWrong = showResults && selectedValue && selectedValue !== blank.correctAnswer;
         
-        const canShowHelp = !showResults && onRequestHelp && (isAdmin || tipsUsed < tipsAllowed);
+        const tipId = `blank-${currentIndex}-${blankId}`;
+        const wasTipOpened = openedTips.has(tipId);
         const helpContent = aiHelperContent[blankId];
         const isLoadingHelp = aiHelperLoading[blankId];
+        const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
 
         return (
           <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
@@ -96,14 +98,15 @@ export default function InlineDropdownQuestion({
               </SelectContent>
             </Select>
             
-            {canShowHelp && (
+            {!showResults && onRequestHelp && (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0"
-                    onClick={() => !helpContent && onRequestHelp(blankId)}
+                    disabled={isTipDisabled}
+                    onClick={() => !isTipDisabled && !helpContent && onRequestHelp(blankId)}
                   >
                     {isLoadingHelp ? (
                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
