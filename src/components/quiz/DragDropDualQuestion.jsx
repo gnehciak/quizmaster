@@ -285,6 +285,17 @@ export default function DragDropDualQuestion({
                                   className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                                   dangerouslySetInnerHTML={{ __html: helpContent }}
                                 />
+                                {highlightedPassages && highlightedPassages[activePassage?.id] && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-2"
+                                    onClick={() => setActiveHelpZone(zone.id)}
+                                  >
+                                    <Sparkles className="w-4 h-4" />
+                                    Highlight
+                                  </Button>
+                                )}
                               </div>
                             </PopoverContent>
                           )}
