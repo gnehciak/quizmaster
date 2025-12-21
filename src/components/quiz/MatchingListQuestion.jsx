@@ -16,28 +16,11 @@ export default function MatchingListQuestion({
   onAnswer, 
   showResults,
   singleQuestion = false,
-  subQuestion = null,
-  highlightedText = '',
-  highlightedTexts = {}
+  subQuestion = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
     : [{ id: 'main', title: 'Passage', content: question.passage }];
-
-  const highlightPassageText = (text, passageId) => {
-    if (!text) return text;
-    
-    const highlightForPassage = highlightedTexts[passageId];
-    const textToHighlight = highlightForPassage || highlightedText;
-    
-    if (!textToHighlight) return text;
-    
-    // AI has already matched the text with HTML tags preserved - just wrap it in highlight
-    const highlightedContent = textToHighlight.replace(/^<mark[^>]*>|<\/mark>$/g, '');
-    const wrapped = `<mark class="bg-yellow-200 px-1 rounded">${highlightedContent}</mark>`;
-    
-    return text.replace(textToHighlight, wrapped);
-  };
   
   const [activeTab, setActiveTab] = useState(passages[0]?.id);
   const [leftWidth, setLeftWidth] = useState(50);
@@ -127,7 +110,7 @@ export default function MatchingListQuestion({
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full">
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: highlightPassageText(activePassage?.content, activePassage?.id) }}
+              dangerouslySetInnerHTML={{ __html: activePassage?.content }}
             />
           </div>
         </div>

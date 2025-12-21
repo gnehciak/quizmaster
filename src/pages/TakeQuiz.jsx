@@ -736,8 +736,6 @@ Return ONLY the matched text portion, nothing else.`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            highlightedText={highlightedText}
-            highlightedTexts={highlightedTexts}
           />
         );
       case 'inline_dropdown_separate':
@@ -762,8 +760,6 @@ Return ONLY the matched text portion, nothing else.`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
-            highlightedText={highlightedText}
-            highlightedTexts={highlightedTexts}
           />
         );
       default:
