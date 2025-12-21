@@ -21,11 +21,12 @@ export default function RichTextEditor({
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       ['link'],
-      [{ 'background': [] }]
+      [{ 'background': [] }],
+      [{ 'align': [] }]
     ]
   };
 
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background'];
+  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background', 'align'];
 
   return (
     <div className="relative">
