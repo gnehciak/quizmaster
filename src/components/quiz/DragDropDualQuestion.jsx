@@ -157,8 +157,8 @@ export default function DragDropDualQuestion({
             <div 
               className="prose prose-slate max-w-none text-slate-800 leading-relaxed"
               dangerouslySetInnerHTML={{ 
-                __html: activeHelpZone && highlightedPassages[activePassage?.id] 
-                  ? highlightedPassages[activePassage?.id] 
+                __html: activeHelpZone && highlightedPassages && highlightedPassages[activePassage?.id]
+                  ? highlightedPassages[activePassage?.id]
                   : activePassage?.content 
               }}
             />
