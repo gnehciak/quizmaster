@@ -208,9 +208,10 @@ export default function ReadingComprehensionQuestion({
 
               {!showResults && aiHelperContent && (
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                    {aiHelperContent}
-                  </p>
+                  <div 
+                    className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
+                    dangerouslySetInnerHTML={{ __html: aiHelperContent }}
+                  />
                 </div>
               )}
               </div>
