@@ -99,9 +99,9 @@ export default function InlineDropdownQuestion({
       />
       
       <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
-        <p className="text-lg leading-loose text-slate-700">
+        <div className="text-lg leading-loose text-slate-700 inline">
           {renderTextWithBlanks()}
-        </p>
+        </div>
       </div>
       </div>
     </div>

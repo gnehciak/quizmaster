@@ -82,9 +82,9 @@ export default function InlineDropdownSameQuestion({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <p className="text-lg font-medium text-slate-800 leading-relaxed">
+      <div className="text-lg font-medium text-slate-800 leading-relaxed inline">
         {renderTextWithDropdowns()}
-      </p>
+      </div>
       
       {showResults && question.explanation && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
