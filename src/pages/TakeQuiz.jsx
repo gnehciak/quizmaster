@@ -444,35 +444,35 @@ export default function TakeQuiz() {
 
       let prompt = '';
       if (stage === 1) {
-        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple, clear language. Get straight to the point - no phrases like "Great question!" or "Let me help you". Just give helpful guidance.
+        prompt = `You are a Year 6 teacher guiding a student. Use simple, clear language. Get straight to the point - no phrases like "Great question!" or "Let me help you". Focus on teaching them HOW to think about finding the answer.
 
 Question: ${questionText}${passageContext}
 
-Give a brief hint in simple language (2-3 sentences) to guide their thinking:`;
+Give a brief teaching hint in simple language (2-3 sentences) that guides their thinking process:`;
       } else if (stage === 2) {
-        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple language. Get straight to the point. ${passageContext ? 'You must identify a specific section of text from the passage to highlight. Return your response as JSON.' : 'Provide more specific guidance.'}
+        prompt = `You are a Year 6 teacher helping a student learn. Use simple language. Get straight to the point. ${passageContext ? 'Teach them WHERE to look. Highlight a BROADER section (paragraph or multiple sentences) that contains the clues. Return your response as JSON.' : 'Teach them more specifically what to look for.'}
 
 Question: ${questionText}${passageContext}
 
 ${passageContext ? `Return JSON in this exact format:
 {
-  "advice": "Your simple guidance here (2-3 sentences)",
-  "highlightText": "The exact text from the passage to highlight"
+  "advice": "Teaching guidance about what to look for in the highlighted section (2-3 sentences)",
+  "highlightText": "A paragraph or several sentences from the passage that contain the clues"
 }
 
-Find a key sentence or phrase from the passage that contains clues to the answer. Copy it EXACTLY as it appears in the passage.` : 'Give more specific guidance in simple language (2-3 sentences):'}`;
+Find a BROADER section (paragraph or multiple sentences) from the passage. This should give them the general area to focus on. Copy the text EXACTLY as it appears, including multiple sentences if needed.` : 'Teach them what specific clues to look for (2-3 sentences):'}`;
       } else if (stage === 3) {
-        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple language. Get straight to the point. ${passageContext ? 'You must identify the exact sentence with the answer. Return your response as JSON.' : 'Give detailed guidance.'}
+        prompt = `You are a Year 6 teacher. Use simple language. Get straight to the point. ${passageContext ? 'Now TELL them the correct answer directly and TEACH them how to find it by highlighting the specific words/sentence. Return your response as JSON.' : 'Tell them the correct answer and explain.'}
 
 Question: ${questionText}${passageContext}
 
 ${passageContext ? `Return JSON in this exact format:
 {
-  "advice": "Your simple explanation of how this sentence helps find the answer (2-3 sentences)",
-  "highlightText": "The exact sentence from the passage that has the answer"
+  "advice": "The correct answer is [state the answer]. Explain in simple language how to find this answer from the highlighted text (2-3 sentences)",
+  "highlightText": "The specific sentence or key words that contain the answer"
 }
 
-Find and copy the EXACT sentence from the passage that contains the answer.` : 'Give detailed guidance in simple language that nearly reveals the answer:'}`;
+Highlight the SPECIFIC sentence or key words that directly give the answer. Copy it EXACTLY from the passage.` : 'State the correct answer directly and teach them how to recognize it (2-3 sentences):'}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
