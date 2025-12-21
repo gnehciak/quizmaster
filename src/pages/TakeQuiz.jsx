@@ -810,11 +810,16 @@ try {
     advice = parsed.advice || text;
 
     if (parsed.passages && Array.isArray(parsed.passages)) {
-      parsed.passages.forEach(p => {
-        if (p.passageId && p.highlightedContent) {
-          passages[p.passageId] = p.highlightedContent;
+      // Map the first passage to the actual passage ID
+      if (parsed.passages.length > 0 && passagesForPrompt.length > 0) {
+        const firstPassageData = parsed.passages[0];
+        if (firstPassageData && firstPassageData.highlightedContent) {
+          // Use the actual passage ID from the question
+          const actualPassageId = passagesForPrompt[0].id;
+          passages[actualPassageId] = firstPassageData.highlightedContent;
+          console.log('Set highlighted passage for:', actualPassageId);
         }
-      });
+      }
     }
   }
 } catch (e) {
