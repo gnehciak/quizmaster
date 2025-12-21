@@ -1103,6 +1103,19 @@ Return ONLY the matched text portion, nothing else.`;
               </div>
             </DialogContent>
           </Dialog>
+          
+          {/* AI Helper Button - Only for reading comprehension */}
+          {!showResults && !submitted && currentQuestion?.type === 'reading_comprehension' && (
+            <Button
+              onClick={handleAiHelperOpen}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              I need help
+            </Button>
+          )}
         </div>
 
         {/* Logo/Brand Space */}
@@ -1125,17 +1138,6 @@ Return ONLY the matched text portion, nothing else.`;
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* AI Helper Button */}
-        {!showResults && !submitted && (
-          <button
-            onClick={handleAiHelperOpen}
-            className="fixed right-6 top-1/2 -translate-y-1/2 bg-gradient-to-br from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 z-20"
-            title="Need help?"
-          >
-            <Sparkles className="w-6 h-6" />
-          </button>
-        )}
 
         {/* AI Helper Popup */}
         <AnimatePresence>
