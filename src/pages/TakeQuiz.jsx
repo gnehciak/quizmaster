@@ -55,6 +55,7 @@ export default function TakeQuiz() {
   const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
   const [highlightedText, setHighlightedText] = useState('');
   const [highlightedTexts, setHighlightedTexts] = useState({});
+  const [aiHelperCache, setAiHelperCache] = useState({});
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -165,18 +166,42 @@ export default function TakeQuiz() {
       ...prev,
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
-    
+
+    // Save current AI helper state to cache
+    if (aiHelperContent) {
+      setAiHelperCache(prev => ({
+        ...prev,
+        [currentIndex]: {
+          stage: aiHelperStage,
+          content: aiHelperContent,
+          highlightedText,
+          highlightedTexts
+        }
+      }));
+    }
+
     // Reset AI helper when navigating
     setAiHelperOpen(false);
-    setAiHelperStage(1);
-    setAiHelperContent('');
     setStageUnlockTime(null);
-    setHighlightedText('');
-    setHighlightedTexts({});
-    
+
     if (currentIndex < totalQuestions - 1) {
-      setCurrentIndex(prev => prev + 1);
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
       setQuestionStartTime(Date.now());
+
+      // Restore cached AI helper state for next question
+      const cached = aiHelperCache[nextIndex];
+      if (cached) {
+        setAiHelperStage(cached.stage);
+        setAiHelperContent(cached.content);
+        setHighlightedText(cached.highlightedText || '');
+        setHighlightedTexts(cached.highlightedTexts || {});
+      } else {
+        setAiHelperStage(1);
+        setAiHelperContent('');
+        setHighlightedText('');
+        setHighlightedTexts({});
+      }
     }
   };
 
@@ -187,18 +212,42 @@ export default function TakeQuiz() {
       ...prev,
       [currentIndex]: (prev[currentIndex] || 0) + timeSpent
     }));
-    
+
+    // Save current AI helper state to cache
+    if (aiHelperContent) {
+      setAiHelperCache(prev => ({
+        ...prev,
+        [currentIndex]: {
+          stage: aiHelperStage,
+          content: aiHelperContent,
+          highlightedText,
+          highlightedTexts
+        }
+      }));
+    }
+
     // Reset AI helper when navigating
     setAiHelperOpen(false);
-    setAiHelperStage(1);
-    setAiHelperContent('');
     setStageUnlockTime(null);
-    setHighlightedText('');
-    setHighlightedTexts({});
-    
+
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
       setQuestionStartTime(Date.now());
+
+      // Restore cached AI helper state for previous question
+      const cached = aiHelperCache[prevIndex];
+      if (cached) {
+        setAiHelperStage(cached.stage);
+        setAiHelperContent(cached.content);
+        setHighlightedText(cached.highlightedText || '');
+        setHighlightedTexts(cached.highlightedTexts || {});
+      } else {
+        setAiHelperStage(1);
+        setAiHelperContent('');
+        setHighlightedText('');
+        setHighlightedTexts({});
+      }
     }
   };
 
@@ -576,7 +625,14 @@ Output Format (JSON):${hasMultiplePassages ? `
 
   const handleAiHelperOpen = () => {
     setAiHelperOpen(true);
-    if (!aiHelperContent) {
+    // Check if we have cached content for this question
+    const cached = aiHelperCache[currentIndex];
+    if (cached) {
+      setAiHelperStage(cached.stage);
+      setAiHelperContent(cached.content);
+      setHighlightedText(cached.highlightedText || '');
+      setHighlightedTexts(cached.highlightedTexts || {});
+    } else if (!aiHelperContent) {
       getAiHelp(1);
     }
   };
