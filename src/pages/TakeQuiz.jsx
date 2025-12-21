@@ -517,6 +517,8 @@ export default function TakeQuiz() {
       const response = await result.response;
       const text = response.text();
 
+      console.log('Reading Comprehension Help Response:', text);
+
       // Parse JSON response
       let advice = text;
       let passages = {};
@@ -654,23 +656,27 @@ Words: ${blank.options.join(', ')}
 
 Format your response as HTML with this structure:
 <div class="space-y-2">
-  <div>
-    <strong>word1:</strong> brief definition<br/>
-    <em>Example: example sentence here</em>
-  </div>
-  <div>
-    <strong>word2:</strong> brief definition<br/>
-    <em>Example: example sentence here</em>
-  </div>
+<div>
+<strong>word1:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
+<div>
+<strong>word2:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
 </div>
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+console.log('Blank Help Prompt:', prompt);
+
+const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('Blank Help Response:', text);
 
       setBlankHelperContent(prev => ({ ...prev, [blankId]: text }));
 
@@ -796,8 +802,10 @@ ${hasPassages ? `[For passages]
   ]
 }` : `[No passage]
 {
-  "advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
+"advice": "2-3 sentences explaining what type of content fits in ${zone.label}. Give clues about sentence structure or connectives if applicable. Do NOT state the answer."
 }`}`;
+
+console.log('Reading Comprehension Help Prompt:', prompt);
 
 const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -805,8 +813,10 @@ const result = await model.generateContent(prompt);
 const response = await result.response;
 const text = response.text();
 
-let advice = text;
-let passages = {};
+            console.log('Drop Zone Help Response:', text);
+
+      let advice = text;
+      let passages = {};
 
 try {
   const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -956,13 +966,17 @@ ${hasPassages ? `[For passages]
 }` : `[No passage]
 {
   "advice": "2-3 sentences explaining what to look for or consider to answer this question. Do NOT state the answer."
-}`}`;
+  }`}`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+  console.log('Matching Help Prompt:', prompt);
+
+  const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('Matching Help Response:', text);
 
       let advice = text;
       let passages = {};
