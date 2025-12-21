@@ -519,8 +519,8 @@ Output Format (JSON):${hasMultiplePassages ? `
       const response = await result.response;
       const text = response.text();
 
-      // Parse JSON for stages 2 and 3 with passages
-      if (stage >= 2 && passageContext) {
+      // Parse JSON for stages 1 and 2 with passages
+      if (stage >= 1 && passageContext) {
         try {
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
