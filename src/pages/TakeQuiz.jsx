@@ -506,7 +506,10 @@ export default function TakeQuiz() {
           if (parsed.passages && Array.isArray(parsed.passages)) {
             parsed.passages.forEach(p => {
               if (p.passageId && p.highlightedContent) {
-                passages[p.passageId] = p.highlightedContent;
+                // Remove the first line (title) from multiple passages
+                const lines = p.highlightedContent.split('\n');
+                const contentWithoutTitle = lines.slice(1).join('\n');
+                passages[p.passageId] = contentWithoutTitle;
               }
             });
           } else if (parsed.highlightedContent) {
