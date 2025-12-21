@@ -456,24 +456,6 @@ export default function TakeQuiz() {
 
       let prompt = '';
       if (stage === 1) {
-        prompt = `You are a Year 6 teacher guiding a student.
-Tone: Simple, clear, direct.
-Rules:
-1. Do NOT use filler phrases like "Great question" or "Let me help".
-2. Do NOT reveal the answer or the specific location in the text yet.
-3. Focus on the STRATEGY (e.g., "Look for keywords," "Think about the character's feelings," "Check the beginning of the text").
-4. Return valid JSON only. Do not use markdown formatting.
-
-Input Data:
-Question: ${questionText}
-Passage: ${passageContext}
-Options: ${optionsContext}
-
-Output Format (JSON):
-{
-  "advice": "A brief teaching hint (2-3 sentences) guiding their thinking process."
-}`;
-      } else if (stage === 2) {
         prompt = `You are a Year 6 teacher helping a student find evidence.
 Tone: Simple, direct.
 Rules:
@@ -500,7 +482,7 @@ Output Format (JSON):${hasMultiplePassages ? `
   "advice": "Teaching guidance about what to scan for in the text below (2-3 sentences).",
   "highlightText": "The exact broad section text from the passage."
 }`}`;
-      } else if (stage === 3) {
+      } else if (stage === 2) {
         prompt = `You are a Year 6 teacher revealing the answer.
 Tone: Simple, direct.
 Rules:
@@ -579,9 +561,9 @@ Output Format (JSON):${hasMultiplePassages ? `
       }
       
       setAiHelperStage(stage);
-      
-      // Start 10 second timer if not at stage 3
-      if (stage < 3) {
+
+      // Start 10 second timer if not at stage 2
+      if (stage < 2) {
         setStageUnlockTime(Date.now() + 10000);
         setSecondsUntilUnlock(10);
       }
@@ -1100,8 +1082,8 @@ Output Format (JSON):${hasMultiplePassages ? `
                     </div>
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      aiHelperStage >= 3 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
-                    )}>3</div>
+                      aiHelperStage >= 2 ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"
+                    )}>2</div>
                   </div>
                 </div>
 
@@ -1118,7 +1100,7 @@ Output Format (JSON):${hasMultiplePassages ? `
                         </p>
                       </div>
 
-                      {aiHelperStage < 3 && (
+                      {aiHelperStage < 2 && (
                         <div className="text-center">
                           {stageUnlockTime && secondsUntilUnlock > 0 ? (
                             <div className="text-sm text-slate-500">
@@ -1138,7 +1120,7 @@ Output Format (JSON):${hasMultiplePassages ? `
                         </div>
                       )}
 
-                      {aiHelperStage === 3 && (
+                      {aiHelperStage === 2 && (
                         <div className="text-center text-sm text-slate-500">
                           This is the maximum level of help available.
                         </div>
