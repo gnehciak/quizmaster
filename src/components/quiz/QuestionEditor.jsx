@@ -785,13 +785,11 @@ ${aiInput}`;
                   disabled
                   className="font-medium text-sm"
                 />
-                <ReactQuill
+                <RichTextEditor
                   value={question.passage || ''}
                   onChange={(value) => updateField('passage', value)}
                   placeholder="Enter the reading passage..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg min-h-[150px]"
+                  minHeight="150px"
                 />
               </div>
             )}
@@ -821,7 +819,7 @@ ${aiInput}`;
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <ReactQuill
+                <RichTextEditor
                   value={passage.content || ''}
                   onChange={(value) => {
                     const updated = [...question.passages];
@@ -829,9 +827,7 @@ ${aiInput}`;
                     updateField('passages', updated);
                   }}
                   placeholder="Enter the reading passage..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg min-h-[120px]"
+                  minHeight="120px"
                 />
               </div>
             ))}
@@ -1126,13 +1122,11 @@ ${aiInput}`;
                   disabled
                   className="font-medium text-sm"
                 />
-                <ReactQuill
+                <RichTextEditor
                   value={question.passage || ''}
                   onChange={(value) => updateField('passage', value)}
                   placeholder="Enter the reading passage..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg min-h-[150px]"
+                  minHeight="150px"
                 />
               </div>
             )}
@@ -1162,7 +1156,7 @@ ${aiInput}`;
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <ReactQuill
+                <RichTextEditor
                   value={passage.content || ''}
                   onChange={(value) => {
                     const updated = [...question.passages];
@@ -1170,9 +1164,7 @@ ${aiInput}`;
                     updateField('passages', updated);
                   }}
                   placeholder="Enter the reading passage..."
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-lg min-h-[120px]"
+                  minHeight="120px"
                 />
               </div>
             ))}
