@@ -53,6 +53,7 @@ export default function TakeQuiz() {
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [stageUnlockTime, setStageUnlockTime] = useState(null);
   const [secondsUntilUnlock, setSecondsUntilUnlock] = useState(0);
+  const [highlightedText, setHighlightedText] = useState('');
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -443,23 +444,35 @@ export default function TakeQuiz() {
 
       let prompt = '';
       if (stage === 1) {
-        prompt = `You are a friendly and helpful tutor assisting a Year 6 student (10-11 years old) with a quiz question. Use simple, clear language that a Year 6 student would understand. Provide general guidance to help them think about the question without revealing the answer directly.
+        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple, clear language. Get straight to the point - no phrases like "Great question!" or "Let me help you". Just give helpful guidance.
 
 Question: ${questionText}${passageContext}
 
-Provide a brief, encouraging hint in simple language (2-3 sentences) that guides their thinking:`;
+Give a brief hint in simple language (2-3 sentences) to guide their thinking:`;
       } else if (stage === 2) {
-        prompt = `You are a friendly tutor helping a Year 6 student (10-11 years old). Use simple, clear language. The student needs more help. If there's a passage, tell them which paragraph or section to look at. Otherwise, provide more specific guidance without revealing the answer.
+        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple language. Get straight to the point. ${passageContext ? 'You must identify a specific section of text from the passage to highlight. Return your response as JSON.' : 'Provide more specific guidance.'}
 
 Question: ${questionText}${passageContext}
 
-${passageContext ? 'In simple language, tell them which paragraph or section in the passage has the answer (2-3 sentences):' : 'Provide more specific guidance in simple language (2-3 sentences):'}`;
+${passageContext ? `Return JSON in this exact format:
+{
+  "advice": "Your simple guidance here (2-3 sentences)",
+  "highlightText": "The exact text from the passage to highlight"
+}
+
+Find a key sentence or phrase from the passage that contains clues to the answer. Copy it EXACTLY as it appears in the passage.` : 'Give more specific guidance in simple language (2-3 sentences):'}`;
       } else if (stage === 3) {
-        prompt = `You are a friendly tutor helping a Year 6 student (10-11 years old). Use simple, clear language they can understand. The student needs maximum help. Point to the exact sentence or detail that contains the answer, and explain the reasoning simply, but still don't directly state the final answer choice.
+        prompt = `You are a tutor helping a Year 6 student (10-11 years old). Use simple language. Get straight to the point. ${passageContext ? 'You must identify the exact sentence with the answer. Return your response as JSON.' : 'Give detailed guidance.'}
 
 Question: ${questionText}${passageContext}
 
-${passageContext ? 'In simple language, quote the specific sentence(s) from the passage and explain how it helps find the answer:' : 'In simple language, provide detailed guidance that nearly reveals the answer:'}`;
+${passageContext ? `Return JSON in this exact format:
+{
+  "advice": "Your simple explanation of how this sentence helps find the answer (2-3 sentences)",
+  "highlightText": "The exact sentence from the passage that has the answer"
+}
+
+Find and copy the EXACT sentence from the passage that contains the answer.` : 'Give detailed guidance in simple language that nearly reveals the answer:'}`;
       }
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
@@ -468,7 +481,27 @@ ${passageContext ? 'In simple language, quote the specific sentence(s) from the 
       const response = await result.response;
       const text = response.text();
 
-      setAiHelperContent(text);
+      // Parse JSON for stages 2 and 3 with passages
+      if (stage >= 2 && passageContext) {
+        try {
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            setAiHelperContent(parsed.advice || text);
+            setHighlightedText(parsed.highlightText || '');
+          } else {
+            setAiHelperContent(text);
+            setHighlightedText('');
+          }
+        } catch (e) {
+          setAiHelperContent(text);
+          setHighlightedText('');
+        }
+      } else {
+        setAiHelperContent(text);
+        setHighlightedText('');
+      }
+      
       setAiHelperStage(stage);
       
       // Start 10 second timer if not at stage 3
@@ -503,6 +536,7 @@ ${passageContext ? 'In simple language, quote the specific sentence(s) from the 
           showResults={submitted || reviewMode}
           singleQuestion={true}
           subQuestion={currentQuestion.subQuestion}
+          highlightedText={highlightedText}
         />
       );
     }
@@ -535,6 +569,7 @@ ${passageContext ? 'In simple language, quote the specific sentence(s) from the 
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
+            highlightedText={highlightedText}
           />
         );
       case 'inline_dropdown_separate':
@@ -559,6 +594,7 @@ ${passageContext ? 'In simple language, quote the specific sentence(s) from the 
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={handleAnswer}
+            highlightedText={highlightedText}
           />
         );
       default:
