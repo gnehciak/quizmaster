@@ -878,7 +878,13 @@ export default function TakeQuiz() {
                 Overview
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className={cn(
+              "max-h-[80vh] overflow-y-auto",
+              totalQuestions <= 20 && "max-w-lg",
+              totalQuestions > 20 && totalQuestions <= 40 && "max-w-2xl",
+              totalQuestions > 40 && totalQuestions <= 60 && "max-w-3xl",
+              totalQuestions > 60 && "max-w-4xl"
+            )}>
               <DialogHeader>
                 <DialogTitle>Quiz Overview</DialogTitle>
               </DialogHeader>
