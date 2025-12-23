@@ -1,37 +1,37 @@
-import TakeQuiz from './pages/TakeQuiz';
+import AdminDashboard from './pages/AdminDashboard';
+import CourseDetail from './pages/CourseDetail';
 import CreateQuiz from './pages/CreateQuiz';
 import Home from './pages/Home';
-import CourseDetail from './pages/CourseDetail';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
-import ManageCourses from './pages/ManageCourses';
 import ManageCategories from './pages/ManageCategories';
+import ManageCourses from './pages/ManageCourses';
 import ManageQuizzes from './pages/ManageQuizzes';
-import QuizAnalytics from './pages/QuizAnalytics';
-import UserManagement from './pages/UserManagement';
-import UserDetails from './pages/UserDetails';
 import MyCourses from './pages/MyCourses';
-import ReviewAnswers from './pages/ReviewAnswers';
+import Profile from './pages/Profile';
+import QuizAnalytics from './pages/QuizAnalytics';
 import QuizAttempts from './pages/QuizAttempts';
+import ReviewAnswers from './pages/ReviewAnswers';
+import TakeQuiz from './pages/TakeQuiz';
+import UserDetails from './pages/UserDetails';
+import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "TakeQuiz": TakeQuiz,
+    "AdminDashboard": AdminDashboard,
+    "CourseDetail": CourseDetail,
     "CreateQuiz": CreateQuiz,
     "Home": Home,
-    "CourseDetail": CourseDetail,
-    "Profile": Profile,
-    "AdminDashboard": AdminDashboard,
-    "ManageCourses": ManageCourses,
     "ManageCategories": ManageCategories,
+    "ManageCourses": ManageCourses,
     "ManageQuizzes": ManageQuizzes,
-    "QuizAnalytics": QuizAnalytics,
-    "UserManagement": UserManagement,
-    "UserDetails": UserDetails,
     "MyCourses": MyCourses,
-    "ReviewAnswers": ReviewAnswers,
+    "Profile": Profile,
+    "QuizAnalytics": QuizAnalytics,
     "QuizAttempts": QuizAttempts,
+    "ReviewAnswers": ReviewAnswers,
+    "TakeQuiz": TakeQuiz,
+    "UserDetails": UserDetails,
+    "UserManagement": UserManagement,
 }
 
 export const pagesConfig = {

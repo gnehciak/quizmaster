@@ -1307,24 +1307,24 @@ try {
             </div>
 
             {quiz.allow_tips && (
-            <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-purple-600" />
-                <div>
-                  <Label htmlFor="practice-tips" className="font-semibold text-slate-800 cursor-pointer">
-                    Practice Tips Mode
-                  </Label>
-                  <div className="text-sm text-slate-600">
-                    Get AI-powered hints during the quiz
+              <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg mb-8">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-6 h-6 text-purple-600" />
+                  <div>
+                    <Label htmlFor="practice-tips" className="font-semibold text-slate-800 cursor-pointer">
+                      Practice Tips Mode
+                    </Label>
+                    <div className="text-sm text-slate-600">
+                      Get AI-powered hints during the quiz
+                    </div>
                   </div>
                 </div>
+                <Switch
+                  id="practice-tips"
+                  checked={practiceTipsEnabled}
+                  onCheckedChange={setPracticeTipsEnabled}
+                />
               </div>
-              <Switch
-                id="practice-tips"
-                checked={practiceTipsEnabled}
-                onCheckedChange={setPracticeTipsEnabled}
-              />
-            </div>
             )}
 
           {canTakeQuiz ? (
