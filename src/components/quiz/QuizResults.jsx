@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Trophy, RotateCcw, Home, CheckCircle2, XCircle, BookOpen, Info } from 'lucide-react';
+import { Trophy, RotateCcw, Home, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function QuizResults({ score, total, onRetry, quizTitle, onReview, courseId, practiceMode = false }) {
+export default function QuizResults({ score, total, onRetry, quizTitle, onReview, courseId }) {
   const percentage = Math.round((score / total) * 100);
   
   const getGrade = () => {
@@ -24,20 +24,6 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
       animate={{ opacity: 1, scale: 1 }}
       className="text-center max-w-md mx-auto"
     >
-      {practiceMode && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3"
-        >
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0" />
-          <div className="text-sm text-blue-800 text-left">
-            <span className="font-semibold">Practice Mode:</span> This attempt was not counted towards your official scores.
-          </div>
-        </motion.div>
-      )}
-
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
