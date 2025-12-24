@@ -1834,7 +1834,7 @@ try {
                   <span className="font-semibold">Time Remaining:</span>
                 </div>
                 <p className="text-2xl font-bold text-amber-900 mt-2">
-                  {formatTime(timeLeft).hours}:{formatTime(timeLeft).minutes}:{formatTime(timeLeft).seconds}
+                  {formatTimeDisplay(timeLeft, true)}
                 </p>
               </div>
             )}
