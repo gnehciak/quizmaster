@@ -479,6 +479,20 @@ export default function TakeQuiz() {
     };
   };
 
+  const formatTimeDisplay = (seconds, forceMinuteSecond = false) => {
+    if (forceMinuteSecond || seconds <= 300) {
+      // mm:ss format - use floor for minutes
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    } else {
+      // hh:mm format - use ceiling for minutes to round up
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.ceil((seconds % 3600) / 60);
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    }
+  };
+
 
 
   const getAiHelp = async (forceRegenerate = false) => {
