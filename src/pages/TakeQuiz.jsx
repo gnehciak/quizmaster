@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,8 @@ export default function TakeQuiz() {
   const [matchingHelperLoading, setMatchingHelperLoading] = useState({});
   const [openedTips, setOpenedTips] = useState(new Set());
   const [practiceTipsEnabled, setPracticeTipsEnabled] = useState(true);
+  const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -222,9 +224,14 @@ export default function TakeQuiz() {
     setConfirmSubmitOpen(true);
   };
 
-  const handleStartQuiz = async () => {
+  const handleStartQuiz = () => {
+    setConfirmStartOpen(true);
+  };
+
+  const handleConfirmStart = async () => {
+    setConfirmStartOpen(false);
     setQuizStarted(true);
-    
+
     // Create attempt record when quiz starts
     try {
       const newAttempt = await base44.entities.QuizAttempt.create({
@@ -1352,11 +1359,45 @@ try {
                 Cancel
               </Button>
             </Link>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+            </div>
+
+            {/* Start Confirmation Dialog */}
+            <Dialog open={confirmStartOpen} onOpenChange={setConfirmStartOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Ready to Start?</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-base text-slate-800">
+                  Please confirm you have read all the instructions.
+                </p>
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">
+                    ⚠️ <strong>Important:</strong> Once you start, you cannot pause or stop the quiz. Make sure you're ready to complete it now.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmStartOpen(false)}
+                  className="px-6"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmStart}
+                  className="bg-indigo-600 hover:bg-indigo-700 px-6"
+                >
+                  Start Quiz
+                </Button>
+              </div>
+            </DialogContent>
+            </Dialog>
+            </motion.div>
+            </div>
+            );
+            }
 
   if (showResults && submitted && !reviewMode) {
       return (
@@ -1376,6 +1417,27 @@ try {
 
 
   const time = formatTime(timeLeft);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -1552,18 +1614,36 @@ try {
           </Dialog>
         </div>
 
-        {/* Edit Quiz Button (Admin Only) */}
-        <div className="flex items-center">
-        {user?.role === 'admin' && (
-          <Link to={createPageUrl(`CreateQuiz?id=${quizId}`)}>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Pencil className="w-4 h-4" />
-              Edit Quiz
-            </Button>
-          </Link>
-        )}
+        {/* Edit Quiz Button (Admin Only) & Fullscreen Button */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleFullscreen}
+            className="gap-2"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize className="w-4 h-4" />
+                Exit Fullscreen
+              </>
+            ) : (
+              <>
+                <Maximize className="w-4 h-4" />
+                Fullscreen
+              </>
+            )}
+          </Button>
+          {user?.role === 'admin' && (
+            <Link to={createPageUrl(`CreateQuiz?id=${quizId}`)}>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Pencil className="w-4 h-4" />
+                Edit Quiz
+              </Button>
+            </Link>
+          )}
         </div>
-      </div>
+        </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
