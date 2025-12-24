@@ -65,6 +65,8 @@ export default function TakeQuiz() {
   const [practiceTipsEnabled, setPracticeTipsEnabled] = useState(true);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [focusLeaveCount, setFocusLeaveCount] = useState(0);
+  const [showFocusWarning, setShowFocusWarning] = useState(false);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -89,6 +91,27 @@ export default function TakeQuiz() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Track window focus/blur during quiz
+  useEffect(() => {
+    if (!quizStarted || submitted || showResults) return;
+
+    const handleBlur = () => {
+      const newCount = focusLeaveCount + 1;
+      setFocusLeaveCount(newCount);
+      setShowFocusWarning(true);
+
+      // Auto-submit after 3rd violation
+      if (newCount >= 3) {
+        setTimeout(() => {
+          handleConfirmSubmit();
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('blur', handleBlur);
+    return () => window.removeEventListener('blur', handleBlur);
+  }, [quizStarted, submitted, showResults, focusLeaveCount]);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
@@ -1808,6 +1831,39 @@ try {
             </Button>
           </div>
           </DialogContent>
+          </Dialog>
+
+          {/* Focus Warning Dialog */}
+          <Dialog open={showFocusWarning} onOpenChange={setShowFocusWarning}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-xl text-red-600">⚠️ Warning: Tab Switch Detected</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-base font-medium text-slate-800">
+                  You switched away from the quiz window!
+                </p>
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    <strong>Violation {focusLeaveCount} of 3:</strong> You must stay on this page during the quiz. 
+                    {focusLeaveCount >= 3 ? (
+                      <span className="block mt-2 font-bold">Quiz will be submitted automatically in 2 seconds.</span>
+                    ) : (
+                      <span className="block mt-2">After 3 violations, your quiz will be automatically submitted.</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => setShowFocusWarning(false)}
+                  className="bg-red-600 hover:bg-red-700 px-6"
+                  disabled={focusLeaveCount >= 3}
+                >
+                  {focusLeaveCount >= 3 ? 'Submitting...' : 'I Understand'}
+                </Button>
+              </div>
+            </DialogContent>
           </Dialog>
 
           {/* Exit Confirmation Dialog */}
