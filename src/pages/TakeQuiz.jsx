@@ -1481,7 +1481,7 @@ try {
             <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg">
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-800 tabular-nums">
-                  {timeLeft <= 300 ? `${time.minutes}:${time.seconds}` : `${time.hours}:${time.minutes}`}
+                  {timeLeft <= 300 ? `${time.minutes}:${time.seconds}` : `${Math.ceil((timeLeft % 3600) / 60)}:${String(Math.floor(timeLeft / 60)).padStart(2, '0').slice(-2)}`}
                 </div>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
                   {timeLeft <= 300 ? (
