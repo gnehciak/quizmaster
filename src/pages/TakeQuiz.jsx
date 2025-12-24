@@ -470,7 +470,7 @@ export default function TakeQuiz() {
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
+    const mins = Math.ceil((seconds % 3600) / 60);
     const secs = seconds % 60;
     return {
       hours: String(hrs).padStart(2, '0'),
