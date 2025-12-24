@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -67,6 +67,7 @@ export default function TakeQuiz() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusLeaveCount, setFocusLeaveCount] = useState(0);
   const [showFocusWarning, setShowFocusWarning] = useState(false);
+  const [practiceMode, setPracticeMode] = useState(false);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -92,9 +93,9 @@ export default function TakeQuiz() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Track window focus/blur during quiz
+  // Track window focus/blur during quiz (skip in practice mode)
   useEffect(() => {
-    if (!quizStarted || submitted || showResults) return;
+    if (!quizStarted || submitted || showResults || practiceMode) return;
 
     const handleBlur = () => {
       const newCount = focusLeaveCount + 1;
@@ -190,7 +191,7 @@ export default function TakeQuiz() {
 
   // Timer countdown
   useEffect(() => {
-    if (!quiz?.timer_enabled || submitted || showResults || timeLeft <= 0) return;
+    if (!quiz?.timer_enabled || submitted || showResults || timeLeft <= 0 || practiceMode) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -277,21 +278,23 @@ export default function TakeQuiz() {
     setConfirmStartOpen(false);
     setQuizStarted(true);
 
-    // Create attempt record when quiz starts
-    try {
-      const newAttempt = await base44.entities.QuizAttempt.create({
-        user_email: user.email,
-        quiz_id: quizId,
-        course_id: urlParams.get('courseId'),
-        score: 0,
-        total: getTotalPoints(),
-        percentage: 0,
-        time_taken: 0,
-        tips_used: 0
-      });
-      setCurrentAttemptId(newAttempt.id);
-    } catch (e) {
-      console.error('Failed to create attempt:', e);
+    // Create attempt record when quiz starts (skip in practice mode)
+    if (!practiceMode) {
+      try {
+        const newAttempt = await base44.entities.QuizAttempt.create({
+          user_email: user.email,
+          quiz_id: quizId,
+          course_id: urlParams.get('courseId'),
+          score: 0,
+          total: getTotalPoints(),
+          percentage: 0,
+          time_taken: 0,
+          tips_used: 0
+        });
+        setCurrentAttemptId(newAttempt.id);
+      } catch (e) {
+        console.error('Failed to create attempt:', e);
+      }
     }
   };
 
@@ -308,28 +311,30 @@ export default function TakeQuiz() {
     setSubmitted(true);
     setShowResults(true);
 
-    // Update the current attempt with final score
-    try {
-      const score = calculateScore();
-      const total = getTotalPoints();
-      const percentage = Math.round((score / total) * 100);
+    // Update the current attempt with final score (skip in practice mode)
+    if (!practiceMode) {
+      try {
+        const score = calculateScore();
+        const total = getTotalPoints();
+        const percentage = Math.round((score / total) * 100);
 
-      if (currentAttemptId) {
-        await base44.entities.QuizAttempt.update(currentAttemptId, {
-          score,
-          total,
-          percentage,
-          answers,
-          time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
-        });
+        if (currentAttemptId) {
+          await base44.entities.QuizAttempt.update(currentAttemptId, {
+            score,
+            total,
+            percentage,
+            answers,
+            time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
+          });
 
-        // Invalidate queries to refresh data across all pages
-        queryClient.invalidateQueries({ queryKey: ['quizAttempts'] });
-        queryClient.invalidateQueries({ queryKey: ['allQuizAttempts'] });
+          // Invalidate queries to refresh data across all pages
+          queryClient.invalidateQueries({ queryKey: ['quizAttempts'] });
+          queryClient.invalidateQueries({ queryKey: ['allQuizAttempts'] });
+        }
+
+      } catch (e) {
+        console.error('Failed to update attempt:', e);
       }
-
-    } catch (e) {
-      console.error('Failed to update attempt:', e);
     }
   };
 
@@ -1170,7 +1175,7 @@ try {
 
     const commonProps = {
       question: currentQuestion,
-      showResults: submitted || reviewMode,
+      showResults: submitted || reviewMode || practiceMode,
     };
 
     switch (currentQuestion.type) {
@@ -1358,26 +1363,47 @@ try {
             </div>
             </div>
 
-            {quiz.allow_tips && (
-              <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg mb-8">
+            <div className="space-y-4 mb-8">
+              {quiz.allow_tips && (
+                <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-6 h-6 text-purple-600" />
+                    <div>
+                      <Label htmlFor="practice-tips" className="font-semibold text-slate-800 cursor-pointer">
+                        AI Practice Tips
+                      </Label>
+                      <div className="text-sm text-slate-600">
+                        Get AI-powered hints during the quiz
+                      </div>
+                    </div>
+                  </div>
+                  <Switch
+                    id="practice-tips"
+                    checked={practiceTipsEnabled}
+                    onCheckedChange={setPracticeTipsEnabled}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-purple-600" />
+                  <BookOpen className="w-6 h-6 text-blue-600" />
                   <div>
-                    <Label htmlFor="practice-tips" className="font-semibold text-slate-800 cursor-pointer">
-                      Practice Tips Mode
+                    <Label htmlFor="practice-mode" className="font-semibold text-slate-800 cursor-pointer">
+                      Practice Mode
                     </Label>
                     <div className="text-sm text-slate-600">
-                      Get AI-powered hints during the quiz
+                      No time limit, immediate feedback, not counted in scores
                     </div>
                   </div>
                 </div>
                 <Switch
-                  id="practice-tips"
-                  checked={practiceTipsEnabled}
-                  onCheckedChange={setPracticeTipsEnabled}
+                  id="practice-mode"
+                  checked={practiceMode}
+                  onCheckedChange={setPracticeMode}
                 />
               </div>
-            )}
+            </div>
 
           {canTakeQuiz ? (
             <Button
@@ -1454,6 +1480,7 @@ try {
             onReview={handleReview}
             quizTitle={quiz.title}
             courseId={urlParams.get('courseId')}
+            practiceMode={practiceMode}
           />
         </div>
       );
@@ -1476,8 +1503,16 @@ try {
             <X className="w-5 h-5" />
           </button>
 
+          {/* Practice Mode Indicator */}
+          {practiceMode && !showResults && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border border-blue-300 rounded-lg">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-semibold text-blue-800">Practice Mode</span>
+            </div>
+          )}
+
           {/* Timer */}
-          {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
+          {quiz.timer_enabled && quiz.timer_duration && !showResults && !practiceMode && timerVisible && (
             <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg">
               <div className="text-center">
                 <div className="text-2xl font-bold text-slate-800 tabular-nums">
@@ -1506,7 +1541,7 @@ try {
             </div>
           )}
 
-          {quiz.timer_enabled && !timerVisible && !showResults && (
+          {quiz.timer_enabled && !timerVisible && !showResults && !practiceMode && (
             <button
               onClick={() => setTimerVisible(true)}
               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-800"
