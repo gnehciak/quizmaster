@@ -4,9 +4,25 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, List, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import MultipleChoiceQuestion from '@/components/quiz/MultipleChoiceQuestion';
+import ReadingComprehensionQuestion from '@/components/quiz/ReadingComprehensionQuestion';
+import DragDropQuestion from '@/components/quiz/DragDropQuestion';
+import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
+import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
+import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
+import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 
 export default function ReviewAnswers() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -14,10 +30,19 @@ export default function ReviewAnswers() {
   const courseId = urlParams.get('courseId');
   const attemptId = urlParams.get('attemptId');
 
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [aiExplanations, setAiExplanations] = useState({});
   const [loadingExplanations, setLoadingExplanations] = useState(false);
   const [performanceAnalysis, setPerformanceAnalysis] = useState(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [aiHelperContent, setAiHelperContent] = useState('');
+  const [highlightedPassages, setHighlightedPassages] = useState({});
+  const [blankHelperContent, setBlankHelperContent] = useState({});
+  const [dropZoneHelperContent, setDropZoneHelperContent] = useState({});
+  const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
+  const [matchingHelperContent, setMatchingHelperContent] = useState({});
 
   const { data: user } = useQuery({
     queryKey: ['user'],
