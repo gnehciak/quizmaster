@@ -21,7 +21,9 @@ export default function ReadingComprehensionQuestion({
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
-  tipOpened = false
+  tipOpened = false,
+  onRequestExplanation = null,
+  openedExplanations = new Set()
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -213,6 +215,18 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
+              {showResults && onRequestExplanation && (
+                <div className="mt-4">
+                  <Button
+                    onClick={onRequestExplanation}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Show Explanation
+                  </Button>
+                </div>
+              )}
+
               {!showResults && !aiHelperLoading && !aiHelperContent && onRequestHelp && (
                 <div className="mt-4">
                   <Button
@@ -226,14 +240,14 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
-              {!showResults && aiHelperLoading && (
+              {aiHelperLoading && (
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center">
                   <Loader2 className="w-5 h-5 text-purple-600 animate-spin mr-2" />
-                  <span className="text-sm text-slate-600">Loading help...</span>
+                  <span className="text-sm text-slate-600">{showResults ? 'Loading explanation...' : 'Loading help...'}</span>
                 </div>
               )}
 
-              {!showResults && aiHelperContent && (
+              {!aiHelperLoading && aiHelperContent && (
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg relative">
                   <div 
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
