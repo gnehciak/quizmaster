@@ -17,7 +17,7 @@ import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse }) {
+export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [] }) {
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
@@ -390,13 +390,19 @@ ${aiInput}`;
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label>Question Name (optional)</Label>
             <Input
               value={question.questionName || ''}
               onChange={(e) => updateField('questionName', e.target.value)}
               placeholder="e.g., 'Introduction', 'Main Analysis', 'Summary'..."
+              list={`question-names-${question.id}`}
             />
+            <datalist id={`question-names-${question.id}`}>
+              {existingQuestionNames.map((name, idx) => (
+                <option key={idx} value={name} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-2">

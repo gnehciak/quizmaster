@@ -498,20 +498,29 @@ export default function CreateQuiz() {
 
           {/* Question Editors */}
           <div className="space-y-4 mt-8">
-            {quiz.questions?.map((question, idx) => (
-              <div key={question.id} id={`question-editor-${idx}`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-2">
-                  Question {idx + 1}
-                </h3>
-                <QuestionEditor
-                  question={question}
-                  onChange={(updated) => updateQuestion(idx, updated)}
-                  onDelete={() => deleteQuestion(idx)}
-                  isCollapsed={collapsedQuestions.has(idx)}
-                  onToggleCollapse={() => toggleCollapseQuestion(idx)}
-                />
-              </div>
-            ))}
+            {quiz.questions?.map((question, idx) => {
+              const existingNames = [...new Set(
+                quiz.questions
+                  .map(q => q.questionName)
+                  .filter(name => name && name.trim())
+              )];
+              
+              return (
+                <div key={question.id} id={`question-editor-${idx}`}>
+                  <h3 className="text-sm font-medium text-slate-500 mb-2">
+                    Question {idx + 1}
+                  </h3>
+                  <QuestionEditor
+                    question={question}
+                    onChange={(updated) => updateQuestion(idx, updated)}
+                    onDelete={() => deleteQuestion(idx)}
+                    isCollapsed={collapsedQuestions.has(idx)}
+                    onToggleCollapse={() => toggleCollapseQuestion(idx)}
+                    existingQuestionNames={existingNames}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <motion.div layout>
