@@ -92,6 +92,8 @@ export default function CourseDetail() {
   const [features, setFeatures] = useState([]);
   const [newFeature, setNewFeature] = useState('');
   const [sectionTitle, setSectionTitle] = useState('');
+  const [sectionIcon, setSectionIcon] = useState('#');
+  const [sectionColor, setSectionColor] = useState('indigo');
 
   const quillModules = {
     toolbar: [
@@ -266,7 +268,11 @@ export default function CourseDetail() {
             updated.file_url = fileUrl;
             updated.file_name = fileName;
           }
-          else if (contentType === 'section') updated.title = sectionTitle;
+          else if (contentType === 'section') {
+            updated.title = sectionTitle;
+            updated.icon = sectionIcon;
+            updated.color = sectionColor;
+          }
           return updated;
         }
         return block;
@@ -291,7 +297,11 @@ export default function CourseDetail() {
         newBlock.file_url = fileUrl;
         newBlock.file_name = fileName;
       }
-      else if (contentType === 'section') newBlock.title = sectionTitle;
+      else if (contentType === 'section') {
+        newBlock.title = sectionTitle;
+        newBlock.icon = sectionIcon;
+        newBlock.color = sectionColor;
+      }
 
       const updatedBlocks = [...contentBlocks, newBlock];
       await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
@@ -306,6 +316,8 @@ export default function CourseDetail() {
     setFileName('');
     setYoutubeUrl('');
     setSectionTitle('');
+    setSectionIcon('#');
+    setSectionColor('indigo');
     setContentType('');
     setEditingBlock(null);
   };
@@ -325,7 +337,11 @@ export default function CourseDetail() {
       setFileUrl(block.file_url || '');
       setFileName(block.file_name || '');
     }
-    else if (block.type === 'section') setSectionTitle(block.title || '');
+    else if (block.type === 'section') {
+      setSectionTitle(block.title || '');
+      setSectionIcon(block.icon || '#');
+      setSectionColor(block.color || 'indigo');
+    }
     setAddContentOpen(true);
   };
 
@@ -916,6 +932,9 @@ export default function CourseDetail() {
                   setFileUrl('');
                   setFileName('');
                   setYoutubeUrl('');
+                  setSectionTitle('');
+                  setSectionIcon('#');
+                  setSectionColor('indigo');
                 }
               }}>
                 <DialogTrigger asChild>
@@ -986,7 +1005,7 @@ export default function CourseDetail() {
                       </div>
                     ) : (
                       <>
-                        {!editingBlock && (
+                        {!editingBlock && contentType && (
                           <Button variant="ghost" onClick={() => setContentType('')} className="text-sm">
                             ← Back to content types
                           </Button>
@@ -1199,13 +1218,61 @@ export default function CourseDetail() {
                         )}
 
                         {contentType === 'section' && (
-                          <div>
-                            <label className="text-sm font-medium mb-2 block">Section Title</label>
-                            <Input
-                              value={sectionTitle}
-                              onChange={(e) => setSectionTitle(e.target.value)}
-                              placeholder="e.g. Week 1: Introduction"
-                            />
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Section Title</label>
+                              <Input
+                                value={sectionTitle}
+                                onChange={(e) => setSectionTitle(e.target.value)}
+                                placeholder="e.g. Week 1: Introduction"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Icon</label>
+                              <div className="grid grid-cols-6 gap-2">
+                                {['#', '📚', '🎯', '⭐', '🔥', '💡', '🎓', '📝', '✨', '🚀', '🎨', '🏆'].map((icon) => (
+                                  <button
+                                    key={icon}
+                                    type="button"
+                                    onClick={() => setSectionIcon(icon)}
+                                    className={cn(
+                                      "p-3 rounded-lg border-2 text-xl transition-all hover:scale-110",
+                                      sectionIcon === icon ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"
+                                    )}
+                                  >
+                                    {icon}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Color Theme</label>
+                              <div className="grid grid-cols-4 gap-2">
+                                {[
+                                  { name: 'indigo', from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
+                                  { name: 'blue', from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
+                                  { name: 'green', from: 'from-green-50', to: 'to-emerald-50', border: 'border-green-500', bg: 'bg-green-600' },
+                                  { name: 'orange', from: 'from-orange-50', to: 'to-amber-50', border: 'border-orange-500', bg: 'bg-orange-600' },
+                                  { name: 'red', from: 'from-red-50', to: 'to-pink-50', border: 'border-red-500', bg: 'bg-red-600' },
+                                  { name: 'purple', from: 'from-purple-50', to: 'to-fuchsia-50', border: 'border-purple-500', bg: 'bg-purple-600' },
+                                  { name: 'slate', from: 'from-slate-50', to: 'to-gray-50', border: 'border-slate-500', bg: 'bg-slate-600' },
+                                  { name: 'pink', from: 'from-pink-50', to: 'to-rose-50', border: 'border-pink-500', bg: 'bg-pink-600' },
+                                ].map((color) => (
+                                  <button
+                                    key={color.name}
+                                    type="button"
+                                    onClick={() => setSectionColor(color.name)}
+                                    className={cn(
+                                      "p-4 rounded-lg border-2 transition-all hover:scale-105 bg-gradient-to-r",
+                                      color.from, color.to,
+                                      sectionColor === color.name ? "border-slate-800 ring-2 ring-slate-800" : "border-slate-200 hover:border-slate-300"
+                                    )}
+                                  >
+                                    <div className={cn("w-6 h-6 rounded-full mx-auto", color.bg)} />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -1318,10 +1385,22 @@ export default function CourseDetail() {
               const blockLocked = isBlockLocked(block);
               const renderBlock = () => {
                 if (block.type === 'section') {
+                  const colorMap = {
+                    indigo: { from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
+                    blue: { from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
+                    green: { from: 'from-green-50', to: 'to-emerald-50', border: 'border-green-500', bg: 'bg-green-600' },
+                    orange: { from: 'from-orange-50', to: 'to-amber-50', border: 'border-orange-500', bg: 'bg-orange-600' },
+                    red: { from: 'from-red-50', to: 'to-pink-50', border: 'border-red-500', bg: 'bg-red-600' },
+                    purple: { from: 'from-purple-50', to: 'to-fuchsia-50', border: 'border-purple-500', bg: 'bg-purple-600' },
+                    slate: { from: 'from-slate-50', to: 'to-gray-50', border: 'border-slate-500', bg: 'bg-slate-600' },
+                    pink: { from: 'from-pink-50', to: 'to-rose-50', border: 'border-pink-500', bg: 'bg-pink-600' },
+                  };
+                  const colors = colorMap[block.color || 'indigo'];
+                  
                   return (
-                    <div className="flex items-center gap-3 flex-1 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 rounded-lg">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
-                        #
+                    <div className={cn("flex items-center gap-3 flex-1 px-4 py-3 bg-gradient-to-r border-l-4 rounded-lg", colors.from, colors.to, colors.border)}>
+                      <div className={cn("w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-lg flex-shrink-0", colors.bg)}>
+                        {block.icon || '#'}
                       </div>
                       <h3 className="text-xl font-bold text-slate-800">{block.title}</h3>
                     </div>
