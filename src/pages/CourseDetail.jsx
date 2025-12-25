@@ -920,21 +920,48 @@ export default function CourseDetail() {
                             <span className="ml-2">• {quiz.timer_duration} min</span>
                           )}
                           {showAttempts && (
-                            <span className={cn(
-                              "ml-2",
-                              attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
-                            )}>
-                              • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
-                            </span>
-                          )}
-                        </p>
-                        {hasCompleted && hasAccess && (
-                          <p className="text-sm font-medium text-emerald-600 mt-1">
-                            Score: {latestAttempt.score}/{latestAttempt.total} ({latestAttempt.percentage}%)
+                              <span className={cn(
+                                "ml-2",
+                                attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
+                              )}>
+                                • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
+                              </span>
+                            )}
                           </p>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
+                        {hasCompleted && hasAccess && (
+                          <div className="relative w-12 h-12 flex-shrink-0">
+                            <svg className="w-12 h-12 transform -rotate-90">
+                              <circle
+                                cx="24"
+                                cy="24"
+                                r="20"
+                                stroke="#e5e7eb"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              <circle
+                                cx="24"
+                                cy="24"
+                                r="20"
+                                stroke={latestAttempt.percentage >= 80 ? "#10b981" : latestAttempt.percentage >= 60 ? "#f59e0b" : "#ef4444"}
+                                strokeWidth="4"
+                                fill="none"
+                                strokeDasharray={`${(latestAttempt.percentage / 100) * 125.6} 125.6`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className={cn(
+                                "text-xs font-bold",
+                                latestAttempt.percentage >= 80 ? "text-emerald-600" : latestAttempt.percentage >= 60 ? "text-amber-600" : "text-red-600"
+                              )}>
+                                {latestAttempt.percentage}%
+                              </span>
+                            </div>
+                          </div>
+                        )}
                         {isAdmin && (
                           <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}&courseId=${courseId}`)}>
                             <Button size="sm" variant="outline" className="gap-2">
