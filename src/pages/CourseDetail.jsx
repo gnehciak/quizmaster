@@ -1460,7 +1460,7 @@ export default function CourseDetail() {
                       >
                         <Clock className="w-4 h-4" />
                       </Button>
-                      <div className="h-6 w-px bg-slate-300 mx-1" />
+                      <div className="h-6 w-[2px] bg-slate-400 mx-2" />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1492,7 +1492,7 @@ export default function CourseDetail() {
                       >
                         <Clock className="w-4 h-4" />
                       </Button>
-                      <div className="h-6 w-px bg-slate-300 mx-1" />
+                      <div className="h-6 w-[2px] bg-slate-400 mx-2" />
                       <Button
                         variant="ghost"
                         size="icon"
