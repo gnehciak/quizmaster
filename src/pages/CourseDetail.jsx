@@ -968,7 +968,9 @@ export default function CourseDetail() {
           </Dialog>
 
           <div className="space-y-4">
-            {contentBlocks.filter(block => isBlockVisible(block)).map((block, idx) => {
+            {contentBlocks.map((block, idx) => {
+              // Skip hidden blocks for non-admins
+              if (!isAdmin && !isBlockVisible(block)) return null;
               const renderBlock = () => {
                 if (block.type === 'text') {
                   return (
@@ -1285,7 +1287,8 @@ export default function CourseDetail() {
                   key={block.id}
                   className={cn(
                     "p-4 rounded-xl border border-slate-200 transition-all",
-                    block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300"
+                    block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300",
+                    isAdmin && block.visible === false && "opacity-50 border-dashed"
                   )}
                   draggable={isAdmin}
                   onDragStart={(e) => {
