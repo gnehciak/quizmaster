@@ -604,7 +604,12 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Question Numbers Bar */}
-      {showNavBar && (
+      <motion.div
+        initial={false}
+        animate={{ height: showNavBar ? 'auto' : 0, opacity: showNavBar ? 1 : 0 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="overflow-hidden"
+      >
         <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
           <div className="flex gap-4 min-w-min justify-center">
           {(() => {
@@ -687,18 +692,20 @@ Be specific and constructive. Focus on what the student did well and what needs 
             ));
           })()}
         </div>
-      </div>
-      )}
+        </div>
+      </motion.div>
 
       {/* Toggle Button */}
       <div className="relative">
-        <button
+        <motion.button
           onClick={() => setShowNavBar(!showNavBar)}
-          className="absolute left-1/2 -translate-x-1/2 -bottom-5 z-50 w-10 h-6 rounded-b-lg bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="absolute left-1/2 -translate-x-1/2 -top-4 z-50 px-3 py-1 rounded-b-md bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors shadow-sm border border-t-0 border-slate-200"
           title={showNavBar ? "Hide navigation bar" : "Show navigation bar"}
         >
-          {showNavBar ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+          {showNavBar ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </motion.button>
       </div>
 
       {/* Main Content */}
