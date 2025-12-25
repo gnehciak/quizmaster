@@ -299,6 +299,271 @@ export default function ReviewAnswers() {
     setLoadingExplanations(false);
   };
 
+  const handleBlankExplanation = async (blankId) => {
+    const explanationId = `blank-${currentIndex}-${blankId}`;
+    const wasAlreadyOpened = openedExplanations.has(explanationId);
+    
+    // Check if explanation already exists for this blank
+    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.blanks?.[blankId];
+    if (existingExplanation && !wasAlreadyOpened) {
+      setBlankExplanationContent(prev => ({ ...prev, [blankId]: existingExplanation }));
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+      return;
+    }
+
+    if (wasAlreadyOpened && existingExplanation) {
+      return; // Already loaded and opened
+    }
+
+    setBlankExplanationLoading(prev => ({ ...prev, [blankId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const blank = q.blanks?.find(b => b.id === blankId);
+      
+      if (!blank) {
+        throw new Error('Blank not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[blankId];
+      const correctAnswer = blank.correctAnswer;
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+
+Question: Fill in the blank
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}
+Options: ${blank.options.join(', ')}
+
+Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+
+      // Save to quiz entity
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const blankExplanations = questionExplanations.blanks || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              blanks: {
+                ...blankExplanations,
+                [blankId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save blank explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating blank explanation:', e);
+      setBlankExplanationContent(prev => ({ ...prev, [blankId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setBlankExplanationLoading(prev => ({ ...prev, [blankId]: false }));
+    }
+  };
+
+  const handleDropZoneExplanation = async (zoneId) => {
+    const explanationId = `dropzone-${currentIndex}-${zoneId}`;
+    const wasAlreadyOpened = openedExplanations.has(explanationId);
+    
+    // Check if explanation already exists for this zone
+    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.dropZones?.[zoneId];
+    if (existingExplanation && !wasAlreadyOpened) {
+      setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: existingExplanation.advice || existingExplanation }));
+      if (existingExplanation.passages) {
+        setDropZoneHighlightedExplanations(prev => ({ ...prev, [zoneId]: existingExplanation.passages }));
+      }
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+      return;
+    }
+
+    if (wasAlreadyOpened && existingExplanation) {
+      return;
+    }
+
+    setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const zone = q.dropZones?.find(z => z.id === zoneId);
+      
+      if (!zone) {
+        throw new Error('Drop zone not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[zoneId];
+      const correctAnswer = zone.correctAnswer;
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+      let passagesForPrompt = [];
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passagesForPrompt = q.passages.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content
+          }));
+          passageContext = '\n\nPassages:\n' + passagesForPrompt.map(p => 
+            `[${p.id}] ${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passagesForPrompt = [{ id: 'main', title: 'Passage', content: q.passage }];
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+
+Gap Label: ${zone.label}
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}${passageContext}
+
+Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+
+      // Save to quiz entity
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const dropZoneExplanations = questionExplanations.dropZones || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              dropZones: {
+                ...dropZoneExplanations,
+                [zoneId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save drop zone explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating drop zone explanation:', e);
+      setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: false }));
+    }
+  };
+
+  const handleMatchingExplanation = async (questionId) => {
+    const explanationId = `matching-${currentIndex}-${questionId}`;
+    const wasAlreadyOpened = openedExplanations.has(explanationId);
+    
+    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.matchingQuestions?.[questionId];
+    if (existingExplanation && !wasAlreadyOpened) {
+      setMatchingExplanationContent(prev => ({ ...prev, [questionId]: existingExplanation }));
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+      return;
+    }
+
+    if (wasAlreadyOpened && existingExplanation) {
+      return;
+    }
+
+    setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const matchingQ = q.matchingQuestions?.find(mq => mq.id === questionId);
+      
+      if (!matchingQ) {
+        throw new Error('Matching question not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[questionId];
+      const correctAnswer = matchingQ.correctAnswer;
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passageContext = '\n\nPassages:\n' + q.passages.map(p => 
+            `${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+
+Question: ${matchingQ.question}
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}${passageContext}
+
+Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setMatchingExplanationContent(prev => ({ ...prev, [questionId]: text }));
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const matchingExplanations = questionExplanations.matchingQuestions || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              matchingQuestions: {
+                ...matchingExplanations,
+                [questionId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save matching explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating matching explanation:', e);
+      setMatchingExplanationContent(prev => ({ ...prev, [questionId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
   const generatePerformanceAnalysis = async () => {
     setLoadingAnalysis(true);
     
