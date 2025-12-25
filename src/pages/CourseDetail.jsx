@@ -170,7 +170,11 @@ export default function CourseDetail() {
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
     onSuccess: () => {
+      console.log('Course updated successfully, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+    },
+    onError: (error) => {
+      console.error('Update course mutation error:', error);
     }
   });
 
@@ -347,16 +351,28 @@ export default function CourseDetail() {
 
   const handleToggleVisibility = async (blockId) => {
     try {
+      console.log('Toggle visibility for block:', blockId);
+      console.log('Current blocks:', contentBlocks);
+
+      const targetBlock = contentBlocks.find(b => b.id === blockId);
+      console.log('Target block before:', targetBlock);
+
       const updatedBlocks = contentBlocks.map(b => {
         if (b.id === blockId) {
           // Toggle: if currently false (hidden), set to undefined (visible), otherwise set to false (hidden)
           const newVisible = b.visible === false ? undefined : false;
+          console.log('Toggling from', b.visible, 'to', newVisible);
           return { ...b, visible: newVisible };
         }
         return b;
       });
-      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
-      toast.success(updatedBlocks.find(b => b.id === blockId).visible === false ? 'Content hidden from students' : 'Content visible to students');
+
+      console.log('Sending update with blocks:', updatedBlocks);
+      const result = await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+      console.log('Update result:', result);
+
+      const updatedBlock = updatedBlocks.find(b => b.id === blockId);
+      toast.success(updatedBlock.visible === false ? 'Content hidden from students' : 'Content visible to students');
     } catch (error) {
       toast.error('Failed to update visibility');
       console.error('Visibility toggle error:', error);
