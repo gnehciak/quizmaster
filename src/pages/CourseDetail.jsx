@@ -1065,7 +1065,7 @@ export default function CourseDetail() {
                                   >
                                     <div className="font-medium text-slate-800">{quiz.title}</div>
                                     <div className="text-xs text-slate-500 mt-1">
-                                      {quiz.questions?.length || 0} questions
+                                      ID: {quiz.id} • {quiz.questions?.length || 0} questions
                                     </div>
                                   </button>
                                 ))}
