@@ -644,7 +644,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   </div>
                   <div className="absolute left-0 right-0 top-full h-2 border-l-2 border-r-2 border-t-2 border-slate-300 rounded-t-lg"></div>
                 </div>
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-2 justify-center">
                   {section.questions.map(({ question: q, index: idx }) => {
                     const answer = answers[idx];
                     let isCorrect = false;
