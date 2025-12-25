@@ -465,86 +465,47 @@ Be specific and constructive. Focus on what the student did well and what needs 
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-4">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">{quiz.title}</h1>
-              <p className="text-slate-600 mt-2">Detailed Review & Performance Analysis</p>
-            </div>
-            <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-              <Button variant="outline" className="gap-2">
-                <ChevronLeft className="w-4 h-4" />
-                Back to Course
+          {/* Back Button */}
+          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
+            <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </Link>
+        </div>
+
+        {/* Question Counter & Stats Button */}
+        <div className="flex-1 flex items-center justify-center gap-3">
+          <h2 className="text-xl font-semibold text-slate-800">
+            Question {currentIndex + 1} of {totalQuestions}
+          </h2>
+          
+          <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Stats
               </Button>
-            </Link>
-          </div>
-
-          {/* Score Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-              <div className="text-sm text-emerald-600 font-medium">Score</div>
-              <div className="text-2xl font-bold text-emerald-700">{score} / {total}</div>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <div className="text-sm text-blue-600 font-medium">Accuracy</div>
-              <div className="text-2xl font-bold text-blue-700">{percentage}%</div>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="text-sm text-amber-600 font-medium">Questions</div>
-              <div className="text-2xl font-bold text-amber-700">{questions.length}</div>
-            </div>
-          </div>
-
-          {/* Quick Jump Buttons */}
-          <div className="mb-8">
-            <div className="text-sm font-medium text-slate-600 mb-3">Jump to Question</div>
-            <div className="flex flex-wrap gap-2">
-              {questions.map((q, idx) => {
-                const answer = answers[idx];
-                let isCorrect = false;
-                let isPartial = false;
-
-                if (q.isSubQuestion) {
-                  isCorrect = answer === q.subQuestion.correctAnswer;
-                } else if (q.type === 'multiple_choice') {
-                  isCorrect = answer === q.correctAnswer;
-                } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-                  const zones = q.dropZones || [];
-                  const correctCount = zones.filter(zone => answer?.[zone.id] === zone.correctAnswer).length;
-                  isCorrect = correctCount === zones.length;
-                  isPartial = correctCount > 0 && correctCount < zones.length;
-                } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-                  const blanks = q.blanks || [];
-                  const correctCount = blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
-                  isCorrect = correctCount === blanks.length;
-                  isPartial = correctCount > 0 && correctCount < blanks.length;
-                } else if (q.type === 'matching_list_dual') {
-                  const matchingQs = q.matchingQuestions || [];
-                  const correctCount = matchingQs.filter(mq => answer?.[mq.id] === mq.correctAnswer).length;
-                  isCorrect = correctCount === matchingQs.length;
-                  isPartial = correctCount > 0 && correctCount < matchingQs.length;
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      document.getElementById(`question-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}
-                    className={cn(
-                      "w-10 h-10 rounded-lg font-semibold text-sm transition-all hover:scale-110",
-                      isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
-                      isPartial && "bg-amber-500 text-white hover:bg-amber-600",
-                      !isCorrect && !isPartial && "bg-red-500 text-white hover:bg-red-600"
-                    )}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Performance Analysis</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                {/* Score Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                    <div className="text-sm text-emerald-600 font-medium">Score</div>
+                    <div className="text-2xl font-bold text-emerald-700">{score} / {total}</div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="text-sm text-blue-600 font-medium">Accuracy</div>
+                    <div className="text-2xl font-bold text-blue-700">{percentage}%</div>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <div className="text-sm text-amber-600 font-medium">Questions</div>
+                    <div className="text-2xl font-bold text-amber-700">{questions.length}</div>
+                  </div>
+                </div>
 
           {/* AI Performance Analysis */}
           {!performanceAnalysis && !loadingAnalysis && (
