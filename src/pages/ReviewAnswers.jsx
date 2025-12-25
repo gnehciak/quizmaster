@@ -476,6 +476,79 @@ Provide a helpful first-person explanation:`;
     }
   };
 
+  const handleRCExplanation = async () => {
+    const explanationId = `rc-${currentIndex}`;
+    const wasAlreadyOpened = openedExplanations.has(explanationId);
+    
+    // Check if explanation already exists
+    const existingExplanation = quiz?.ai_explanations?.[currentIndex];
+    if (existingExplanation && !wasAlreadyOpened) {
+      setAiHelperContent(existingExplanation);
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+      return;
+    }
+
+    if (wasAlreadyOpened && existingExplanation) {
+      return;
+    }
+
+    setAiHelperLoading(true);
+
+    try {
+      const q = currentQuestion;
+      const userAnswer = answers[currentIndex];
+      const correctAnswer = q.isSubQuestion ? q.subQuestion.correctAnswer : q.correctAnswer;
+
+      let passageContext = '';
+      if (q.passages?.length > 0) {
+        passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+          `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+        ).join('\n\n');
+      } else if (q.passage) {
+        passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+      }
+
+      const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+Quote specific sentences from the passage where applicable to support your explanation.
+
+Question: ${questionText?.replace(/<[^>]*>/g, '')}
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}${passageContext}
+
+Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setAiHelperContent(text);
+      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+
+      // Save to quiz entity
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: text
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save RC explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating RC explanation:', e);
+      setAiHelperContent("Unable to generate explanation at this time.");
+    } finally {
+      setAiHelperLoading(false);
+    }
+  };
+
   const handleMatchingExplanation = async (questionId) => {
     const explanationId = `matching-${currentIndex}-${questionId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
@@ -657,13 +730,15 @@ Be specific and constructive. Focus on what the student did well and what needs 
           subQuestion={currentQuestion.subQuestion}
           highlightedPassages={highlightedPassages}
           aiHelperContent={aiHelperContent}
-          aiHelperLoading={false}
+          aiHelperLoading={aiHelperLoading}
           onRequestHelp={null}
           isAdmin={true}
           tipsAllowed={999}
           tipsUsed={0}
           tipOpened={true}
           autoExpandTip={true}
+          onRequestExplanation={handleRCExplanation}
+          openedExplanations={openedExplanations}
         />
       );
     }
