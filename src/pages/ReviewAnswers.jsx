@@ -559,14 +559,22 @@ Provide HTML formatted explanation:`;
         }
       }
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+      const prompt = `You are a Year 6 teacher helping a student understand why their drag-and-drop answer is incorrect.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer.
+2. **Explain Why Wrong:** Explain why the student's answer is incorrect${passageContext ? ', using specific quotes from the passage' : ''}.
+3. **Explain Why Right:** Explain why the correct answer is right${passageContext ? ', using specific quotes from the passage' : ''}.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Gap Label: ${zone.label}
 Student's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}${passageContext}
 
-Provide a helpful first-person explanation:`;
+Provide HTML formatted explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -688,14 +696,22 @@ Provide a helpful first-person explanation:`;
         }
       }
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+      const prompt = `You are a Year 6 teacher helping a student understand why their drag-and-drop answer is incorrect.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer.
+2. **Explain Why Wrong:** Explain why the student's answer is incorrect${passageContext ? ', using specific quotes from the passage' : ''}.
+3. **Explain Why Right:** Explain why the correct answer is right${passageContext ? ', using specific quotes from the passage' : ''}.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Gap Label: ${zone.label}
 Student's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}${passageContext}
 
-Provide a helpful first-person explanation:`;
+Provide HTML formatted explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
