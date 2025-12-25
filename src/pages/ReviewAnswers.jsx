@@ -269,7 +269,7 @@ export default function ReviewAnswers() {
     });
 
     const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
     const newExplanations = {};
 
     for (const { q, idx, answer } of incorrectQuestions) {
@@ -356,7 +356,7 @@ Options: ${blank.options.join(', ')}
 Provide a helpful first-person explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -456,7 +456,7 @@ Correct Answer: ${correctAnswer}${passageContext}
 Provide a helpful first-person explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -571,7 +571,7 @@ Provide a helpful first-person explanation:`;
       console.log('===========================');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -743,7 +743,7 @@ Correct Answer: ${correctAnswer}${passageContext}
 Provide a helpful first-person explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -831,7 +831,7 @@ Provide a JSON response with:
 Be specific and constructive. Focus on what the student did well and what needs improvement.`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
