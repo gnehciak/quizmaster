@@ -532,9 +532,13 @@ Provide a helpful first-person explanation:`;
          - You may highlight multiple separate sections if the proof is spread across the text.
       2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
          - Do NOT summarize, truncate, or alter the non-highlighted text.
-      3. **Advice Strategy (Tell & Explain):** - **State the Answer:** Start your advice by clearly stating the correct answer (e.g., "The correct answer is Option A").
-         - **Explain:** Explain *why* this is the correct answer by directly referencing the text you highlighted.
-         - Connect the keywords in the question to the evidence in the text.
+      3. **Advice Strategy (Tell & Explain Each Option):** 
+         - **State the Correct Answer:** Start by clearly stating the correct answer (e.g., "The correct answer is Option A").
+         - **Explain Each Option Individually:** Go through EACH option one by one and explain:
+           * If it's the CORRECT option: Why it's right, using specific quotes from the passage.
+           * If it's a WRONG option: Why it's incorrect, using specific quotes or reasoning from the passage.
+         - Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
+         - Quote directly from the passage to support your explanations.
       4. **JSON Logic:**
          - If the input Passage(s) is a single string, use the [For single passage] format.
          - If the input Passage(s) is an array/list, use the [For multiple passages] format.
