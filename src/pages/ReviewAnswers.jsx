@@ -691,13 +691,15 @@ Be specific and constructive. Focus on what the student did well and what needs 
       )}
 
       {/* Toggle Button */}
-      <button
-        onClick={() => setShowNavBar(!showNavBar)}
-        className="fixed top-20 right-4 z-50 w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg"
-        title={showNavBar ? "Hide navigation bar" : "Show navigation bar"}
-      >
-        {showNavBar ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-      </button>
+      <div className="relative">
+        <button
+          onClick={() => setShowNavBar(!showNavBar)}
+          className="absolute left-1/2 -translate-x-1/2 -bottom-5 z-50 w-10 h-6 rounded-b-lg bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg"
+          title={showNavBar ? "Hide navigation bar" : "Show navigation bar"}
+        >
+          {showNavBar ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
