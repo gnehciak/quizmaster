@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
