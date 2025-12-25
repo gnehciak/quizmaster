@@ -27,7 +27,8 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Clock
+  Clock,
+  Calendar
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -1460,7 +1461,7 @@ export default function CourseDetail() {
                       >
                         <Clock className="w-4 h-4" />
                       </Button>
-                      <div className="h-6 w-[2px] bg-slate-400 mx-2" />
+                      <div className="w-3" />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1490,9 +1491,9 @@ export default function CourseDetail() {
                         )}
                         title="Schedule unlock"
                       >
-                        <Clock className="w-4 h-4" />
+                        <Calendar className="w-4 h-4" />
                       </Button>
-                      <div className="h-6 w-[2px] bg-slate-400 mx-2" />
+                      <div className="w-3" />
                       <Button
                         variant="ghost"
                         size="icon"
