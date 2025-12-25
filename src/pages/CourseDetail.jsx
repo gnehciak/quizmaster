@@ -1082,9 +1082,20 @@ export default function CourseDetail() {
                                     questions: [],
                                     status: 'draft'
                                   });
-                                  setSelectedQuizId(newQuiz.id);
+                                  
+                                  const newBlock = {
+                                    id: `block_${Date.now()}`,
+                                    type: 'quiz',
+                                    quiz_id: newQuiz.id
+                                  };
+                                  
+                                  const updatedBlocks = [...contentBlocks, newBlock];
+                                  await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+                                  
                                   queryClient.invalidateQueries({ queryKey: ['quizzes'] });
-                                  toast.success('Quiz created');
+                                  setAddContentOpen(false);
+                                  setContentType('');
+                                  toast.success('Quiz created and added to course');
                                 }}
                               >
                                 <Plus className="w-4 h-4" />
