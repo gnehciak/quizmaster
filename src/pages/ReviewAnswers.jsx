@@ -463,7 +463,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-4">
           {/* Back Button */}
           <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
@@ -735,7 +735,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Bottom Navigation */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+      <div className="flex items-center justify-between px-6 py-4 border-t border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <Button
           onClick={handlePrev}
           disabled={currentIndex === 0}
