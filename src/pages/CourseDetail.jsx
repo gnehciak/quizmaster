@@ -1320,7 +1320,10 @@ export default function CourseDetail() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleToggleVisibility(block.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleVisibility(block.id);
+                        }}
                         className={cn(
                           "text-slate-400",
                           block.visible === false ? "hover:text-emerald-600" : "hover:text-slate-600"
@@ -1332,7 +1335,8 @@ export default function CourseDetail() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSchedulingBlock(block);
                           setScheduleDialogOpen(true);
                         }}
@@ -1347,7 +1351,10 @@ export default function CourseDetail() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEditBlock(block)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditBlock(block);
+                        }}
                         className="text-slate-400 hover:text-indigo-600"
                       >
                         <Pencil className="w-4 h-4" />
@@ -1355,7 +1362,10 @@ export default function CourseDetail() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteBlock(block.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteBlock(block.id);
+                        }}
                         className="text-slate-400 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
