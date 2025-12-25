@@ -1198,6 +1198,17 @@ export default function CourseDetail() {
                           </div>
                         )}
 
+                        {contentType === 'section' && (
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Section Title</label>
+                            <Input
+                              value={sectionTitle}
+                              onChange={(e) => setSectionTitle(e.target.value)}
+                              placeholder="e.g. Week 1: Introduction"
+                            />
+                          </div>
+                        )}
+
                         <Button 
                           onClick={handleAddContent}
                           className="w-full"
@@ -1207,7 +1218,8 @@ export default function CourseDetail() {
                             (contentType === 'website_link' && (!websiteLink?.trim() || !websiteLinkTitle?.trim())) ||
                             (contentType === 'embed_file' && !fileUrl?.trim()) ||
                             (contentType === 'embed_youtube' && !youtubeUrl?.trim()) ||
-                            (contentType === 'upload_file' && !fileUrl?.trim())
+                            (contentType === 'upload_file' && !fileUrl?.trim()) ||
+                            (contentType === 'section' && !sectionTitle?.trim())
                           }
                         >
                           {editingBlock ? 'Update Content' : 'Add Content'}
