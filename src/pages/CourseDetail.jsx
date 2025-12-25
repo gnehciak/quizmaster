@@ -1302,61 +1302,63 @@ export default function CourseDetail() {
                     handleReorderContent(startIndex, idx);
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
                     {isAdmin && (
                       <div className="cursor-grab active:cursor-grabbing pt-1">
                         <GripVertical className="w-5 h-5 text-slate-400" />
                       </div>
                     )}
-                    {renderBlock()}
-                    {isAdmin && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleVisibility(block.id)}
-                          className={cn(
-                            "text-slate-400",
-                            block.visible === false ? "hover:text-emerald-600" : "hover:text-slate-600"
-                          )}
-                          title={block.visible === false ? "Hidden from students" : "Visible to students"}
-                        >
-                          {block.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSchedulingBlock(block);
-                            setScheduleDialogOpen(true);
-                          }}
-                          className={cn(
-                            "text-slate-400 hover:text-amber-600",
-                            (block.scheduledShowDate || block.scheduledHideDate) && "text-amber-600"
-                          )}
-                          title="Schedule visibility"
-                        >
-                          <Clock className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditBlock(block)}
-                          className="text-slate-400 hover:text-indigo-600"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteBlock(block.id)}
-                          className="text-slate-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex-1">
+                      {renderBlock()}
+                    </div>
                   </div>
+                  {isAdmin && (
+                    <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-slate-200">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleVisibility(block.id)}
+                        className={cn(
+                          "text-slate-400",
+                          block.visible === false ? "hover:text-emerald-600" : "hover:text-slate-600"
+                        )}
+                        title={block.visible === false ? "Hidden from students" : "Visible to students"}
+                      >
+                        {block.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSchedulingBlock(block);
+                          setScheduleDialogOpen(true);
+                        }}
+                        className={cn(
+                          "text-slate-400 hover:text-amber-600",
+                          (block.scheduledShowDate || block.scheduledHideDate) && "text-amber-600"
+                        )}
+                        title="Schedule visibility"
+                      >
+                        <Clock className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditBlock(block)}
+                        className="text-slate-400 hover:text-indigo-600"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteBlock(block.id)}
+                        className="text-slate-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
