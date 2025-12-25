@@ -562,19 +562,31 @@ IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        setAiHelperContent(parsed.advice || text);
+        
+        // Remove first line (before first \n) from each passage
+        const cleanedPassages = {};
         if (parsed.passages) {
-          setHighlightedPassages(parsed.passages);
+          Object.keys(parsed.passages).forEach(key => {
+            const passage = parsed.passages[key];
+            const firstLineBreak = passage.indexOf('\n');
+            cleanedPassages[key] = firstLineBreak !== -1 ? passage.substring(firstLineBreak + 1) : passage;
+          });
         }
+        
+        setAiHelperContent(parsed.advice || text);
+        setHighlightedPassages(cleanedPassages);
         setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
-        // Save to quiz entity
+        // Save to quiz entity with cleaned passages
         try {
           const existingExplanations = quiz?.ai_explanations || {};
           await base44.entities.Quiz.update(quiz.id, {
             ai_explanations: {
               ...existingExplanations,
-              [currentIndex]: parsed
+              [currentIndex]: {
+                advice: parsed.advice,
+                passages: cleanedPassages
+              }
             }
           });
           queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
