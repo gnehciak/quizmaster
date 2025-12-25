@@ -907,10 +907,77 @@ export default function CourseDetail() {
                   const latestAttempt = sortedAttempts.length > 0 ? sortedAttempts[0] : null;
                   const hasCompleted = latestAttempt !== null;
                   
+                  // Helper function to get gradient color based on percentage
+                  const getGradientColor = (percentage) => {
+                    if (percentage >= 75) {
+                      // Green to yellow-green (75-100%)
+                      const ratio = (percentage - 75) / 25;
+                      const r = Math.round(34 + (16 - 34) * (1 - ratio));
+                      const g = Math.round(197 + (185 - 197) * (1 - ratio));
+                      const b = Math.round(94 + (47 - 94) * (1 - ratio));
+                      return `rgb(${r}, ${g}, ${b})`;
+                    } else if (percentage >= 50) {
+                      // Yellow to yellow-green (50-75%)
+                      const ratio = (percentage - 50) / 25;
+                      const r = Math.round(234 + (34 - 234) * ratio);
+                      const g = Math.round(179 + (197 - 179) * ratio);
+                      const b = Math.round(8 + (94 - 8) * ratio);
+                      return `rgb(${r}, ${g}, ${b})`;
+                    } else if (percentage >= 25) {
+                      // Amber to yellow (25-50%)
+                      const ratio = (percentage - 25) / 25;
+                      const r = Math.round(245 + (234 - 245) * ratio);
+                      const g = Math.round(158 + (179 - 158) * ratio);
+                      const b = Math.round(11 + (8 - 11) * ratio);
+                      return `rgb(${r}, ${g}, ${b})`;
+                    } else {
+                      // Red to amber (0-25%)
+                      const ratio = percentage / 25;
+                      const r = Math.round(239 + (245 - 239) * ratio);
+                      const g = Math.round(68 + (158 - 68) * ratio);
+                      const b = Math.round(68 + (11 - 68) * ratio);
+                      return `rgb(${r}, ${g}, ${b})`;
+                    }
+                  };
+
+                  const scoreColor = hasCompleted ? getGradientColor(latestAttempt.percentage) : '#6366f1';
+
                   return (
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center">
-                        {idx + 1}
+                      <div className="relative w-14 h-14 flex-shrink-0">
+                        <svg className="w-14 h-14 transform -rotate-90">
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="24"
+                            stroke="#e5e7eb"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          {hasCompleted && hasAccess ? (
+                            <circle
+                              cx="28"
+                              cy="28"
+                              r="24"
+                              stroke={scoreColor}
+                              strokeWidth="4"
+                              fill="none"
+                              strokeDasharray={`${(latestAttempt.percentage / 100) * 150.8} 150.8`}
+                              strokeLinecap="round"
+                            />
+                          ) : null}
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          {hasCompleted && hasAccess ? (
+                            <span className="text-sm font-bold" style={{ color: scoreColor }}>
+                              {latestAttempt.percentage}%
+                            </span>
+                          ) : (
+                            <span className="text-lg font-bold text-indigo-600">
+                              {idx + 1}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
@@ -919,49 +986,17 @@ export default function CourseDetail() {
                           {quiz.timer_enabled && quiz.timer_duration && (
                             <span className="ml-2">• {quiz.timer_duration} min</span>
                           )}
-                          {showAttempts && (
-                              <span className={cn(
-                                "ml-2",
-                                attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
-                              )}>
-                                • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
-                              </span>
-                            )}
-                          </p>
+                        {showAttempts && (
+                            <span className={cn(
+                              "ml-2",
+                              attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
+                            )}>
+                              • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
+                            </span>
+                          )}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {hasCompleted && hasAccess && (
-                          <div className="relative w-12 h-12 flex-shrink-0">
-                            <svg className="w-12 h-12 transform -rotate-90">
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke="#e5e7eb"
-                                strokeWidth="4"
-                                fill="none"
-                              />
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke={latestAttempt.percentage >= 80 ? "#10b981" : latestAttempt.percentage >= 60 ? "#f59e0b" : "#ef4444"}
-                                strokeWidth="4"
-                                fill="none"
-                                strokeDasharray={`${(latestAttempt.percentage / 100) * 125.6} 125.6`}
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className={cn(
-                                "text-xs font-bold",
-                                latestAttempt.percentage >= 80 ? "text-emerald-600" : latestAttempt.percentage >= 60 ? "text-amber-600" : "text-red-600"
-                              )}>
-                                {latestAttempt.percentage}%
-                              </span>
-                            </div>
-                          </div>
-                        )}
                         {isAdmin && (
                           <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}&courseId=${courseId}`)}>
                             <Button size="sm" variant="outline" className="gap-2">
