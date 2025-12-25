@@ -984,6 +984,9 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationContent={blankExplanationContent}
             explanationLoading={blankExplanationLoading}
             openedExplanations={openedExplanations}
+            onRequestHelp={handleBlankExplanation}
+            aiHelperContent={blankExplanationContent}
+            aiHelperLoading={blankExplanationLoading}
           />
         );
       case 'inline_dropdown_same':
@@ -1005,8 +1008,6 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationLoading={blankExplanationLoading}
             openedExplanations={openedExplanations}
             onRequestHelp={handleBlankExplanation}
-            aiHelperContent={blankExplanationContent}
-            aiHelperLoading={blankExplanationLoading}
           />
         );
       case 'matching_list_dual':
