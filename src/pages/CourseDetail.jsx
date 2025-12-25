@@ -24,7 +24,10 @@ import {
   Youtube,
   Upload,
   Search,
-  Copy
+  Copy,
+  Eye,
+  EyeOff,
+  Clock
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -71,6 +74,8 @@ export default function CourseDetail() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [purchaseSuccessOpen, setPurchaseSuccessOpen] = useState(false);
   const [quizSearch, setQuizSearch] = useState('');
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [schedulingBlock, setSchedulingBlock] = useState(null);
 
   const quillModules = {
     toolbar: [
@@ -338,6 +343,43 @@ export default function CourseDetail() {
     if (!confirm('Delete this content block?')) return;
     const updatedBlocks = contentBlocks.filter(b => b.id !== blockId);
     await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+  };
+
+  const handleToggleVisibility = async (blockId) => {
+    const updatedBlocks = contentBlocks.map(b => {
+      if (b.id === blockId) {
+        return { ...b, visible: b.visible === false ? true : false };
+      }
+      return b;
+    });
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+  };
+
+  const handleSchedule = async (blockId, showDate, hideDate) => {
+    const updatedBlocks = contentBlocks.map(b => {
+      if (b.id === blockId) {
+        return { ...b, scheduledShowDate: showDate || null, scheduledHideDate: hideDate || null };
+      }
+      return b;
+    });
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    setScheduleDialogOpen(false);
+    setSchedulingBlock(null);
+  };
+
+  const isBlockVisible = (block) => {
+    // For admins, always show everything
+    if (isAdmin) return true;
+    
+    // Check manual visibility toggle
+    if (block.visible === false) return false;
+    
+    // Check scheduled visibility
+    const now = new Date();
+    if (block.scheduledShowDate && new Date(block.scheduledShowDate) > now) return false;
+    if (block.scheduledHideDate && new Date(block.scheduledHideDate) < now) return false;
+    
+    return true;
   };
 
   if (isLoading || userLoading) {
@@ -883,8 +925,50 @@ export default function CourseDetail() {
             )}
           </div>
 
+          <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Schedule Visibility</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const showDate = formData.get('showDate');
+                const hideDate = formData.get('hideDate');
+                handleSchedule(schedulingBlock?.id, showDate, hideDate);
+              }} className="space-y-4">
+                <div>
+                  <Label>Show After (optional)</Label>
+                  <Input
+                    name="showDate"
+                    type="datetime-local"
+                    defaultValue={schedulingBlock?.scheduledShowDate || ''}
+                  />
+                </div>
+                <div>
+                  <Label>Hide After (optional)</Label>
+                  <Input
+                    name="hideDate"
+                    type="datetime-local"
+                    defaultValue={schedulingBlock?.scheduledHideDate || ''}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">Save Schedule</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSchedule(schedulingBlock?.id, null, null)}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           <div className="space-y-4">
-            {contentBlocks.map((block, idx) => {
+            {contentBlocks.filter(block => isBlockVisible(block)).map((block, idx) => {
               const renderBlock = () => {
                 if (block.type === 'text') {
                   return (
@@ -1227,6 +1311,33 @@ export default function CourseDetail() {
                     {renderBlock()}
                     {isAdmin && (
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleVisibility(block.id)}
+                          className={cn(
+                            "text-slate-400",
+                            block.visible === false ? "hover:text-emerald-600" : "hover:text-slate-600"
+                          )}
+                          title={block.visible === false ? "Hidden from students" : "Visible to students"}
+                        >
+                          {block.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSchedulingBlock(block);
+                            setScheduleDialogOpen(true);
+                          }}
+                          className={cn(
+                            "text-slate-400 hover:text-amber-600",
+                            (block.scheduledShowDate || block.scheduledHideDate) && "text-amber-600"
+                          )}
+                          title="Schedule visibility"
+                        >
+                          <Clock className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
