@@ -322,6 +322,132 @@ Be specific and constructive. Focus on what the student did well and what needs 
     }
   };
 
+  const renderQuestion = () => {
+    if (!currentQuestion) return null;
+
+    const commonProps = {
+      question: currentQuestion,
+      showResults: true,
+    };
+
+    // For reading comprehension sub-questions
+    if (currentQuestion.isSubQuestion && currentQuestion.type === 'reading_comprehension') {
+      return (
+        <ReadingComprehensionQuestion
+          {...commonProps}
+          selectedAnswer={answers[currentIndex]}
+          onAnswer={() => {}}
+          singleQuestion={true}
+          subQuestion={currentQuestion.subQuestion}
+          highlightedPassages={highlightedPassages}
+          aiHelperContent={aiHelperContent}
+          aiHelperLoading={false}
+          onRequestHelp={null}
+          isAdmin={true}
+          tipsAllowed={999}
+          tipsUsed={0}
+          tipOpened={true}
+          autoExpandTip={true}
+        />
+      );
+    }
+
+    switch (currentQuestion.type) {
+      case 'multiple_choice':
+        return (
+          <MultipleChoiceQuestion
+            {...commonProps}
+            selectedAnswer={answers[currentIndex]}
+            onAnswer={() => {}}
+          />
+        );
+      case 'drag_drop_single':
+        return (
+          <DragDropQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            aiHelperContent={dropZoneHelperContent}
+            aiHelperLoading={{}}
+            highlightedPassages={dropZoneHighlightedPassages}
+            isAdmin={true}
+            tipsAllowed={999}
+            tipsUsed={0}
+            openedTips={new Set()}
+            currentIndex={currentIndex}
+            autoExpandTips={true}
+          />
+        );
+      case 'drag_drop_dual':
+        return (
+          <DragDropDualQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            aiHelperContent={dropZoneHelperContent}
+            aiHelperLoading={{}}
+            highlightedPassages={dropZoneHighlightedPassages}
+            isAdmin={true}
+            tipsAllowed={999}
+            tipsUsed={0}
+            openedTips={new Set()}
+            currentIndex={currentIndex}
+            autoExpandTips={true}
+          />
+        );
+      case 'inline_dropdown_separate':
+        return (
+          <InlineDropdownQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            aiHelperContent={blankHelperContent}
+            aiHelperLoading={{}}
+            isAdmin={true}
+            tipsAllowed={999}
+            tipsUsed={0}
+            openedTips={new Set()}
+            currentIndex={currentIndex}
+            autoExpandTips={true}
+          />
+        );
+      case 'inline_dropdown_same':
+        return (
+          <InlineDropdownSameQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            aiHelperContent={blankHelperContent}
+            aiHelperLoading={{}}
+            isAdmin={true}
+            tipsAllowed={999}
+            tipsUsed={0}
+            openedTips={new Set()}
+            currentIndex={currentIndex}
+            autoExpandTips={true}
+          />
+        );
+      case 'matching_list_dual':
+        return (
+          <MatchingListQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            aiHelperContent={matchingHelperContent}
+            aiHelperLoading={{}}
+            isAdmin={true}
+            tipsAllowed={999}
+            tipsUsed={0}
+            openedTips={new Set()}
+            currentIndex={currentIndex}
+            autoExpandTips={true}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   if (!quiz || !attempt) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -335,8 +461,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
   const percentage = Math.round((score / total) * 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="h-screen flex flex-col bg-white">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-4">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
           <div className="flex items-center justify-between mb-6">
