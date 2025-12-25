@@ -582,14 +582,28 @@ Provide a helpful first-person explanation:`;
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         
-        // Remove first line (before first \n) from each passage
-        const cleanedPassages = {};
+        // Handle passages - can be object or array
+        let cleanedPassages = {};
         if (parsed.passages) {
-          Object.keys(parsed.passages).forEach(key => {
-            const passage = parsed.passages[key];
-            const firstLineBreak = passage.indexOf('\n');
-            cleanedPassages[key] = firstLineBreak !== -1 ? passage.substring(firstLineBreak + 1) : passage;
-          });
+          if (Array.isArray(parsed.passages)) {
+            // Array format from new prompt
+            parsed.passages.forEach(p => {
+              if (p.passageId && p.highlightedContent) {
+                cleanedPassages[p.passageId] = p.highlightedContent;
+              }
+            });
+          } else {
+            // Object format (legacy)
+            Object.keys(parsed.passages).forEach(key => {
+              const passage = parsed.passages[key];
+              const firstLineBreak = passage.indexOf('\n');
+              cleanedPassages[key] = firstLineBreak !== -1 ? passage.substring(firstLineBreak + 1) : passage;
+            });
+          }
+        } else if (parsed.highlightedContent) {
+          // Single passage format
+          const passageId = passagesForPrompt[0]?.id || 'main';
+          cleanedPassages[passageId] = parsed.highlightedContent;
         }
         
         setAiHelperContent(parsed.advice || text);
