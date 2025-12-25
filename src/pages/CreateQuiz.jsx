@@ -25,7 +25,8 @@ import {
   Clock,
   Eye,
   GripVertical,
-  PlayCircle
+  PlayCircle,
+  Download
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -116,6 +117,19 @@ export default function CreateQuiz() {
     }
   };
 
+  const handleExport = () => {
+    const dataStr = JSON.stringify(quiz, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${quiz.title || 'quiz'}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const addQuestion = () => {
     const newQuestion = {
       id: `q_${Date.now()}`,
@@ -200,15 +214,25 @@ export default function CreateQuiz() {
                 {previewMode ? 'Edit' : 'Preview'}
               </Button>
               {quizId && (
-                <Link to={createPageUrl(`TakeQuiz?id=${quizId}${courseId ? `&courseId=${courseId}` : ''}`)}>
+                <>
+                  <Link to={createPageUrl(`TakeQuiz?id=${quizId}${courseId ? `&courseId=${courseId}` : ''}`)}>
+                    <Button 
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <PlayCircle className="w-4 h-4" />
+                      Start Quiz
+                    </Button>
+                  </Link>
                   <Button 
+                    onClick={handleExport}
                     variant="outline"
                     className="gap-2"
                   >
-                    <PlayCircle className="w-4 h-4" />
-                    Start Quiz
+                    <Download className="w-4 h-4" />
+                    Export
                   </Button>
-                </Link>
+                </>
               )}
               <Button 
                 onClick={handleSave}
