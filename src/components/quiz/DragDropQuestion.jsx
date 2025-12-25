@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X } from 'lucide-react';
+import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -23,7 +23,14 @@ export default function DragDropQuestion({
   tipsUsed = 0,
   onRegenerateHelp,
   openedTips = new Set(),
-  currentIndex = 0
+  currentIndex = 0,
+  onRequestExplanation,
+  explanationContent = {},
+  explanationLoading = {},
+  explanationHighlightedPassages = {},
+  openedExplanations = new Set(),
+  onRegenerateExplanation,
+  onDeleteExplanation
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
   
@@ -179,6 +186,11 @@ export default function DragDropQuestion({
           const isLoadingHelp = aiHelperLoading[zone.id];
           const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
           
+          const explanationId = `dropzone-${currentIndex}-${zone.id}`;
+          const wasExplanationOpened = openedExplanations.has(explanationId);
+          const explanation = explanationContent[zone.id];
+          const isLoadingExplanation = explanationLoading[zone.id];
+          
           return (
             <motion.div
               key={zone.id}
@@ -293,9 +305,67 @@ export default function DragDropQuestion({
               )}
               
               {showCorrectAnswer && (
-                <p className="mt-2 text-xs text-emerald-600 font-medium">
-                  Correct: {zone.correctAnswer}
-                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <p className="text-xs text-emerald-600 font-medium">
+                    Correct: {zone.correctAnswer}
+                  </p>
+                  {onRequestExplanation && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => !explanation && onRequestExplanation(zone.id)}
+                        >
+                          {isLoadingExplanation ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                          ) : (
+                            <Sparkles className="w-3 h-3 text-indigo-500" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      {explanation && (
+                        <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
+                              {isAdmin && (
+                                <div className="flex items-center gap-1">
+                                  {onRegenerateExplanation && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => onRegenerateExplanation(zone.id)}
+                                      className="h-7 px-2 gap-1"
+                                    >
+                                      <RefreshCw className="w-3 h-3" />
+                                      Regenerate
+                                    </Button>
+                                  )}
+                                  {onDeleteExplanation && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => onDeleteExplanation(zone.id)}
+                                      className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div 
+                              className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: explanation }}
+                            />
+                          </div>
+                        </PopoverContent>
+                      )}
+                    </Popover>
+                  )}
+                </div>
               )}
             </motion.div>
           );

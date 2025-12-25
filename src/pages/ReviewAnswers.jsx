@@ -525,6 +525,117 @@ Provide HTML formatted explanation:`;
     }
   };
 
+  const handleRegenerateDropZoneExplanation = async (zoneId) => {
+    setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const zone = q.dropZones?.find(z => z.id === zoneId);
+      
+      if (!zone) {
+        throw new Error('Drop zone not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[zoneId];
+      const correctAnswer = zone.correctAnswer;
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+      let passagesForPrompt = [];
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passagesForPrompt = q.passages.map(p => ({
+            id: p.id,
+            title: p.title,
+            content: p.content
+          }));
+          passageContext = '\n\nPassages:\n' + passagesForPrompt.map(p => 
+            `[${p.id}] ${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passagesForPrompt = [{ id: 'main', title: 'Passage', content: q.passage }];
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+
+Gap Label: ${zone.label}
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}${passageContext}
+
+Provide a helpful first-person explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
+
+      // Save to quiz entity
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const dropZoneExplanations = questionExplanations.dropZones || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              dropZones: {
+                ...dropZoneExplanations,
+                [zoneId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save drop zone explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating drop zone explanation:', e);
+      setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: false }));
+    }
+  };
+
+  const handleDeleteDropZoneExplanation = async (zoneId) => {
+    try {
+      const existingExplanations = quiz?.ai_explanations || {};
+      const questionExplanations = existingExplanations[currentIndex] || {};
+      const dropZoneExplanations = questionExplanations.dropZones || {};
+      
+      const { [zoneId]: _, ...remainingZones } = dropZoneExplanations;
+      
+      await base44.entities.Quiz.update(quiz.id, {
+        ai_explanations: {
+          ...existingExplanations,
+          [currentIndex]: {
+            ...questionExplanations,
+            dropZones: remainingZones
+          }
+        }
+      });
+
+      setDropZoneExplanationContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[zoneId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+    } catch (err) {
+      console.error('Failed to delete drop zone explanation:', err);
+    }
+  };
+
   const handleDropZoneExplanation = async (zoneId) => {
     const explanationId = `dropzone-${currentIndex}-${zoneId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
@@ -1053,6 +1164,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationLoading={dropZoneExplanationLoading}
             explanationHighlightedPassages={dropZoneHighlightedExplanations}
             openedExplanations={openedExplanations}
+            onRegenerateExplanation={handleRegenerateDropZoneExplanation}
+            onDeleteExplanation={handleDeleteDropZoneExplanation}
           />
         );
       case 'drag_drop_dual':
@@ -1075,6 +1188,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationLoading={dropZoneExplanationLoading}
             explanationHighlightedPassages={dropZoneHighlightedExplanations}
             openedExplanations={openedExplanations}
+            onRegenerateExplanation={handleRegenerateDropZoneExplanation}
+            onDeleteExplanation={handleDeleteDropZoneExplanation}
           />
         );
       case 'inline_dropdown_separate':
