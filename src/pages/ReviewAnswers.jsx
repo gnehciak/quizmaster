@@ -603,43 +603,87 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Question Numbers Bar */}
-      <div className="px-6 py-3 border-b border-slate-200 bg-white overflow-x-auto">
-        <div className="flex gap-2 min-w-min">
-          {questions.map((q, idx) => {
-            const answer = answers[idx];
-            let isCorrect = false;
-            const isCurrent = idx === currentIndex;
+      <div className="px-6 py-4 border-b border-slate-200 bg-white overflow-x-auto">
+        <div className="flex gap-6 min-w-min">
+          {(() => {
+            const typeLabels = {
+              'reading_comprehension': 'Reading Comprehension',
+              'multiple_choice': 'Multiple Choice',
+              'drag_drop_single': 'Drag & Drop',
+              'drag_drop_dual': 'Drag & Drop (Dual)',
+              'inline_dropdown_separate': 'Fill in Blanks',
+              'inline_dropdown_same': 'Fill in Blanks',
+              'matching_list_dual': 'Matching List'
+            };
 
-            if (q.isSubQuestion) {
-              isCorrect = answer === q.subQuestion.correctAnswer;
-            } else if (q.type === 'multiple_choice') {
-              isCorrect = answer === q.correctAnswer;
-            } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-              const zones = q.dropZones || [];
-              isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
-            } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-              const blanks = q.blanks || [];
-              isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
-            } else if (q.type === 'matching_list_dual') {
-              const matchingQs = q.matchingQuestions || [];
-              isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+            const sections = [];
+            let currentType = null;
+            let currentSection = [];
+
+            questions.forEach((q, idx) => {
+              if (q.type !== currentType) {
+                if (currentSection.length > 0) {
+                  sections.push({ type: currentType, questions: currentSection });
+                }
+                currentType = q.type;
+                currentSection = [{ question: q, index: idx }];
+              } else {
+                currentSection.push({ question: q, index: idx });
+              }
+            });
+
+            if (currentSection.length > 0) {
+              sections.push({ type: currentType, questions: currentSection });
             }
 
-            return (
-              <button
-                key={idx}
-                onClick={() => setCurrentIndex(idx)}
-                className={cn(
-                  "w-10 h-10 rounded-lg font-semibold text-sm transition-all flex-shrink-0",
-                  isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
-                  !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
-                  !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
-                )}
-              >
-                {idx + 1}
-              </button>
-            );
-          })}
+            return sections.map((section, sectionIdx) => (
+              <div key={sectionIdx} className="flex flex-col gap-2">
+                <div className="relative">
+                  <div className="text-xs font-semibold text-slate-600 mb-1 text-center px-2">
+                    {typeLabels[section.type] || section.type}
+                  </div>
+                  <div className="absolute left-0 right-0 top-full h-2 border-l-2 border-r-2 border-t-2 border-slate-300 rounded-t-lg"></div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  {section.questions.map(({ question: q, index: idx }) => {
+                    const answer = answers[idx];
+                    let isCorrect = false;
+                    const isCurrent = idx === currentIndex;
+
+                    if (q.isSubQuestion) {
+                      isCorrect = answer === q.subQuestion.correctAnswer;
+                    } else if (q.type === 'multiple_choice') {
+                      isCorrect = answer === q.correctAnswer;
+                    } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                      const zones = q.dropZones || [];
+                      isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+                    } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                      const blanks = q.blanks || [];
+                      isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+                    } else if (q.type === 'matching_list_dual') {
+                      const matchingQs = q.matchingQuestions || [];
+                      isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentIndex(idx)}
+                        className={cn(
+                          "w-10 h-10 rounded-lg font-semibold text-sm transition-all flex-shrink-0",
+                          isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
+                          !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
+                          !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
+                        )}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       </div>
 
