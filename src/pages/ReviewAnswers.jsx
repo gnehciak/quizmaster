@@ -63,7 +63,7 @@ export default function ReviewAnswers() {
     select: (data) => data[0]
   });
 
-  // Flatten questions - always call useMemo
+  // Flatten questions
   const flattenedQuestions = React.useMemo(() => {
     if (!quiz?.questions) return [];
     
@@ -89,6 +89,8 @@ export default function ReviewAnswers() {
 
   const questions = flattenedQuestions;
   const answers = attempt?.answers || {};
+  const currentQuestion = questions[currentIndex];
+  const totalQuestions = questions.length;
 
   // Load saved AI data on mount and auto-generate if needed
   React.useEffect(() => {
