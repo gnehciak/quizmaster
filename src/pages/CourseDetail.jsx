@@ -346,15 +346,21 @@ export default function CourseDetail() {
   };
 
   const handleToggleVisibility = async (blockId) => {
-    const updatedBlocks = contentBlocks.map(b => {
-      if (b.id === blockId) {
-        // Toggle: if currently false (hidden), set to undefined (visible), otherwise set to false (hidden)
-        const newVisible = b.visible === false ? undefined : false;
-        return { ...b, visible: newVisible };
-      }
-      return b;
-    });
-    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    try {
+      const updatedBlocks = contentBlocks.map(b => {
+        if (b.id === blockId) {
+          // Toggle: if currently false (hidden), set to undefined (visible), otherwise set to false (hidden)
+          const newVisible = b.visible === false ? undefined : false;
+          return { ...b, visible: newVisible };
+        }
+        return b;
+      });
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+      toast.success(updatedBlocks.find(b => b.id === blockId).visible === false ? 'Content hidden from students' : 'Content visible to students');
+    } catch (error) {
+      toast.error('Failed to update visibility');
+      console.error('Visibility toggle error:', error);
+    }
   };
 
   const handleSchedule = async (blockId, showDate, hideDate) => {
