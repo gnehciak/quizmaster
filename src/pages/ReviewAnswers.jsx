@@ -584,7 +584,8 @@ IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p
               }
             }
           });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
         } catch (err) {
           console.error('Failed to save RC explanation:', err);
         }
