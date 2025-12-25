@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -23,7 +23,14 @@ export default function DragDropDualQuestion({
   tipsUsed = 0,
   onRegenerateHelp,
   openedTips = new Set(),
-  currentIndex = 0
+  currentIndex = 0,
+  onRequestExplanation,
+  explanationContent = {},
+  explanationLoading = {},
+  explanationHighlightedPassages = {},
+  openedExplanations = new Set(),
+  onRegenerateExplanation,
+  onDeleteExplanation
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -243,6 +250,11 @@ export default function DragDropDualQuestion({
               const isLoadingHelp = aiHelperLoading[zone.id];
               const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
 
+              const explanationId = `dropzone-${currentIndex}-${zone.id}`;
+              const wasExplanationOpened = openedExplanations.has(explanationId);
+              const explanation = explanationContent[zone.id];
+              const isLoadingExplanation = explanationLoading[zone.id];
+
               return (
                 <div
                   key={zone.id}
@@ -336,8 +348,66 @@ export default function DragDropDualQuestion({
                   )}
                   
                   {showResults && isWrong && (
-                    <div className="mt-2 text-xs text-slate-600">
-                      Correct: <span className="font-medium">{zone.correctAnswer}</span>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="text-xs text-slate-600">
+                        Correct: <span className="font-medium">{zone.correctAnswer}</span>
+                      </div>
+                      {onRequestExplanation && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => !explanation && onRequestExplanation(zone.id)}
+                            >
+                              {isLoadingExplanation ? (
+                                <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                              ) : (
+                                <Sparkles className="w-3 h-3 text-indigo-500" />
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          {explanation && (
+                            <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1">
+                                      {onRegenerateExplanation && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onRegenerateExplanation(zone.id)}
+                                          className="h-7 px-2 gap-1"
+                                        >
+                                          <RefreshCw className="w-3 h-3" />
+                                          Regenerate
+                                        </Button>
+                                      )}
+                                      {onDeleteExplanation && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onDeleteExplanation(zone.id)}
+                                          className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div 
+                                  className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={{ __html: explanation }}
+                                />
+                              </div>
+                            </PopoverContent>
+                          )}
+                        </Popover>
+                      )}
                     </div>
                   )}
                 </div>
