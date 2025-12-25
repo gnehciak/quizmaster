@@ -507,490 +507,214 @@ Be specific and constructive. Focus on what the student did well and what needs 
                   </div>
                 </div>
 
-          {/* AI Performance Analysis */}
-          {!performanceAnalysis && !loadingAnalysis && (
-            <Button
-              onClick={generatePerformanceAnalysis}
-              className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            >
-              <Sparkles className="w-4 h-4" />
-              Generate AI Performance Analysis
-            </Button>
-          )}
-
-          {loadingAnalysis && (
-            <div className="flex items-center justify-center gap-3 p-8 bg-slate-50 rounded-xl">
-              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-              <span className="text-slate-600">Analyzing your performance...</span>
-            </div>
-          )}
-
-          {performanceAnalysis && (
-            <div className="space-y-6">
-              {/* Overall Summary */}
-              <div className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
-                    <Target className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-indigo-900 mb-2">Overall Assessment</h3>
-                    <p className="text-indigo-800 leading-relaxed">{performanceAnalysis.summary}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Strong & Weak Areas */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Strong Areas */}
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-emerald-600" />
-                    <h3 className="text-lg font-bold text-emerald-900">Strong Areas</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {performanceAnalysis.strongAreas.map((area, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-emerald-800">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <span>{area}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Weak Areas */}
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                    <h3 className="text-lg font-bold text-red-900">Areas for Improvement</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {performanceAnalysis.weakAreas.map((area, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-red-800">
-                        <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                        <span>{area}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Recommendations */}
-              <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl">
-                <h3 className="text-lg font-bold text-amber-900 mb-3">Recommendations</h3>
-                <ul className="space-y-2">
-                  {performanceAnalysis.recommendations.map((rec, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-amber-800">
-                      <span className="text-amber-600 font-bold">{idx + 1}.</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Reading Passages */}
-        {quiz.questions?.[0]?.type === 'reading_comprehension' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
-            <div className="font-semibold text-slate-800 text-lg mb-4">
-              Reading Passage{quiz.questions[0].passages?.length > 1 ? 's' : ''}
-            </div>
-            {quiz.questions[0].passages?.length > 0 ? (
-              <div className="space-y-4">
-                {quiz.questions[0].passages.map((passage, pIdx) => (
-                  <div key={pIdx}>
-                    <div className="font-medium text-slate-700 mb-2">{passage.title}</div>
-                    <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
-                      __html: passage.content
-                    }} />
-                  </div>
-                ))}
-              </div>
-            ) : quiz.questions[0].passage && (
-              <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{
-                __html: quiz.questions[0].passage
-              }} />
-            )}
-          </div>
-        )}
-
-        {/* Questions Review */}
-        <div className="space-y-6">
-          {questions.map((q, idx) => {
-            const answer = answers[idx];
-            let isCorrect = false;
-            
-            // Check if answer exists
-            const hasAnswer = answer !== undefined && answer !== null;
-
-            if (hasAnswer) {
-              if (q.isSubQuestion) {
-                isCorrect = answer === q.subQuestion.correctAnswer;
-              } else if (q.type === 'multiple_choice') {
-                isCorrect = answer === q.correctAnswer;
-              } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-                const zones = q.dropZones || [];
-                isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
-              } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-                const blanks = q.blanks || [];
-                isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
-              } else if (q.type === 'matching_list_dual') {
-                const matchingQs = q.matchingQuestions || [];
-                isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
-              }
-            }
-
-            return (
-              <div 
-                key={idx} 
-                id={`question-${idx}`}
-                className={cn(
-                  "bg-white rounded-2xl shadow-lg border-2 p-6 scroll-mt-24",
-                  isCorrect ? "border-emerald-300" : "border-red-300"
+                {/* AI Performance Analysis */}
+                {!performanceAnalysis && !loadingAnalysis && (
+                  <Button
+                    onClick={generatePerformanceAnalysis}
+                    className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Generate AI Performance Analysis
+                  </Button>
                 )}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-bold",
-                      isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                    )}>
-                      {idx + 1}
-                    </div>
-                    <div className={cn(
-                      "text-sm font-semibold",
-                      isCorrect ? "text-emerald-700" : "text-red-700"
-                    )}>
-                      {isCorrect ? "✓ Correct" : "✗ Incorrect"}
-                    </div>
+
+                {loadingAnalysis && (
+                  <div className="flex items-center justify-center gap-3 p-8 bg-slate-50 rounded-xl">
+                    <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+                    <span className="text-slate-600">Analyzing your performance...</span>
                   </div>
-                  {attempt?.time_taken && (
-                    <div className="text-xs text-slate-500">
-                      Time: {Math.round(attempt.time_taken / questions.length)}s avg
-                    </div>
-                  )}
-                </div>
+                )}
 
-                <div className="mb-4">
-                  <div className="font-semibold text-slate-800 mb-3" dangerouslySetInnerHTML={{
-                    __html: q.isSubQuestion ? q.subQuestion.question : q.question
-                  }} />
-
-                  {/* Multiple Choice Display */}
-                  {(q.type === 'multiple_choice' || q.isSubQuestion) && (
-                    <div className="space-y-2">
-                      {(q.isSubQuestion ? q.subQuestion.options : q.options)?.map((opt, i) => {
-                        const isSelected = answer === opt;
-                        const isCorrectOption = opt === (q.isSubQuestion ? q.subQuestion.correctAnswer : q.correctAnswer);
-
-                        return (
-                          <div key={i} className={cn(
-                            "p-3 rounded-lg border-2 flex items-center gap-3",
-                            isSelected && isCorrectOption && "bg-emerald-50 border-emerald-400",
-                            isSelected && !isCorrectOption && "bg-red-50 border-red-400",
-                            !isSelected && isCorrectOption && "bg-emerald-50 border-emerald-300",
-                            !isSelected && !isCorrectOption && "border-slate-200"
-                          )}>
-                            <div className={cn(
-                              "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                              isSelected && "border-slate-600",
-                              !isSelected && "border-slate-300"
-                            )}>
-                              {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />}
-                            </div>
-                            <span dangerouslySetInnerHTML={{ __html: opt }} />
-                            {isCorrectOption && <CheckCircle2 className="w-5 h-5 text-emerald-600 ml-auto" />}
-                            {isSelected && !isCorrectOption && <X className="w-5 h-5 text-red-600 ml-auto" />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Drag & Drop Display */}
-                  {(q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') && (
-                    <div className="space-y-4">
-                      {/* Show passage if available */}
-                      {q.passage && (
-                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
-                          <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: q.passage }} />
+                {performanceAnalysis && (
+                  <div className="space-y-6">
+                    {/* Overall Summary */}
+                    <div className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                          <Target className="w-5 h-5 text-white" />
                         </div>
-                      )}
-                      
-                      {/* Show right pane question for dual layout */}
-                      {q.type === 'drag_drop_dual' && q.rightPaneQuestion && (
-                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
-                          <div className="text-slate-800" dangerouslySetInnerHTML={{ __html: q.rightPaneQuestion }} />
-                        </div>
-                      )}
-                      
-                      {/* Answers Table */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-slate-100">
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Drop Zone</th>
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Your Answer</th>
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Correct Answer</th>
-                              <th className="border border-slate-300 px-4 py-2 text-center text-sm font-semibold w-16">Result</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {q.dropZones?.map((zone) => {
-                              const userAnswer = answer?.[zone.id];
-                              const isZoneCorrect = userAnswer === zone.correctAnswer;
-                              
-                              return (
-                                <tr key={zone.id} className={cn(
-                                  isZoneCorrect ? "bg-emerald-50" : "bg-red-50"
-                                )}>
-                                  <td className="border border-slate-300 px-4 py-2 font-medium text-slate-800">{zone.label}</td>
-                                  <td className={cn(
-                                    "border border-slate-300 px-4 py-2 font-medium",
-                                    isZoneCorrect ? "text-emerald-700" : "text-red-700"
-                                  )}>
-                                    {userAnswer || '(not answered)'}
-                                  </td>
-                                  <td className="border border-slate-300 px-4 py-2 font-medium text-emerald-700">
-                                    {zone.correctAnswer}
-                                  </td>
-                                  <td className="border border-slate-300 px-4 py-2 text-center">
-                                    {isZoneCorrect ? (
-                                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
-                                    ) : (
-                                      <X className="w-5 h-5 text-red-600 mx-auto" />
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Fill in the Blanks Display */}
-                  {q.type === 'inline_dropdown_separate' && (
-                    <div className="space-y-4">
-                      {/* Show question text if available */}
-                      {q.question && (
-                        <div className="text-base font-medium text-slate-800 mb-3" dangerouslySetInnerHTML={{ __html: q.question }} />
-                      )}
-                      
-                      {/* Show text with blanks as dropdowns */}
-                      <div className="p-6 bg-slate-50 rounded-lg">
-                        <div className="text-lg leading-loose text-slate-800">
-                          {(() => {
-                            const text = q.textWithBlanks || '';
-                            const parts = text.split(/(\{\{[^}]+\}\})/g);
-                            
-                            return parts.map((part, idx) => {
-                              const blankMatch = part.match(/\{\{([^}]+)\}\}/);
-                              
-                              if (blankMatch) {
-                                const blankId = blankMatch[1];
-                                const blank = q.blanks?.find(b => b.id === blankId);
-                                if (!blank) return null;
-                                
-                                const userAnswer = answer?.[blankId];
-                                const isCorrect = userAnswer === blank.correctAnswer;
-                                
-                                return (
-                                  <span key={idx} className="inline-flex items-center gap-2 mx-1 align-middle">
-                                    <span className={cn(
-                                      "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-semibold min-w-[140px] justify-center",
-                                      isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700"
-                                    )}>
-                                      {userAnswer || '(not answered)'}
-                                      {isCorrect ? (
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                      ) : (
-                                        <X className="w-4 h-4 text-red-600" />
-                                      )}
-                                    </span>
-                                    {!isCorrect && (
-                                      <span className="text-sm font-medium text-emerald-700">
-                                        → {blank.correctAnswer}
-                                      </span>
-                                    )}
-                                  </span>
-                                );
-                              }
-                              
-                              return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
-                            });
-                          })()}
+                        <div>
+                          <h3 className="text-lg font-bold text-indigo-900 mb-2">Overall Assessment</h3>
+                          <p className="text-indigo-800 leading-relaxed">{performanceAnalysis.summary}</p>
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  {q.type === 'inline_dropdown_same' && (
-                    <div className="space-y-4">
-                      {/* Show text with blanks as dropdowns */}
-                      <div className="p-6 bg-slate-50 rounded-lg">
-                        <div className="text-lg leading-loose text-slate-800">
-                          {(() => {
-                            const text = q.textWithBlanks || '';
-                            const parts = text.split(/(\{\{blank_\d+\}\})/g);
-                            
-                            return parts.map((part, idx) => {
-                              const blankMatch = part.match(/\{\{(blank_\d+)\}\}/);
-                              
-                              if (blankMatch) {
-                                const blankId = blankMatch[1];
-                                const blank = q.blanks?.find(b => b.id === blankId);
-                                const userAnswer = answer?.[blankId];
-                                const isCorrect = userAnswer === blank?.correctAnswer;
-                                
-                                return (
-                                  <span key={idx} className="inline-flex items-center gap-2 mx-1 align-middle">
-                                    <span className={cn(
-                                      "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-semibold min-w-[140px] justify-center",
-                                      isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700"
-                                    )}>
-                                      {userAnswer || '(not answered)'}
-                                      {isCorrect ? (
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                      ) : (
-                                        <X className="w-4 h-4 text-red-600" />
-                                      )}
-                                    </span>
-                                    {!isCorrect && blank?.correctAnswer && (
-                                      <span className="text-sm font-medium text-emerald-700">
-                                        → {blank.correctAnswer}
-                                      </span>
-                                    )}
-                                  </span>
-                                );
-                              }
-                              
-                              return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
-                            });
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Matching List Display */}
-                  {q.type === 'matching_list_dual' && (
-                    <div className="space-y-4">
-                      {/* Show passages if available */}
-                      {q.passages?.length > 0 ? (
-                        <div className="space-y-3">
-                          {q.passages.map((passage) => (
-                            <div key={passage.id} className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
-                              {passage.title && (
-                                <div className="font-semibold text-slate-800 mb-2">{passage.title}</div>
-                              )}
-                              <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: passage.content }} />
-                            </div>
+                    {/* Strong & Weak Areas */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Strong Areas */}
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                          <h3 className="text-lg font-bold text-emerald-900">Strong Areas</h3>
+                        </div>
+                        <ul className="space-y-2">
+                          {performanceAnalysis.strongAreas.map((area, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-emerald-800">
+                              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                              <span>{area}</span>
+                            </li>
                           ))}
+                        </ul>
+                      </div>
+
+                      {/* Weak Areas */}
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingDown className="w-5 h-5 text-red-600" />
+                          <h3 className="text-lg font-bold text-red-900">Areas for Improvement</h3>
                         </div>
-                      ) : q.passage && (
-                        <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-indigo-400">
-                          <div className="text-slate-800 prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: q.passage }} />
-                        </div>
-                      )}
-                      
-                      {/* Answers Table */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-slate-100">
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Question</th>
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Your Answer</th>
-                              <th className="border border-slate-300 px-4 py-2 text-left text-sm font-semibold">Correct Answer</th>
-                              <th className="border border-slate-300 px-4 py-2 text-center text-sm font-semibold w-16">Result</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {q.matchingQuestions?.map((mq) => {
-                              const userAnswer = answer?.[mq.id];
-                              const isMatchCorrect = userAnswer === mq.correctAnswer;
-                              
-                              return (
-                                <tr key={mq.id} className={cn(
-                                  isMatchCorrect ? "bg-emerald-50" : "bg-red-50"
-                                )}>
-                                  <td className="border border-slate-300 px-4 py-2">
-                                    <div dangerouslySetInnerHTML={{ __html: mq.question }} />
-                                  </td>
-                                  <td className={cn(
-                                    "border border-slate-300 px-4 py-2 font-medium",
-                                    isMatchCorrect ? "text-emerald-700" : "text-red-700"
-                                  )}>
-                                    {userAnswer || '(not answered)'}
-                                  </td>
-                                  <td className="border border-slate-300 px-4 py-2 font-medium text-emerald-700">
-                                    {mq.correctAnswer}
-                                  </td>
-                                  <td className="border border-slate-300 px-4 py-2 text-center">
-                                    {isMatchCorrect ? (
-                                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
-                                    ) : (
-                                      <X className="w-5 h-5 text-red-600 mx-auto" />
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                        <ul className="space-y-2">
+                          {performanceAnalysis.weakAreas.map((area, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-red-800">
+                              <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                              <span>{area}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* AI Explanation for Wrong Answers */}
-                {!isCorrect && (
-                  <div className="mt-4">
-                    {loadingExplanations ? (
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-                        <span className="text-sm text-slate-600">Generating AI explanations...</span>
-                      </div>
-                    ) : aiExplanations[idx] ? (
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Sparkles className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-semibold text-blue-900 mb-1">AI Explanation</div>
-                            <div className="text-sm text-blue-800 leading-relaxed">{aiExplanations[idx]}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-
-                {/* Manual Explanation */}
-                {(q.explanation || q.subQuestion?.explanation) && (
-                  <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div className="font-semibold text-slate-700 mb-1">Explanation</div>
-                    <div className="text-sm text-slate-600" dangerouslySetInnerHTML={{
-                      __html: q.explanation || q.subQuestion?.explanation
-                    }} />
+                    {/* Recommendations */}
+                    <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl">
+                      <h3 className="text-lg font-bold text-amber-900 mb-3">Recommendations</h3>
+                      <ul className="space-y-2">
+                        {performanceAnalysis.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-amber-800">
+                            <span className="text-amber-600 font-bold">{idx + 1}.</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>
-            );
-          })}
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <List className="w-4 h-4" />
+                Overview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className={cn(
+              "max-h-[80vh] overflow-y-auto",
+              totalQuestions <= 20 && "max-w-lg",
+              totalQuestions > 20 && totalQuestions <= 40 && "max-w-2xl",
+              totalQuestions > 40 && totalQuestions <= 60 && "max-w-3xl",
+              totalQuestions > 60 && "max-w-4xl"
+            )}>
+              <DialogHeader>
+                <DialogTitle>Question Overview</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                {(() => {
+                  const typeLabels = {
+                    'reading_comprehension': 'Reading Comprehension',
+                    'multiple_choice': 'Multiple Choice',
+                    'drag_drop_single': 'Drag & Drop',
+                    'drag_drop_dual': 'Drag & Drop (Dual Pane)',
+                    'inline_dropdown_separate': 'Fill in the Blanks',
+                    'inline_dropdown_same': 'Fill in the Blanks',
+                    'matching_list_dual': 'Matching List'
+                  };
+
+                  const sections = [];
+                  let currentType = null;
+                  let currentSection = [];
+
+                  questions.forEach((q, idx) => {
+                    if (q.type !== currentType) {
+                      if (currentSection.length > 0) {
+                        sections.push({ type: currentType, questions: currentSection });
+                      }
+                      currentType = q.type;
+                      currentSection = [{ question: q, index: idx }];
+                    } else {
+                      currentSection.push({ question: q, index: idx });
+                    }
+                  });
+
+                  if (currentSection.length > 0) {
+                    sections.push({ type: currentType, questions: currentSection });
+                  }
+
+                  return sections.map((section, sectionIdx) => (
+                    <div key={sectionIdx} className="space-y-2">
+                      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                        {typeLabels[section.type] || section.type}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {section.questions.map(({ question: q, index: idx }) => {
+                          const answer = answers[idx];
+                          let isCorrect = false;
+                          const isCurrent = idx === currentIndex;
+
+                          if (q.isSubQuestion) {
+                            isCorrect = answer === q.subQuestion.correctAnswer;
+                          } else if (q.type === 'multiple_choice') {
+                            isCorrect = answer === q.correctAnswer;
+                          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                            const zones = q.dropZones || [];
+                            isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+                          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                            const blanks = q.blanks || [];
+                            isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+                          } else if (q.type === 'matching_list_dual') {
+                            const matchingQs = q.matchingQuestions || [];
+                            isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+                          }
+
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setCurrentIndex(idx);
+                                setOverviewOpen(false);
+                              }}
+                              className={cn(
+                                "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
+                                isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
+                                !isCurrent && isCorrect && "bg-emerald-500 text-white border-emerald-500",
+                                !isCurrent && !isCorrect && "bg-red-500 text-white border-red-500"
+                              )}
+                            >
+                              {idx + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ));
+                })()}
+                
+                <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-indigo-600"></div>
+                    <span>Current</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-emerald-500"></div>
+                    <span>Correct</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-red-500"></div>
+                    <span>Incorrect</span>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-            <Button size="lg" className="gap-2">
-              <ChevronLeft className="w-4 h-4" />
-              Back to Course
-            </Button>
-          </Link>
+        {/* Score Badge */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+          <span className="font-semibold text-slate-800">{score}/{total}</span>
+          <span className="text-slate-600">({percentage}%)</span>
         </div>
       </div>
     </div>
