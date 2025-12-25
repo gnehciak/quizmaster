@@ -161,14 +161,22 @@ export default function ReviewAnswers() {
     if (!quiz || !currentQuestion) return;
 
     // Load reading comprehension explanation
-    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_explanations?.[currentIndex]) {
-      const explanation = quiz.ai_explanations[currentIndex];
-      if (typeof explanation === 'string') {
-        setAiHelperContent(explanation);
+    if (currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) {
+      const explanation = quiz.ai_explanations?.[currentIndex];
+      if (explanation) {
+        // Load existing explanation
+        if (typeof explanation === 'string') {
+          setAiHelperContent(explanation);
+          setHighlightedPassages({});
+        } else if (explanation?.advice) {
+          setAiHelperContent(explanation.advice);
+          setHighlightedPassages(explanation.passages || {});
+        }
+      } else {
+        // Auto-generate if doesn't exist
+        setAiHelperContent('');
         setHighlightedPassages({});
-      } else if (explanation?.advice) {
-        setAiHelperContent(explanation.advice);
-        setHighlightedPassages(explanation.passages || {});
+        generateRCExplanation(false);
       }
     } else {
       setAiHelperContent('');
@@ -861,7 +869,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
           tipsUsed={0}
           tipOpened={true}
           autoExpandTip={true}
-          onRequestExplanation={handleRCExplanation}
+          autoExpandExplanation={true}
           onRegenerateExplanation={handleRegenerateRCExplanation}
           onDeleteExplanation={handleDeleteRCExplanation}
           openedExplanations={openedExplanations}
