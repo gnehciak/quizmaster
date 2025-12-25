@@ -121,6 +121,7 @@ export default function CreateQuiz() {
       id: `q_${Date.now()}`,
       type: 'multiple_choice',
       question: '',
+      questionName: '',
       options: ['', '', '', ''],
       correctAnswer: ''
     };
