@@ -717,6 +717,60 @@ Be specific and constructive. Focus on what the student did well and what needs 
           <span className="text-slate-600">({percentage}%)</span>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="h-full"
+          >
+            {renderQuestion()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <Button
+          onClick={handlePrev}
+          disabled={currentIndex === 0}
+          className={cn(
+            "px-8 py-6 text-base font-semibold",
+            currentIndex === 0 
+              ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+              : "bg-slate-800 text-white hover:bg-slate-700"
+          )}
+        >
+          <ChevronLeft className="w-5 h-5 mr-2" />
+          Back
+        </Button>
+
+        <div className="text-sm text-slate-600">
+          Review Mode - Showing correct answers
+        </div>
+
+        {currentIndex < totalQuestions - 1 ? (
+          <Button
+            onClick={handleNext}
+            className="bg-slate-800 text-white hover:bg-slate-700 px-8 py-6 text-base font-semibold"
+          >
+            Next
+            <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
+        ) : (
+          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
+            <Button className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold">
+              Finish Review
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
