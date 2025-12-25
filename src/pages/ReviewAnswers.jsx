@@ -104,30 +104,30 @@ export default function ReviewAnswers() {
     }
   }, [attempt, questions]);
 
-  // Load AI helper content when question changes
+  // Load AI explanation content when question changes
   React.useEffect(() => {
     if (!quiz || !currentQuestion) return;
 
-    // Load reading comprehension help
-    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_helper_tips?.[currentIndex]) {
-      const tipData = quiz.ai_helper_tips[currentIndex];
-      setAiHelperContent(tipData.advice || '');
-      setHighlightedPassages(tipData.passages || {});
+    // Load reading comprehension explanation
+    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_explanations?.[currentIndex]) {
+      const explData = quiz.ai_explanations[currentIndex];
+      setAiHelperContent(explData.advice || '');
+      setHighlightedPassages(explData.passages || {});
     } else {
       setAiHelperContent('');
       setHighlightedPassages({});
     }
 
-    // Load blank helper content
-    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_helper_tips?.[currentIndex]?.blanks) {
-      setBlankHelperContent(quiz.ai_helper_tips[currentIndex].blanks || {});
+    // Load blank explanation content
+    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_explanations?.[currentIndex]?.blanks) {
+      setBlankHelperContent(quiz.ai_explanations[currentIndex].blanks || {});
     } else {
       setBlankHelperContent({});
     }
 
-    // Load drop zone helper content
-    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_helper_tips?.[currentIndex]?.dropZones) {
-      const dropZones = quiz.ai_helper_tips[currentIndex].dropZones || {};
+    // Load drop zone explanation content
+    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_explanations?.[currentIndex]?.dropZones) {
+      const dropZones = quiz.ai_explanations[currentIndex].dropZones || {};
       const content = {};
       const passages = {};
       Object.keys(dropZones).forEach(zoneId => {
@@ -148,9 +148,9 @@ export default function ReviewAnswers() {
       setDropZoneHighlightedPassages({});
     }
 
-    // Load matching helper content
-    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_helper_tips?.[currentIndex]?.matchingQuestions) {
-      setMatchingHelperContent(quiz.ai_helper_tips[currentIndex].matchingQuestions || {});
+    // Load matching explanation content
+    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_explanations?.[currentIndex]?.matchingQuestions) {
+      setMatchingHelperContent(quiz.ai_explanations[currentIndex].matchingQuestions || {});
     } else {
       setMatchingHelperContent({});
     }
@@ -462,24 +462,34 @@ Be specific and constructive. Focus on what the student did well and what needs 
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-        <div className="flex items-center gap-4">
-          {/* Back Button */}
-          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-            <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </Link>
-        </div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-8">
+          {/* Header with Back Button */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">{quiz.title}</h1>
+              <p className="text-slate-600 mt-2">Review Mode - Question {currentIndex + 1} of {totalQuestions}</p>
+            </div>
+            <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
+              <Button variant="outline" className="gap-2">
+                <X className="w-4 h-4" />
+                Exit Review
+              </Button>
+            </Link>
+          </div>
 
-        {/* Question Counter & Stats Button */}
-        <div className="flex-1 flex items-center justify-center gap-3">
-          <h2 className="text-xl font-semibold text-slate-800">
-            Question {currentIndex + 1} of {totalQuestions}
-          </h2>
-          
-          <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+          {/* Score Card */}
+          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-xl p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                <div>
+                  <div className="text-2xl font-bold text-slate-800">{score}/{total}</div>
+                  <div className="text-sm text-slate-600">Score ({percentage}%)</div>
+                </div>
+              </div>
+              <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
@@ -593,7 +603,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             </DialogContent>
           </Dialog>
 
-          <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
+              <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <List className="w-4 h-4" />
@@ -708,30 +718,22 @@ Be specific and constructive. Focus on what the student did well and what needs 
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+            </div>
+          </div>
 
-        {/* Score Badge */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span className="font-semibold text-slate-800">{score}/{total}</span>
-          <span className="text-slate-600">({percentage}%)</span>
+          {/* Question Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderQuestion()}
+            </motion.div>
+          </AnimatePresence>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="h-full"
-          >
-            {renderQuestion()}
-          </motion.div>
-        </AnimatePresence>
       </div>
 
       {/* Bottom Navigation */}
