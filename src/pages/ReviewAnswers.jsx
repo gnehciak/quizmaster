@@ -162,7 +162,14 @@ export default function ReviewAnswers() {
 
     // Load reading comprehension explanation
     if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_explanations?.[currentIndex]) {
-      setAiHelperContent(quiz.ai_explanations[currentIndex] || '');
+      const explanation = quiz.ai_explanations[currentIndex];
+      if (typeof explanation === 'string') {
+        setAiHelperContent(explanation);
+        setHighlightedPassages({});
+      } else if (explanation?.advice) {
+        setAiHelperContent(explanation.advice);
+        setHighlightedPassages(explanation.passages || {});
+      }
     } else {
       setAiHelperContent('');
       setHighlightedPassages({});
@@ -509,14 +516,25 @@ Provide a helpful first-person explanation:`;
 
       const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
 
+      const passagesForPrompt = q.passages?.length > 0 
+        ? q.passages.map(p => ({ id: p.id, title: p.title, content: p.content }))
+        : [{ id: 'main', title: 'Passage', content: q.passage }];
+
       const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-Quote specific sentences from the passage where applicable to support your explanation.
 
 Question: ${questionText?.replace(/<[^>]*>/g, '')}
 Student's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}${passageContext}
 
-Provide a helpful first-person explanation:`;
+Return your response as JSON in this exact format:
+{
+  "advice": "Your explanation here in first person",
+  "passages": {
+    "passage_id": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"
+  }
+}
+
+Highlight the specific sentences in the passage that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
@@ -524,21 +542,33 @@ Provide a helpful first-person explanation:`;
       const response = await result.response;
       const text = response.text();
 
-      setAiHelperContent(text);
-      setOpenedExplanations(prev => new Set([...prev, explanationId]));
+      // Parse JSON response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        setAiHelperContent(parsed.advice || text);
+        if (parsed.passages) {
+          setHighlightedPassages(parsed.passages);
+        }
+        setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
-      // Save to quiz entity
-      try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: text
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
-      } catch (err) {
-        console.error('Failed to save RC explanation:', err);
+        // Save to quiz entity
+        try {
+          const existingExplanations = quiz?.ai_explanations || {};
+          await base44.entities.Quiz.update(quiz.id, {
+            ai_explanations: {
+              ...existingExplanations,
+              [currentIndex]: parsed
+            }
+          });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        } catch (err) {
+          console.error('Failed to save RC explanation:', err);
+        }
+      } else {
+        // Fallback if JSON parsing fails
+        setAiHelperContent(text);
+        setOpenedExplanations(prev => new Set([...prev, explanationId]));
       }
     } catch (e) {
       console.error('Error generating RC explanation:', e);
