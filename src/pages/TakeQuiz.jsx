@@ -341,50 +341,6 @@ export default function TakeQuiz() {
     handleConfirmSubmit();
   };
 
-  const generateSingleExplanation = async (idx) => {
-    const q = questions[idx];
-    const answer = answers[idx];
-    
-    setLoadingExplanations(prev => ({ ...prev, [idx]: true }));
-    
-    try {
-      const questionText = q.isSubQuestion ? q.subQuestion.question : q.question;
-      let passageContext = '';
-
-      // Include passage text for reading-based questions
-      if (q.passage || q.passages?.length > 0) {
-        if (q.passages?.length > 0) {
-          passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
-            `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
-          ).join('\n\n');
-        } else {
-          passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
-        }
-      }
-
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-      ${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
-
-      Question: ${questionText?.replace(/<[^>]*>/g, '')}
-      Student's Answer: ${JSON.stringify(answer)}
-      Correct Answer: ${q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See correct answers')}${passageContext}
-
-      Provide a helpful first-person explanation:`;
-
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-
-      setAiExplanations(prev => ({...prev, [idx]: text}));
-    } catch (e) {
-      setAiExplanations(prev => ({...prev, [idx]: "Unable to generate explanation at this time."}));
-    } finally {
-      setLoadingExplanations(prev => ({ ...prev, [idx]: false }));
-    }
-  };
-
   const handleTimeUp = () => {
     if (!submitted) {
       handleConfirmSubmit();
