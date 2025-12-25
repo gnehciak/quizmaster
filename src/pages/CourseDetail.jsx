@@ -178,6 +178,14 @@ export default function CourseDetail() {
     }
   }, []);
 
+  // Auto-generate unlock code if course is locked but has no code
+  React.useEffect(() => {
+    if (isAdmin && course?.is_locked && !course?.unlock_code) {
+      const newCode = Math.random().toString(36).substring(2, 10);
+      updateCourseMutation.mutate({ unlock_code: newCode });
+    }
+  }, [course?.is_locked, course?.unlock_code, isAdmin]);
+
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
     onSuccess: () => {
