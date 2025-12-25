@@ -156,16 +156,17 @@ export default function ReviewAnswers() {
     }
   }, [currentIndex, quiz, currentQuestion]);
 
-  // Save AI explanations before leaving page - always call useEffect
-  React.useEffect(() => {
-    return () => {
-      if (Object.keys(aiExplanations).length > 0 && attemptId) {
-        base44.entities.QuizAttempt.update(attemptId, {
-          ai_explanations: aiExplanations
-        }).catch(e => console.error('Failed to save explanations on unmount:', e));
-      }
-    };
-  }, [aiExplanations, attemptId]);
+  const handleNext = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
 
   const generateAllExplanations = async () => {
     setLoadingExplanations(true);
