@@ -1072,12 +1072,24 @@ export default function CourseDetail() {
                             </div>
 
                             <div className="flex gap-2">
-                              <Link to={createPageUrl(`CreateQuiz?courseId=${courseId}`)} className="flex-1">
-                                <Button type="button" variant="outline" className="w-full gap-2">
-                                  <Plus className="w-4 h-4" />
-                                  Create New Quiz
-                                </Button>
-                              </Link>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                className="flex-1 gap-2"
+                                onClick={async () => {
+                                  const newQuiz = await base44.entities.Quiz.create({
+                                    title: 'New Quiz',
+                                    questions: [],
+                                    status: 'draft'
+                                  });
+                                  setSelectedQuizId(newQuiz.id);
+                                  queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+                                  toast.success('Quiz created');
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                                Create New Quiz
+                              </Button>
                               {selectedQuizId && (
                                 <Button
                                   type="button"
