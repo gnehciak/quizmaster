@@ -953,6 +953,117 @@ Provide HTML formatted explanation:`;
       }
     };
 
+  const handleRegenerateMatchingExplanation = async (questionId) => {
+    setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const matchingQ = q.matchingQuestions?.find(mq => mq.id === questionId);
+      
+      if (!matchingQ) {
+        throw new Error('Matching question not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[questionId];
+      const correctAnswer = matchingQ.correctAnswer;
+
+      const hasPassages = q.passages?.length > 0 || q.passage;
+      let passageContext = '';
+
+      if (hasPassages) {
+        if (q.passages?.length > 0) {
+          passageContext = '\n\nPassages:\n' + q.passages.map(p => 
+            `${p.title}:\n${p.content}`
+          ).join('\n\n');
+        } else {
+          passageContext = '\n\nPassage:\n' + q.passage;
+        }
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student understand why their matching answer is incorrect.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct match for this question.
+2. **Explain Why Student's Answer is Wrong:** Explain why "${userAnswer}" is incorrect for this question${passageContext ? ', using specific quotes from the passage to show why it doesn\'t match' : ''}.
+3. **Explain Why Correct Answer is Right:** Explain why "${correctAnswer}" is the correct match${passageContext ? ', using specific quotes from the passage to prove it matches perfectly' : ''}.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+
+Question: ${matchingQ.question}
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}${passageContext}
+
+Provide HTML formatted explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setMatchingExplanationContent(prev => ({ ...prev, [questionId]: text }));
+
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const matchingExplanations = questionExplanations.matchingQuestions || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              matchingQuestions: {
+                ...matchingExplanations,
+                [questionId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save matching explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating matching explanation:', e);
+      setMatchingExplanationContent(prev => ({ ...prev, [questionId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
+  const handleDeleteMatchingExplanation = async (questionId) => {
+    try {
+      const existingExplanations = quiz?.ai_explanations || {};
+      const questionExplanations = existingExplanations[currentIndex] || {};
+      const matchingExplanations = questionExplanations.matchingQuestions || {};
+      
+      const { [questionId]: _, ...remainingQuestions } = matchingExplanations;
+      
+      await base44.entities.Quiz.update(quiz.id, {
+        ai_explanations: {
+          ...existingExplanations,
+          [currentIndex]: {
+            ...questionExplanations,
+            matchingQuestions: remainingQuestions
+          }
+        }
+      });
+
+      setMatchingExplanationContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[questionId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+    } catch (err) {
+      console.error('Failed to delete matching explanation:', err);
+    }
+  };
+
   const handleMatchingExplanation = async (questionId) => {
     const explanationId = `matching-${currentIndex}-${questionId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
@@ -994,14 +1105,22 @@ Provide HTML formatted explanation:`;
         }
       }
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
-${passageContext ? 'Quote specific sentences from the passage where applicable to support your explanation.' : ''}
+      const prompt = `You are a Year 6 teacher helping a student understand why their matching answer is incorrect.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct match for this question.
+2. **Explain Why Student's Answer is Wrong:** Explain why "${userAnswer}" is incorrect for this question${passageContext ? ', using specific quotes from the passage to show why it doesn\'t match' : ''}.
+3. **Explain Why Correct Answer is Right:** Explain why "${correctAnswer}" is the correct match${passageContext ? ', using specific quotes from the passage to prove it matches perfectly' : ''}.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Question: ${matchingQ.question}
 Student's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}${passageContext}
 
-Provide a helpful first-person explanation:`;
+Provide HTML formatted explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -1274,6 +1393,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationContent={matchingExplanationContent}
             explanationLoading={matchingExplanationLoading}
             openedExplanations={openedExplanations}
+            onRegenerateExplanation={handleRegenerateMatchingExplanation}
+            onDeleteExplanation={handleDeleteMatchingExplanation}
           />
         );
       default:

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -31,7 +31,13 @@ export default function MatchingListQuestion({
   tipsUsed = 0,
   onRegenerateHelp = null,
   openedTips = new Set(),
-  currentIndex = 0
+  currentIndex = 0,
+  onRequestExplanation,
+  explanationContent = {},
+  explanationLoading = {},
+  openedExplanations = new Set(),
+  onRegenerateExplanation,
+  onDeleteExplanation
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -223,6 +229,11 @@ export default function MatchingListQuestion({
                 const helpContent = aiHelperContent[q.id];
                 const isLoadingHelp = aiHelperLoading[q.id];
                 const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
+                
+                const explanationId = `matching-${currentIndex}-${q.id}`;
+                const wasExplanationOpened = openedExplanations.has(explanationId);
+                const explanation = explanationContent[q.id];
+                const isLoadingExplanation = explanationLoading[q.id];
 
                 return (
                   <div
@@ -313,7 +324,65 @@ export default function MatchingListQuestion({
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       )}
                       {showResults && isWrong && (
-                        <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                        <>
+                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                          {onRequestExplanation && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => !explanation && onRequestExplanation(q.id)}
+                                >
+                                  {isLoadingExplanation ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                                  ) : (
+                                    <Sparkles className="w-4 h-4 text-indigo-500" />
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              {explanation && (
+                                <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
+                                      {isAdmin && (
+                                        <div className="flex items-center gap-1">
+                                          {onRegenerateExplanation && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => onRegenerateExplanation(q.id)}
+                                              className="h-7 px-2 gap-1"
+                                            >
+                                              <RefreshCw className="w-3 h-3" />
+                                              Regenerate
+                                            </Button>
+                                          )}
+                                          {onDeleteExplanation && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => onDeleteExplanation(q.id)}
+                                              className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div 
+                                      className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: explanation }}
+                                    />
+                                  </div>
+                                </PopoverContent>
+                              )}
+                            </Popover>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
