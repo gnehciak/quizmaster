@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, Sparkles, Loader2, X, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -32,7 +32,8 @@ export default function InlineDropdownQuestion({
   explanationContent = {},
   explanationLoading = {},
   openedExplanations = new Set(),
-  onRegenerateExplanation
+  onRegenerateExplanation,
+  onDeleteExplanation
 }) {
   const handleSelect = (blankId, value) => {
     if (showResults) return;
@@ -169,16 +170,30 @@ export default function InlineDropdownQuestion({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
-                            {isAdmin && onRegenerateExplanation && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRegenerateExplanation(blankId)}
-                                className="h-7 px-2 gap-1"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                Regenerate
-                              </Button>
+                            {isAdmin && (
+                              <div className="flex items-center gap-1">
+                                {onRegenerateExplanation && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onRegenerateExplanation(blankId)}
+                                    className="h-7 px-2 gap-1"
+                                  >
+                                    <RefreshCw className="w-3 h-3" />
+                                    Regenerate
+                                  </Button>
+                                )}
+                                {onDeleteExplanation && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onDeleteExplanation(blankId)}
+                                    className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </div>
                           <div 

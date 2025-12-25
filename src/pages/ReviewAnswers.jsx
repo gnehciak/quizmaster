@@ -317,6 +317,117 @@ export default function ReviewAnswers() {
     setLoadingExplanations(false);
   };
 
+  const handleRegenerateBlankExplanation = async (blankId) => {
+    setBlankExplanationLoading(prev => ({ ...prev, [blankId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const blank = q.blanks?.find(b => b.id === blankId);
+      
+      if (!blank) {
+        throw new Error('Blank not found');
+      }
+
+      const userAnswer = answers[currentIndex]?.[blankId];
+      const correctAnswer = blank.correctAnswer;
+
+      let passageContext = '';
+      if (q.passages?.length > 0) {
+        passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+          `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+        ).join('\n\n');
+      } else if (q.passage) {
+        passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer.
+2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
+   * If it's the CORRECT option: Why it's right${passageContext ? ', using specific quotes from the passage' : ''}.
+   * If it's a WRONG option: Why it's incorrect${passageContext ? ', using specific quotes or reasoning from the passage' : ''}.
+3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+
+Question: Fill in the blank
+Student's Answer: ${userAnswer}
+Correct Answer: ${correctAnswer}
+Options: ${blank.options.join(', ')}${passageContext}
+
+Provide HTML formatted explanation:`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
+
+      // Save to quiz entity
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const blankExplanations = questionExplanations.blanks || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              blanks: {
+                ...blankExplanations,
+                [blankId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to save blank explanation:', err);
+      }
+    } catch (e) {
+      console.error('Error generating blank explanation:', e);
+      setBlankExplanationContent(prev => ({ ...prev, [blankId]: "Unable to generate explanation at this time." }));
+    } finally {
+      setBlankExplanationLoading(prev => ({ ...prev, [blankId]: false }));
+    }
+  };
+
+  const handleDeleteBlankExplanation = async (blankId) => {
+    try {
+      const existingExplanations = quiz?.ai_explanations || {};
+      const questionExplanations = existingExplanations[currentIndex] || {};
+      const blankExplanations = questionExplanations.blanks || {};
+      
+      const { [blankId]: _, ...remainingBlanks } = blankExplanations;
+      
+      await base44.entities.Quiz.update(quiz.id, {
+        ai_explanations: {
+          ...existingExplanations,
+          [currentIndex]: {
+            ...questionExplanations,
+            blanks: remainingBlanks
+          }
+        }
+      });
+
+      setBlankExplanationContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[blankId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+    } catch (err) {
+      console.error('Failed to delete blank explanation:', err);
+    }
+  };
+
   const handleBlankExplanation = async (blankId) => {
     const explanationId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
@@ -987,6 +1098,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             onRequestHelp={handleBlankExplanation}
             aiHelperContent={blankExplanationContent}
             aiHelperLoading={blankExplanationLoading}
+            onRegenerateExplanation={handleRegenerateBlankExplanation}
+            onDeleteExplanation={handleDeleteBlankExplanation}
           />
         );
       case 'inline_dropdown_same':
@@ -1008,6 +1121,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             explanationLoading={blankExplanationLoading}
             openedExplanations={openedExplanations}
             onRequestHelp={handleBlankExplanation}
+            onRegenerateExplanation={handleRegenerateBlankExplanation}
+            onDeleteExplanation={handleDeleteBlankExplanation}
           />
         );
       case 'matching_list_dual':
