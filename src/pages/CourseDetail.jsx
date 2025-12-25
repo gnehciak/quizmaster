@@ -96,6 +96,7 @@ export default function CourseDetail() {
   const [sectionColor, setSectionColor] = useState('indigo');
   const [customIconInput, setCustomIconInput] = useState('');
   const [customColorInput, setCustomColorInput] = useState('');
+  const [editMode, setEditMode] = useState(false);
 
   const quillModules = {
     toolbar: [
@@ -618,10 +619,23 @@ export default function CourseDetail() {
               <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
             </div>
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={handleEditCourse} className="gap-2">
-                <Pencil className="w-4 h-4" />
-                Edit Course
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant={editMode ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setEditMode(!editMode)} 
+                  className="gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {editMode ? 'Done Editing' : 'Edit Mode'}
+                </Button>
+                {editMode && (
+                  <Button variant="outline" size="sm" onClick={handleEditCourse} className="gap-2">
+                    <Pencil className="w-4 h-4" />
+                    Edit Course
+                  </Button>
+                )}
+              </div>
             )}
           </div>
           <p className="text-slate-600">{course.description}</p>
@@ -925,7 +939,7 @@ export default function CourseDetail() {
             <h2 className="text-xl font-bold text-slate-800">
               Course Content
             </h2>
-            {isAdmin && (
+            {isAdmin && editMode && (
               <Dialog open={addContentOpen} onOpenChange={(open) => {
                 setAddContentOpen(open);
                 if (!open) {
@@ -1694,7 +1708,7 @@ export default function CourseDetail() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isAdmin && (
+                        {isAdmin && editMode && (
                           <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}&courseId=${courseId}`)}>
                             <Button size="sm" variant="outline" className="gap-2">
                               <Pencil className="w-4 h-4" />
@@ -1893,7 +1907,7 @@ export default function CourseDetail() {
                     isAdmin && block.visible === false && "opacity-50 border-dashed",
                     blockLocked && !isAdmin && "opacity-60"
                   )}
-                  draggable={isAdmin}
+                  draggable={isAdmin && editMode}
                   onDragStart={(e) => {
                     e.dataTransfer.effectAllowed = "move";
                     e.dataTransfer.setData("text/plain", idx.toString());
@@ -1909,7 +1923,7 @@ export default function CourseDetail() {
                   }}
                 >
                   <div className="flex items-start gap-3">
-                    {isAdmin && (
+                    {isAdmin && editMode && (
                       <div className="cursor-grab active:cursor-grabbing pt-1">
                         <GripVertical className="w-5 h-5 text-slate-400" />
                       </div>
@@ -1932,7 +1946,7 @@ export default function CourseDetail() {
                       )}
                     </div>
                   </div>
-                  {isAdmin && (
+                  {isAdmin && editMode && (
                     <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-slate-200">
                       <Button
                         variant="ghost"
