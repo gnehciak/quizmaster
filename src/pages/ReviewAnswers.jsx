@@ -524,6 +524,7 @@ Provide a helpful first-person explanation:`;
 
       const prompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
       Tone: Encouraging, simple, and direct.
+      IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
       **CRITICAL RULES:**
       1. **Highlighting:** - Locate ALL specific sentences or phrases in the text that prove the Correct Answer. 
