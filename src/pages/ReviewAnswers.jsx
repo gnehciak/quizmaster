@@ -593,7 +593,8 @@ Provide a helpful first-person explanation:`;
             // Array format from new prompt
             parsed.passages.forEach(p => {
               if (p.passageId && p.highlightedContent) {
-                cleanedPassages[p.passageId] = p.highlightedContent;
+                const firstLineBreak = p.highlightedContent.indexOf('\n');
+                cleanedPassages[p.passageId] = firstLineBreak !== -1 ? p.highlightedContent.substring(firstLineBreak + 1) : p.highlightedContent;
               }
             });
           } else {
@@ -607,7 +608,8 @@ Provide a helpful first-person explanation:`;
         } else if (parsed.highlightedContent) {
           // Single passage format
           const passageId = passagesForPrompt[0]?.id || 'main';
-          cleanedPassages[passageId] = parsed.highlightedContent;
+          const firstLineBreak = parsed.highlightedContent.indexOf('\n');
+          cleanedPassages[passageId] = firstLineBreak !== -1 ? parsed.highlightedContent.substring(firstLineBreak + 1) : parsed.highlightedContent;
         }
         
         const explanationData = {
