@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +37,7 @@ export default function ReviewAnswers() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [showQuestionBar, setShowQuestionBar] = useState(true);
   const [aiHelperContent, setAiHelperContent] = useState('');
   const [highlightedPassages, setHighlightedPassages] = useState({});
   const [blankHelperContent, setBlankHelperContent] = useState({});
@@ -603,8 +604,9 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Question Numbers Bar */}
-      <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
-        <div className="flex gap-4 min-w-min justify-center">
+      {showQuestionBar && (
+        <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
+          <div className="flex gap-4 min-w-min justify-center">
           {(() => {
             const typeLabels = {
               'reading_comprehension': 'Reading Comprehension',
@@ -683,9 +685,32 @@ Be specific and constructive. Focus on what the student did well and what needs 
                 </div>
               </div>
             ));
-          })()}
-        </div>
-      </div>
+            })()}
+            </div>
+            </div>
+            )}
+
+            {/* Toggle Question Bar Button */}
+            <div className="px-4 py-2 border-b border-slate-200 bg-white flex justify-center">
+            <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowQuestionBar(!showQuestionBar)}
+            className="text-slate-600 hover:text-slate-800"
+            >
+            {showQuestionBar ? (
+            <>
+              <ChevronUp className="w-4 h-4 mr-2" />
+              Hide Questions
+            </>
+            ) : (
+            <>
+              <ChevronDown className="w-4 h-4 mr-2" />
+              Show Questions
+            </>
+            )}
+            </Button>
+            </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
