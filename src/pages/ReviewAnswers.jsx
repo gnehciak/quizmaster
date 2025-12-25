@@ -92,7 +92,7 @@ export default function ReviewAnswers() {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  // Load saved AI data on mount and auto-generate if needed
+  // Load saved AI data on mount and load helper content for current question
   React.useEffect(() => {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
@@ -100,10 +100,61 @@ export default function ReviewAnswers() {
     if (attempt?.ai_explanations) {
       setAiExplanations(attempt.ai_explanations);
     } else if (attempt && questions.length > 0) {
-      // Auto-generate all explanations for incorrect answers
       generateAllExplanations();
     }
   }, [attempt, questions]);
+
+  // Load AI helper content when question changes
+  React.useEffect(() => {
+    if (!quiz || !currentQuestion) return;
+
+    // Load reading comprehension help
+    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_helper_tips?.[currentIndex]) {
+      const tipData = quiz.ai_helper_tips[currentIndex];
+      setAiHelperContent(tipData.advice || '');
+      setHighlightedPassages(tipData.passages || {});
+    } else {
+      setAiHelperContent('');
+      setHighlightedPassages({});
+    }
+
+    // Load blank helper content
+    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_helper_tips?.[currentIndex]?.blanks) {
+      setBlankHelperContent(quiz.ai_helper_tips[currentIndex].blanks || {});
+    } else {
+      setBlankHelperContent({});
+    }
+
+    // Load drop zone helper content
+    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_helper_tips?.[currentIndex]?.dropZones) {
+      const dropZones = quiz.ai_helper_tips[currentIndex].dropZones || {};
+      const content = {};
+      const passages = {};
+      Object.keys(dropZones).forEach(zoneId => {
+        const data = dropZones[zoneId];
+        if (typeof data === 'string') {
+          content[zoneId] = data;
+        } else if (data.advice) {
+          content[zoneId] = data.advice;
+          if (data.passages) {
+            passages[zoneId] = data.passages;
+          }
+        }
+      });
+      setDropZoneHelperContent(content);
+      setDropZoneHighlightedPassages(passages);
+    } else {
+      setDropZoneHelperContent({});
+      setDropZoneHighlightedPassages({});
+    }
+
+    // Load matching helper content
+    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_helper_tips?.[currentIndex]?.matchingQuestions) {
+      setMatchingHelperContent(quiz.ai_helper_tips[currentIndex].matchingQuestions || {});
+    } else {
+      setMatchingHelperContent({});
+    }
+  }, [currentIndex, quiz, currentQuestion]);
 
   // Save AI explanations before leaving page - always call useEffect
   React.useEffect(() => {
