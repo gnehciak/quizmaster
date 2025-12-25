@@ -147,6 +147,18 @@ export default function MatchingListQuestion({
       {/* Right Pane - Matching Questions */}
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-3xl">
+          {showResults && Object.keys(selectedAnswers).length === 0 && !singleQuestion && (
+            <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 mb-6">
+              <X className="w-5 h-5 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+            </div>
+          )}
+          {showResults && singleQuestion && (selectedAnswer === undefined || selectedAnswer === null || selectedAnswer === '') && (
+            <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 mb-6">
+              <X className="w-5 h-5 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+            </div>
+          )}
           {question.rightPaneQuestion && (
             <div 
               className="text-base text-slate-700 mb-6 prose prose-slate max-w-none prose-p:my-0"
