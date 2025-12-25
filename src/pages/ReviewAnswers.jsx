@@ -909,7 +909,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             aiHelperContent={dropZoneHelperContent}
             aiHelperLoading={{}}
             highlightedPassages={dropZoneHighlightedPassages}
-            isAdmin={true}
+            isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
@@ -931,7 +931,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             aiHelperContent={dropZoneHelperContent}
             aiHelperLoading={{}}
             highlightedPassages={dropZoneHighlightedPassages}
-            isAdmin={true}
+            isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
@@ -952,7 +952,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             onAnswer={() => {}}
             aiHelperContent={blankHelperContent}
             aiHelperLoading={{}}
-            isAdmin={true}
+            isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
@@ -972,7 +972,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             onAnswer={() => {}}
             aiHelperContent={blankHelperContent}
             aiHelperLoading={{}}
-            isAdmin={true}
+            isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
