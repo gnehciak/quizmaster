@@ -640,7 +640,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
               <div key={sectionIdx} className="flex flex-col gap-1">
                 <div className="relative">
                   <div className="text-[10px] font-semibold text-slate-600 mb-0.5 text-center px-1">
-                    {typeLabels[section.type] || section.type}
+                    {section.questions[0]?.question?.questionName || typeLabels[section.type] || section.type}
                   </div>
                   <div className="absolute left-0 right-0 top-full h-1.5 border-l-2 border-r-2 border-t-2 border-slate-300 rounded-t-md"></div>
                 </div>

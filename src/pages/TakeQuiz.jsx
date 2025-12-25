@@ -1602,7 +1602,7 @@ try {
                   return sections.map((section, sectionIdx) => (
                     <div key={sectionIdx} className="space-y-2">
                       <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                        {typeLabels[section.type] || section.type}
+                        {section.questions[0]?.question?.questionName || typeLabels[section.type] || section.type}
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {section.questions.map(({ question: q, index: idx }) => {

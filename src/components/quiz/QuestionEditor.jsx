@@ -391,6 +391,15 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-2">
+            <Label>Question Name (optional)</Label>
+            <Input
+              value={question.questionName || ''}
+              onChange={(e) => updateField('questionName', e.target.value)}
+              placeholder="e.g., 'Introduction', 'Main Analysis', 'Summary'..."
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Question</Label>
             <RichTextEditor
               value={question.question || ''}
