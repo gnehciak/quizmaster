@@ -539,11 +539,19 @@ Return your response as JSON in this exact format:
 
 Highlight the specific sentences in the passage that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
 
+      console.log('=== RC EXPLANATION PROMPT ===');
+      console.log(prompt);
+      console.log('===========================');
+
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== RC EXPLANATION RESPONSE ===');
+      console.log(text);
+      console.log('==============================');
 
       // Parse JSON response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -586,20 +594,22 @@ Highlight the specific sentences in the passage that support your explanation by
     const handleRegenerateRCExplanation = () => generateRCExplanation(true);
 
     const handleDeleteRCExplanation = async () => {
-    try {
-      const existingExplanations = quiz?.ai_explanations || {};
-      const { [currentIndex]: _, ...remaining } = existingExplanations;
+      try {
+        // Clear local state immediately
+        setAiHelperContent('');
+        setHighlightedPassages({});
 
-      await base44.entities.Quiz.update(quiz.id, {
-        ai_explanations: remaining
-      });
+        const existingExplanations = quiz?.ai_explanations || {};
+        const { [currentIndex]: _, ...remaining } = existingExplanations;
 
-      setAiHelperContent('');
-      setHighlightedPassages({});
-      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
-    } catch (err) {
-      console.error('Failed to delete RC explanation:', err);
-    }
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: remaining
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      } catch (err) {
+        console.error('Failed to delete RC explanation:', err);
+      }
     };
 
   const handleMatchingExplanation = async (questionId) => {
