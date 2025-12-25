@@ -485,18 +485,21 @@ Provide a helpful first-person explanation:`;
   const generateRCExplanation = async (forceRegenerate = false) => {
     const explanationId = `rc-${currentIndex}`;
 
-    // Always check if explanation already exists first
-    const existingExplanation = quiz?.ai_explanations?.[currentIndex];
-    if (existingExplanation && !forceRegenerate) {
-      const content = typeof existingExplanation === 'string' ? existingExplanation : existingExplanation?.advice;
-      const passages = typeof existingExplanation === 'object' ? existingExplanation?.passages : {};
-      setAiHelperContent(content || '');
-      setHighlightedPassages(passages || {});
-      setOpenedExplanations(prev => new Set([...prev, explanationId]));
-      return;
-    }
-
     setAiHelperLoading(true);
+
+    // Check if explanation already exists first
+    if (!forceRegenerate) {
+      const existingExplanation = quiz?.ai_explanations?.[currentIndex];
+      if (existingExplanation) {
+        const content = typeof existingExplanation === 'string' ? existingExplanation : existingExplanation?.advice;
+        const passages = typeof existingExplanation === 'object' ? existingExplanation?.passages : {};
+        setAiHelperContent(content || '');
+        setHighlightedPassages(passages || {});
+        setOpenedExplanations(prev => new Set([...prev, explanationId]));
+        setAiHelperLoading(false);
+        return;
+      }
+    }
 
     try {
       const q = currentQuestion;
