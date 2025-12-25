@@ -217,7 +217,7 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
-              {showResults && onRequestExplanation && (
+              {showResults && onRequestExplanation && !aiHelperLoading && !aiHelperContent && (
                 <div className="mt-4">
                   <Button
                     onClick={onRequestExplanation}
