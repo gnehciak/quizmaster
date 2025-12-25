@@ -604,7 +604,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
 
       {/* Question Numbers Bar */}
       <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
-        <div className="flex gap-4 min-w-min">
+        <div className="flex gap-4 min-w-min justify-center">
           {(() => {
             const typeLabels = {
               'reading_comprehension': 'Reading Comprehension',
