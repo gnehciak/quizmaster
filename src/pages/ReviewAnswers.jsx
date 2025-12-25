@@ -525,7 +525,7 @@ Provide a helpful first-person explanation:`;
 
       const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+      const prompt = `Tell the student what the correct answer is. Explain how to find the correct answer in the text. Keep it concise (3-4 sentences).
 
 Question: ${questionText?.replace(/<[^>]*>/g, '')}
 Student's Answer: ${userAnswer}
