@@ -554,13 +554,13 @@ Provide a helpful first-person explanation:`;
 
       [For single passage]
       {
-        "advice": "Start by stating the correct answer. Then, explain simply why the highlighted text supports it (2-3 sentences).",
+        "advice": "HTML formatted advice using <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed. Follow the 'Explain Each Option Individually' strategy from rule 3.",
         "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
       }
 
       [For multiple passages]
       {
-        "advice": "Start by stating the correct answer. Then, explain simply why the highlighted text supports it (2-3 sentences).",
+        "advice": "HTML formatted advice using <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed. Follow the 'Explain Each Option Individually' strategy from rule 3.",
         "passages": [
           {"passageId": "${passagesForPrompt[0].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"}${passagesForPrompt.length > 1 ? `,\n          {"passageId": "${passagesForPrompt[1].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}` : ''}
         ]
