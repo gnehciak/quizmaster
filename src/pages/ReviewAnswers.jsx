@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +43,7 @@ export default function ReviewAnswers() {
   const [dropZoneHelperContent, setDropZoneHelperContent] = useState({});
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
+  const [showNavBar, setShowNavBar] = useState(true);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -603,8 +604,9 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Question Numbers Bar */}
-      <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
-        <div className="flex gap-4 min-w-min justify-center">
+      {showNavBar && (
+        <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
+          <div className="flex gap-4 min-w-min justify-center">
           {(() => {
             const typeLabels = {
               'reading_comprehension': 'Reading Comprehension',
@@ -686,6 +688,16 @@ Be specific and constructive. Focus on what the student did well and what needs 
           })()}
         </div>
       </div>
+      )}
+
+      {/* Toggle Button */}
+      <button
+        onClick={() => setShowNavBar(!showNavBar)}
+        className="fixed top-20 right-4 z-50 w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-all shadow-lg"
+        title={showNavBar ? "Hide navigation bar" : "Show navigation bar"}
+      >
+        {showNavBar ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+      </button>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
