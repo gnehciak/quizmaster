@@ -39,6 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Sparkles } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -981,20 +982,28 @@ export default function CourseDetail() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{quiz.title}</h3>
-                        <p className="text-sm text-slate-500">
-                          {quiz.questions?.length || 0} questions
-                          {quiz.timer_enabled && quiz.timer_duration && (
-                            <span className="ml-2">• {quiz.timer_duration} min</span>
-                          )}
-                        {showAttempts && (
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-sm text-slate-500">
+                            {quiz.questions?.length || 0} questions
+                            {quiz.timer_enabled && quiz.timer_duration && (
+                              <span className="ml-2">• {quiz.timer_duration} min</span>
+                            )}
+                          </span>
+                          {showAttempts && (
                             <span className={cn(
-                              "ml-2",
-                              attemptsLeft > 0 ? "text-emerald-600" : "text-red-600"
+                              "text-xs font-medium px-2 py-0.5 rounded-full",
+                              attemptsLeft > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
                             )}>
-                              • {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
+                              {attemptsLeft} attempt{attemptsLeft !== 1 ? 's' : ''} left
                             </span>
                           )}
-                        </p>
+                          {quiz.allow_tips && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              AI Tips
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {isAdmin && (
