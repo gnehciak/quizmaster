@@ -523,21 +523,26 @@ Provide a helpful first-person explanation:`;
         ? q.passages.map(p => ({ id: p.id, title: p.title, content: p.content }))
         : [{ id: 'main', title: 'Passage', content: q.passage }];
 
+      const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
+
       const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
 
 Question: ${questionText?.replace(/<[^>]*>/g, '')}
 Student's Answer: ${userAnswer}
-Correct Answer: ${correctAnswer}${passageContext}
+Correct Answer: ${correctAnswer}
+
+Passages:
+${passagesList}
 
 Return your response as JSON in this exact format:
 {
   "advice": "Your explanation here in first person",
   "passages": {
-    "passage_id": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"
+    "${passagesForPrompt[0].id}": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"${passagesForPrompt.length > 1 ? `,\n    "${passagesForPrompt[1].id}": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"` : ''}
   }
 }
 
-Highlight the specific sentences in the passage that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
+IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p.id).join(', ')}). Include ALL passages in your response, even if you only highlight text in one of them. Highlight the specific sentences that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
 
       console.log('=== RC EXPLANATION PROMPT ===');
       console.log(prompt);
