@@ -71,6 +71,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index }) {
           <h3 className="text-xl font-semibold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
             {quiz.title}
           </h3>
+          <p className="text-xs text-slate-500 mb-1">ID: {quiz.id}</p>
           {quiz.description && (
             <p className="text-slate-500 text-sm line-clamp-2">
               {quiz.description}

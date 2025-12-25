@@ -199,9 +199,14 @@ export default function CreateQuiz() {
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
               </Link>
-              <h1 className="text-lg font-semibold text-slate-800">
-                {quizId ? 'Edit Quiz' : 'Create Quiz'}
-              </h1>
+              <div>
+                <h1 className="text-lg font-semibold text-slate-800">
+                  {quizId ? 'Edit Quiz' : 'Create Quiz'}
+                </h1>
+                {quizId && (
+                  <p className="text-xs text-slate-500 mt-0.5">ID: {quizId}</p>
+                )}
+              </div>
             </div>
             
             <div className="flex gap-2">
