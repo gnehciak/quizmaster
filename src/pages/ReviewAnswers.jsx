@@ -603,8 +603,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
       </div>
 
       {/* Question Numbers Bar */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white overflow-x-auto">
-        <div className="flex gap-6 min-w-min">
+      <div className="px-4 py-2 border-b border-slate-200 bg-white overflow-x-auto">
+        <div className="flex gap-4 min-w-min">
           {(() => {
             const typeLabels = {
               'reading_comprehension': 'Reading Comprehension',
@@ -637,14 +637,14 @@ Be specific and constructive. Focus on what the student did well and what needs 
             }
 
             return sections.map((section, sectionIdx) => (
-              <div key={sectionIdx} className="flex flex-col gap-2">
+              <div key={sectionIdx} className="flex flex-col gap-1">
                 <div className="relative">
-                  <div className="text-xs font-semibold text-slate-600 mb-1 text-center px-2">
+                  <div className="text-[10px] font-semibold text-slate-600 mb-0.5 text-center px-1">
                     {typeLabels[section.type] || section.type}
                   </div>
-                  <div className="absolute left-0 right-0 top-full h-2 border-l-2 border-r-2 border-t-2 border-slate-300 rounded-t-lg"></div>
+                  <div className="absolute left-0 right-0 top-full h-1.5 border-l-2 border-r-2 border-t-2 border-slate-300 rounded-t-md"></div>
                 </div>
-                <div className="flex gap-2 pt-2 justify-center">
+                <div className="flex gap-1.5 pt-1.5 justify-center">
                   {section.questions.map(({ question: q, index: idx }) => {
                     const answer = answers[idx];
                     let isCorrect = false;
@@ -670,7 +670,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
                         key={idx}
                         onClick={() => setCurrentIndex(idx)}
                         className={cn(
-                          "w-10 h-10 rounded-lg font-semibold text-sm transition-all flex-shrink-0",
+                          "w-8 h-8 rounded-md font-semibold text-xs transition-all flex-shrink-0",
                           isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
                           !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
                           !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
