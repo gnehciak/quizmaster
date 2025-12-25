@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, X } from 'lucide-react';
 
 export default function MultipleChoiceQuestion({ 
   question, 
@@ -9,9 +9,17 @@ export default function MultipleChoiceQuestion({
   onAnswer, 
   showResults 
 }) {
+  const isUnattempted = showResults && (selectedAnswer === undefined || selectedAnswer === null || selectedAnswer === '');
+
   return (
     <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
+        {isUnattempted && (
+          <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <X className="w-5 h-5 text-red-600" />
+            <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+          </div>
+        )}
         <div 
           className="text-lg font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none"
           dangerouslySetInnerHTML={{ __html: question.question }}
