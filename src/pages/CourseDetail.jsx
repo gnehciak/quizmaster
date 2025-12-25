@@ -28,7 +28,9 @@ import {
   Eye,
   EyeOff,
   Clock,
-  Calendar
+  Calendar,
+  MoreVertical,
+  RefreshCw
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -43,6 +45,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sparkles } from 'lucide-react';
 import {
   Select,
@@ -410,6 +418,21 @@ export default function CourseDetail() {
     setSchedulingBlock(null);
   };
 
+  const handleCopyCode = () => {
+    if (course?.unlock_code) {
+      navigator.clipboard.writeText(course.unlock_code);
+      toast.success('Code copied to clipboard');
+    }
+  };
+
+  const handleResetCode = async () => {
+    if (!confirm('Reset unlock code? This will generate a new code and invalidate the old one.')) return;
+    
+    const newCode = Math.random().toString(36).substring(2, 10);
+    await updateCourseMutation.mutateAsync({ unlock_code: newCode });
+    toast.success('Unlock code reset successfully');
+  };
+
   const isBlockVisible = (block) => {
     // For admins, always show everything
     if (isAdmin) return true;
@@ -599,6 +622,41 @@ export default function CourseDetail() {
       </Dialog>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {/* Admin: Class Code Display */}
+        {isAdmin && course?.is_locked && course?.unlock_code && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">Class code</h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="w-5 h-5 text-slate-600" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleResetCode} className="gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    Reset Code
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-semibold text-slate-800 tracking-wide">
+                {course.unlock_code}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopyCode}
+                className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+              >
+                <Copy className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Unlock Section */}
         {!hasAccess && (
           <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-8">
