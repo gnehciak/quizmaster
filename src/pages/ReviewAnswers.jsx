@@ -613,7 +613,7 @@ Provide a helpful first-person explanation:`;
         // Save to quiz entity with cleaned passages
         try {
           const existingExplanations = quiz?.ai_explanations || {};
-          await base44.entities.Quiz.update(quiz.id, {
+          const updatedQuiz = await base44.entities.Quiz.update(quiz.id, {
             ai_explanations: {
               ...existingExplanations,
               [currentIndex]: {
@@ -622,6 +622,7 @@ Provide a helpful first-person explanation:`;
               }
             }
           });
+          // Invalidate and refetch to ensure local state is in sync
           await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
           await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
         } catch (err) {
