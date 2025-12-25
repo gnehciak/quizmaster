@@ -140,6 +140,12 @@ export default function ReadingComprehensionQuestion({
         <div className="max-w-2xl space-y-8">
           {singleQuestion && subQuestion ? (
             <div className="space-y-3">
+              {showResults && (selectedAnswer === undefined || selectedAnswer === null || selectedAnswer === '') && (
+                <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <X className="w-5 h-5 text-red-600" />
+                  <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+                </div>
+              )}
               <div 
                 className="font-medium text-slate-800 text-base prose prose-slate max-w-none prose-p:my-0"
                 dangerouslySetInnerHTML={{ __html: subQuestion.question }}
