@@ -346,14 +346,34 @@ export default function ReviewAnswers() {
       const userAnswer = answers[currentIndex]?.[blankId];
       const correctAnswer = blank.correctAnswer;
 
-      const prompt = `You are explaining to a student why their answer is incorrect. Use first person ("Your answer is incorrect because..."). Then explain how to find the correct answer. Keep it concise (3-4 sentences).
+      let passageContext = '';
+      if (q.passages?.length > 0) {
+        passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
+          `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
+        ).join('\n\n');
+      } else if (q.passage) {
+        passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer.
+2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
+   * If it's the CORRECT option: Why it's right${passageContext ? ', using specific quotes from the passage' : ''}.
+   * If it's a WRONG option: Why it's incorrect${passageContext ? ', using specific quotes or reasoning from the passage' : ''}.
+3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
+${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
+5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Question: Fill in the blank
 Student's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}
-Options: ${blank.options.join(', ')}
+Options: ${blank.options.join(', ')}${passageContext}
 
-Provide a helpful first-person explanation:`;
+Provide HTML formatted explanation:`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
