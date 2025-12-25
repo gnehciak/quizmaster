@@ -187,6 +187,12 @@ export default function DragDropDualQuestion({
       {/* Right Pane - Drag & Drop Activity */}
       <div className="overflow-y-auto flex-1 p-8">
         <div className="max-w-2xl space-y-8">
+          {isUnattempted && (
+            <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <X className="w-5 h-5 text-red-600" />
+              <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+            </div>
+          )}
           {/* Question Text */}
           {question.rightPaneQuestion && (
             <div className="pb-4 border-b border-slate-200">
