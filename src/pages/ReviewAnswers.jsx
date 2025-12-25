@@ -858,6 +858,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
+    const isAdmin = user?.role === 'admin' || user?.role === 'teacher';
+
     const commonProps = {
       question: currentQuestion,
       showResults: true,
@@ -876,7 +878,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
           aiHelperContent={aiHelperContent}
           aiHelperLoading={aiHelperLoading}
           onRequestHelp={null}
-          isAdmin={true}
+          isAdmin={isAdmin}
           tipsAllowed={999}
           tipsUsed={0}
           tipOpened={true}
@@ -990,7 +992,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
             onAnswer={() => {}}
             aiHelperContent={matchingHelperContent}
             aiHelperLoading={{}}
-            isAdmin={true}
+            isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
