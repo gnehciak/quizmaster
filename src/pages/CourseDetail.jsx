@@ -87,6 +87,10 @@ export default function CourseDetail() {
   const [schedulingBlock, setSchedulingBlock] = useState(null);
   const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const [lockingBlock, setLockingBlock] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState(null);
+  const [features, setFeatures] = useState([]);
+  const [newFeature, setNewFeature] = useState('');
 
   const quillModules = {
     toolbar: [
@@ -333,7 +337,31 @@ export default function CourseDetail() {
   };
 
   const handleEditCourse = () => {
+    setTempImageUrl(course?.image_url);
+    setFeatures(course?.features || []);
     setEditCourseOpen(true);
+  };
+
+  const handleImageUpload = async (file) => {
+    setUploadingImage(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      setTempImageUrl(result.file_url);
+    } catch (e) {
+      console.error('Upload failed:', e);
+    }
+    setUploadingImage(false);
+  };
+
+  const handleAddFeature = () => {
+    if (newFeature.trim()) {
+      setFeatures([...features, newFeature.trim()]);
+      setNewFeature('');
+    }
+  };
+
+  const handleRemoveFeature = (index) => {
+    setFeatures(features.filter((_, i) => i !== index));
   };
 
   const handleUpdateCourse = async (e) => {
@@ -343,12 +371,19 @@ export default function CourseDetail() {
       title: formData.get('title'),
       description: formData.get('description'),
       category: formData.get('category'),
+      visibility: formData.get('visibility') || 'public',
       is_locked: formData.get('is_locked') === 'true',
       unlock_code: formData.get('unlock_code') || undefined,
-      price: formData.get('price') ? parseFloat(formData.get('price')) : undefined
+      price: formData.get('price') ? parseFloat(formData.get('price')) : undefined,
+      enrollment_duration: formData.get('enrollment_duration') ? parseInt(formData.get('enrollment_duration')) : 365,
+      image_url: tempImageUrl || undefined,
+      features: features.length > 0 ? features : undefined
     };
     await updateCourseMutation.mutateAsync(data);
     setEditCourseOpen(false);
+    setTempImageUrl(null);
+    setFeatures([]);
+    setNewFeature('');
   };
 
   const handleReorderContent = async (startIndex, endIndex) => {
@@ -567,12 +602,71 @@ export default function CourseDetail() {
       </div>
 
       {/* Edit Course Dialog */}
-      <Dialog open={editCourseOpen} onOpenChange={setEditCourseOpen}>
+      <Dialog open={editCourseOpen} onOpenChange={(open) => {
+        setEditCourseOpen(open);
+        if (!open) {
+          setTempImageUrl(null);
+          setFeatures([]);
+          setNewFeature('');
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Course</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUpdateCourse} className="space-y-4">
+            <div>
+              <Label>Cover Image</Label>
+              <div className="mt-2">
+                {tempImageUrl ? (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={tempImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setTempImageUrl(null)}
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const file = e.dataTransfer.files[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer"
+                    onClick={() => document.getElementById('cover-upload').click()}
+                  >
+                    <input
+                      id="cover-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                    />
+                    {uploadingImage ? (
+                      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto mb-2" />
+                    ) : (
+                      <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    )}
+                    <p className="text-sm text-slate-600">
+                      {uploadingImage ? 'Uploading...' : 'Drag and drop an image or click to browse'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <Label>Title</Label>
               <Input name="title" defaultValue={course?.title} required />
@@ -600,6 +694,21 @@ export default function CourseDetail() {
             </div>
 
             <div>
+              <Label>Visibility</Label>
+              <Select name="visibility" defaultValue={course?.visibility || 'public'}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public - Shown on home page</SelectItem>
+                  <SelectItem value="unlisted">Unlisted - Link only, show in My Courses</SelectItem>
+                  <SelectItem value="private">Private - Creator & admin only</SelectItem>
+                  <SelectItem value="admin">Admin - Admin only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label>Locked</Label>
               <Select name="is_locked" defaultValue={course?.is_locked?.toString() || 'true'}>
                 <SelectTrigger>
@@ -620,6 +729,54 @@ export default function CourseDetail() {
             <div>
               <Label>Price (optional)</Label>
               <Input name="price" type="number" step="0.01" defaultValue={course?.price} />
+            </div>
+
+            <div>
+              <Label>Enrollment Duration (days)</Label>
+              <Input name="enrollment_duration" type="number" defaultValue={course?.enrollment_duration || 365} />
+              <p className="text-xs text-slate-500 mt-1">How many days students have access after enrollment</p>
+            </div>
+
+            <div>
+              <Label>Features</Label>
+              <div className="space-y-2">
+                {features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+                    <span className="flex-1 text-sm">{feature}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFeature(index)}
+                      className="h-8 w-8 p-0 text-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Input
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    placeholder="Add a feature..."
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddFeature();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddFeature}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <Button type="submit" className="w-full">
