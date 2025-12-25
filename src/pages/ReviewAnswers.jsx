@@ -484,20 +484,15 @@ Provide a helpful first-person explanation:`;
 
   const generateRCExplanation = async (forceRegenerate = false) => {
     const explanationId = `rc-${currentIndex}`;
-    const wasAlreadyOpened = openedExplanations.has(explanationId);
 
-    // Check if explanation already exists
+    // Always check if explanation already exists first
     const existingExplanation = quiz?.ai_explanations?.[currentIndex];
-    if (existingExplanation && !wasAlreadyOpened && !forceRegenerate) {
+    if (existingExplanation && !forceRegenerate) {
       const content = typeof existingExplanation === 'string' ? existingExplanation : existingExplanation?.advice;
       const passages = typeof existingExplanation === 'object' ? existingExplanation?.passages : {};
       setAiHelperContent(content || '');
       setHighlightedPassages(passages || {});
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
-      return;
-    }
-
-    if (wasAlreadyOpened && existingExplanation && !forceRegenerate) {
       return;
     }
 
@@ -616,6 +611,14 @@ IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p
         setAiHelperContent('');
         setHighlightedPassages({});
 
+        // Remove from opened explanations set
+        const explanationId = `rc-${currentIndex}`;
+        setOpenedExplanations(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(explanationId);
+          return newSet;
+        });
+
         const existingExplanations = quiz?.ai_explanations || {};
         const { [currentIndex]: _, ...remaining } = existingExplanations;
 
@@ -623,7 +626,9 @@ IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p
           ai_explanations: remaining
         });
 
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        // Refetch quiz data to ensure consistency
+        await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
       } catch (err) {
         console.error('Failed to delete RC explanation:', err);
       }
