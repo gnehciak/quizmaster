@@ -482,19 +482,22 @@ Provide a helpful first-person explanation:`;
     }
   };
 
-  const handleRCExplanation = async () => {
+  const generateRCExplanation = async (forceRegenerate = false) => {
     const explanationId = `rc-${currentIndex}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
-    
+
     // Check if explanation already exists
     const existingExplanation = quiz?.ai_explanations?.[currentIndex];
-    if (existingExplanation && !wasAlreadyOpened) {
-      setAiHelperContent(existingExplanation);
+    if (existingExplanation && !wasAlreadyOpened && !forceRegenerate) {
+      const content = typeof existingExplanation === 'string' ? existingExplanation : existingExplanation?.advice;
+      const passages = typeof existingExplanation === 'object' ? existingExplanation?.passages : {};
+      setAiHelperContent(content || '');
+      setHighlightedPassages(passages || {});
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
       return;
     }
 
-    if (wasAlreadyOpened && existingExplanation) {
+    if (wasAlreadyOpened && existingExplanation && !forceRegenerate) {
       return;
     }
 
@@ -576,7 +579,28 @@ Highlight the specific sentences in the passage that support your explanation by
     } finally {
       setAiHelperLoading(false);
     }
-  };
+    };
+
+    const handleRCExplanation = () => generateRCExplanation(false);
+
+    const handleRegenerateRCExplanation = () => generateRCExplanation(true);
+
+    const handleDeleteRCExplanation = async () => {
+    try {
+      const existingExplanations = quiz?.ai_explanations || {};
+      const { [currentIndex]: _, ...remaining } = existingExplanations;
+
+      await base44.entities.Quiz.update(quiz.id, {
+        ai_explanations: remaining
+      });
+
+      setAiHelperContent('');
+      setHighlightedPassages({});
+      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+    } catch (err) {
+      console.error('Failed to delete RC explanation:', err);
+    }
+    };
 
   const handleMatchingExplanation = async (questionId) => {
     const explanationId = `matching-${currentIndex}-${questionId}`;
@@ -767,6 +791,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
           tipOpened={true}
           autoExpandTip={true}
           onRequestExplanation={handleRCExplanation}
+          onRegenerateExplanation={handleRegenerateRCExplanation}
+          onDeleteExplanation={handleDeleteRCExplanation}
           openedExplanations={openedExplanations}
         />
       );

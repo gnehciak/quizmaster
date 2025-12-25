@@ -23,6 +23,8 @@ export default function ReadingComprehensionQuestion({
   tipsUsed = 0,
   tipOpened = false,
   onRequestExplanation = null,
+  onRegenerateExplanation = null,
+  onDeleteExplanation = null,
   openedExplanations = new Set()
 }) {
   const passages = question.passages?.length > 0 
@@ -253,9 +255,21 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && (onRegenerateHelp || onDeleteHelp) && (
+                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp))) && (
                     <div className="absolute top-2 right-2 flex gap-1">
-                      {onDeleteHelp && (
+                      {showResults && onDeleteExplanation && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={onDeleteExplanation}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          title="Delete explanation"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {!showResults && onDeleteHelp && (
                         <Button
                           type="button"
                           variant="ghost"
@@ -267,7 +281,24 @@ export default function ReadingComprehensionQuestion({
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
-                      {onRegenerateHelp && (
+                      {showResults && onRegenerateExplanation && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={onRegenerateExplanation}
+                          disabled={aiHelperLoading}
+                          className="h-8 w-8 p-0"
+                          title="Regenerate explanation"
+                        >
+                          {aiHelperLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      {!showResults && onRegenerateHelp && (
                         <Button
                           type="button"
                           variant="ghost"
