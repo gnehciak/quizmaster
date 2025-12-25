@@ -156,15 +156,13 @@ export default function ReviewAnswers() {
     }
   }, [currentIndex, quiz, currentQuestion]);
 
-  // Load AI helper content when question changes
+  // Load AI explanation content when question changes
   React.useEffect(() => {
     if (!quiz || !currentQuestion) return;
 
-    // Load reading comprehension help
-    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_helper_tips?.[currentIndex]) {
-      const tipData = quiz.ai_helper_tips[currentIndex];
-      setAiHelperContent(tipData.advice || '');
-      setHighlightedPassages(tipData.passages || {});
+    // Load reading comprehension explanation
+    if ((currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) && quiz.ai_explanations?.[currentIndex]) {
+      setAiHelperContent(quiz.ai_explanations[currentIndex] || '');
     } else {
       setAiHelperContent('');
       setHighlightedPassages({});
