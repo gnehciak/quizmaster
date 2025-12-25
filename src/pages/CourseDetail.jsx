@@ -91,6 +91,7 @@ export default function CourseDetail() {
   const [tempImageUrl, setTempImageUrl] = useState(null);
   const [features, setFeatures] = useState([]);
   const [newFeature, setNewFeature] = useState('');
+  const [sectionTitle, setSectionTitle] = useState('');
 
   const quillModules = {
     toolbar: [
@@ -265,6 +266,7 @@ export default function CourseDetail() {
             updated.file_url = fileUrl;
             updated.file_name = fileName;
           }
+          else if (contentType === 'section') updated.title = sectionTitle;
           return updated;
         }
         return block;
@@ -289,6 +291,7 @@ export default function CourseDetail() {
         newBlock.file_url = fileUrl;
         newBlock.file_name = fileName;
       }
+      else if (contentType === 'section') newBlock.title = sectionTitle;
 
       const updatedBlocks = [...contentBlocks, newBlock];
       await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
@@ -302,6 +305,7 @@ export default function CourseDetail() {
     setFileUrl('');
     setFileName('');
     setYoutubeUrl('');
+    setSectionTitle('');
     setContentType('');
     setEditingBlock(null);
   };
@@ -321,6 +325,7 @@ export default function CourseDetail() {
       setFileUrl(block.file_url || '');
       setFileName(block.file_name || '');
     }
+    else if (block.type === 'section') setSectionTitle(block.title || '');
     setAddContentOpen(true);
   };
 
@@ -928,6 +933,13 @@ export default function CourseDetail() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium mb-2 block">Select Content Type</label>
                         <div className="grid gap-2">
+                          <Button variant="outline" onClick={() => setContentType('section')} className="justify-start gap-2 h-auto py-3">
+                            <div className="w-5 h-5 flex items-center justify-center text-indigo-600 font-bold">#</div>
+                            <div className="text-left">
+                              <div className="font-medium">Section</div>
+                              <div className="text-xs text-slate-500">Add a section divider/header</div>
+                            </div>
+                          </Button>
                           <Button variant="outline" onClick={() => setContentType('quiz')} className="justify-start gap-2 h-auto py-3">
                             <PlayCircle className="w-5 h-5" />
                             <div className="text-left">
@@ -1293,6 +1305,17 @@ export default function CourseDetail() {
 
               const blockLocked = isBlockLocked(block);
               const renderBlock = () => {
+                if (block.type === 'section') {
+                  return (
+                    <div className="flex items-center gap-3 flex-1 -mx-4 -my-4 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                        #
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800">{block.title}</h3>
+                    </div>
+                  );
+                }
+
                 if (block.type === 'text') {
                   return (
                     <div className="flex items-start gap-3 flex-1">
@@ -1608,7 +1631,7 @@ export default function CourseDetail() {
                   key={block.id}
                   className={cn(
                     "p-4 rounded-xl border border-slate-200 transition-all",
-                    block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300",
+                    block.type === 'section' ? "bg-white border-2 border-indigo-200" : block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300",
                     isAdmin && block.visible === false && "opacity-50 border-dashed",
                     blockLocked && !isAdmin && "opacity-60"
                   )}
