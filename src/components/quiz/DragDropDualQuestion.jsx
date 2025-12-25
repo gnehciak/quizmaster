@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
