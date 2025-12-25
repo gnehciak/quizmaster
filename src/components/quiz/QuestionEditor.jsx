@@ -16,12 +16,14 @@ import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [] }) {
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
   const updateTimeoutRef = React.useRef(null);
+  const queryClient = useQueryClient();
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
@@ -395,6 +397,17 @@ ${aiInput}`;
             <Input
               value={question.questionName || ''}
               onChange={(e) => updateField('questionName', e.target.value)}
+              onBlur={async (e) => {
+                const newName = e.target.value.trim();
+                if (newName && !existingQuestionNames.includes(newName)) {
+                  try {
+                    await base44.entities.QuestionName.create({ name: newName });
+                    queryClient.invalidateQueries({ queryKey: ['questionNames'] });
+                  } catch (err) {
+                    console.error('Failed to save question name:', err);
+                  }
+                }
+              }}
               placeholder="e.g., 'Introduction', 'Main Analysis', 'Summary'..."
               list={`question-names-${question.id}`}
             />
