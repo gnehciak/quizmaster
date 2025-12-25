@@ -76,6 +76,8 @@ export default function CourseDetail() {
   const [quizSearch, setQuizSearch] = useState('');
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [schedulingBlock, setSchedulingBlock] = useState(null);
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
+  const [lockingBlock, setLockingBlock] = useState(null);
 
   const quillModules = {
     toolbar: [
@@ -170,11 +172,7 @@ export default function CourseDetail() {
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
     onSuccess: () => {
-      console.log('Course updated successfully, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
-    },
-    onError: (error) => {
-      console.error('Update course mutation error:', error);
     }
   });
 
@@ -353,7 +351,6 @@ export default function CourseDetail() {
     try {
       const updatedBlocks = contentBlocks.map(b => {
         if (b.id === blockId) {
-          // Toggle: if currently false (hidden), set to true (visible), otherwise set to false (hidden)
           const newVisible = b.visible === false ? true : false;
           return { ...b, visible: newVisible };
         }
@@ -366,8 +363,38 @@ export default function CourseDetail() {
       toast.success(updatedBlock.visible === false ? 'Content hidden from students' : 'Content visible to students');
     } catch (error) {
       toast.error('Failed to update visibility');
-      console.error('Visibility toggle error:', error);
     }
+  };
+
+  const handleToggleLock = async (blockId) => {
+    try {
+      const updatedBlocks = contentBlocks.map(b => {
+        if (b.id === blockId) {
+          const newLocked = b.locked === true ? false : true;
+          return { ...b, locked: newLocked };
+        }
+        return b;
+      });
+
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+
+      const updatedBlock = updatedBlocks.find(b => b.id === blockId);
+      toast.success(updatedBlock.locked === true ? 'Content locked for students' : 'Content unlocked for students');
+    } catch (error) {
+      toast.error('Failed to update lock');
+    }
+  };
+
+  const handleLockSchedule = async (blockId, unlockDate) => {
+    const updatedBlocks = contentBlocks.map(b => {
+      if (b.id === blockId) {
+        return { ...b, unlockDate: unlockDate || null, locked: unlockDate ? true : b.locked };
+      }
+      return b;
+    });
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    setLockDialogOpen(false);
+    setLockingBlock(null);
   };
 
   const handleSchedule = async (blockId, showDate, hideDate) => {
@@ -395,6 +422,23 @@ export default function CourseDetail() {
     if (block.scheduledHideDate && new Date(block.scheduledHideDate) < now) return false;
 
     return true;
+  };
+
+  const isBlockLocked = (block) => {
+    // For admins, nothing is locked
+    if (isAdmin) return false;
+
+    // Check manual lock
+    if (block.locked === true) {
+      // Check if unlock date has passed
+      if (block.unlockDate) {
+        const now = new Date();
+        return new Date(block.unlockDate) > now;
+      }
+      return true;
+    }
+
+    return false;
   };
 
   if (isLoading || userLoading) {
@@ -982,10 +1026,48 @@ export default function CourseDetail() {
             </DialogContent>
           </Dialog>
 
+          <Dialog open={lockDialogOpen} onOpenChange={setLockDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Schedule Unlock</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const unlockDate = formData.get('unlockDate');
+                handleLockSchedule(lockingBlock?.id, unlockDate);
+              }} className="space-y-4">
+                <div>
+                  <Label>Unlock At (optional)</Label>
+                  <Input
+                    name="unlockDate"
+                    type="datetime-local"
+                    defaultValue={lockingBlock?.unlockDate || ''}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Content will automatically unlock at this time
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">Save Schedule</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleLockSchedule(lockingBlock?.id, null)}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           <div className="space-y-4">
             {contentBlocks.map((block, idx) => {
               // Skip hidden blocks for non-admins
               if (!isAdmin && !isBlockVisible(block)) return null;
+
+              const blockLocked = isBlockLocked(block);
               const renderBlock = () => {
                 if (block.type === 'text') {
                   return (
@@ -1303,7 +1385,8 @@ export default function CourseDetail() {
                   className={cn(
                     "p-4 rounded-xl border border-slate-200 transition-all",
                     block.type === 'text' ? "bg-slate-50" : "bg-white hover:border-indigo-300",
-                    isAdmin && block.visible === false && "opacity-50 border-dashed"
+                    isAdmin && block.visible === false && "opacity-50 border-dashed",
+                    blockLocked && !isAdmin && "opacity-60"
                   )}
                   draggable={isAdmin}
                   onDragStart={(e) => {
@@ -1327,7 +1410,21 @@ export default function CourseDetail() {
                       </div>
                     )}
                     <div className="flex-1">
-                      {renderBlock()}
+                      {blockLocked && !isAdmin ? (
+                        <div className="flex items-center gap-3 text-slate-500">
+                          <Lock className="w-5 h-5" />
+                          <div>
+                            <div className="font-medium">This content is locked</div>
+                            {block.unlockDate && (
+                              <div className="text-sm">
+                                Unlocks on {new Date(block.unlockDate).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        renderBlock()
+                      )}
                     </div>
                   </div>
                   {isAdmin && (
@@ -1360,6 +1457,37 @@ export default function CourseDetail() {
                           (block.scheduledShowDate || block.scheduledHideDate) && "text-amber-600"
                         )}
                         title="Schedule visibility"
+                      >
+                        <Clock className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleLock(block.id);
+                        }}
+                        className={cn(
+                          "text-slate-400",
+                          block.locked === true ? "hover:text-red-600 text-red-500" : "hover:text-slate-600"
+                        )}
+                        title={block.locked === true ? "Locked for students" : "Unlocked for students"}
+                      >
+                        {block.locked === true ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLockingBlock(block);
+                          setLockDialogOpen(true);
+                        }}
+                        className={cn(
+                          "text-slate-400 hover:text-purple-600",
+                          block.unlockDate && "text-purple-600"
+                        )}
+                        title="Schedule unlock"
                       >
                         <Clock className="w-4 h-4" />
                       </Button>
