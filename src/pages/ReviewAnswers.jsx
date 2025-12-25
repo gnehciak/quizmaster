@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, List, BarChart3 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -592,122 +592,6 @@ Be specific and constructive. Focus on what the student did well and what needs 
               </div>
             </DialogContent>
           </Dialog>
-
-          <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <List className="w-4 h-4" />
-                Overview
-              </Button>
-            </DialogTrigger>
-            <DialogContent className={cn(
-              "max-h-[80vh] overflow-y-auto",
-              totalQuestions <= 20 && "max-w-lg",
-              totalQuestions > 20 && totalQuestions <= 40 && "max-w-2xl",
-              totalQuestions > 40 && totalQuestions <= 60 && "max-w-3xl",
-              totalQuestions > 60 && "max-w-4xl"
-            )}>
-              <DialogHeader>
-                <DialogTitle>Question Overview</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-6 mt-4">
-                {(() => {
-                  const typeLabels = {
-                    'reading_comprehension': 'Reading Comprehension',
-                    'multiple_choice': 'Multiple Choice',
-                    'drag_drop_single': 'Drag & Drop',
-                    'drag_drop_dual': 'Drag & Drop (Dual Pane)',
-                    'inline_dropdown_separate': 'Fill in the Blanks',
-                    'inline_dropdown_same': 'Fill in the Blanks',
-                    'matching_list_dual': 'Matching List'
-                  };
-
-                  const sections = [];
-                  let currentType = null;
-                  let currentSection = [];
-
-                  questions.forEach((q, idx) => {
-                    if (q.type !== currentType) {
-                      if (currentSection.length > 0) {
-                        sections.push({ type: currentType, questions: currentSection });
-                      }
-                      currentType = q.type;
-                      currentSection = [{ question: q, index: idx }];
-                    } else {
-                      currentSection.push({ question: q, index: idx });
-                    }
-                  });
-
-                  if (currentSection.length > 0) {
-                    sections.push({ type: currentType, questions: currentSection });
-                  }
-
-                  return sections.map((section, sectionIdx) => (
-                    <div key={sectionIdx} className="space-y-2">
-                      <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                        {typeLabels[section.type] || section.type}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {section.questions.map(({ question: q, index: idx }) => {
-                          const answer = answers[idx];
-                          let isCorrect = false;
-                          const isCurrent = idx === currentIndex;
-
-                          if (q.isSubQuestion) {
-                            isCorrect = answer === q.subQuestion.correctAnswer;
-                          } else if (q.type === 'multiple_choice') {
-                            isCorrect = answer === q.correctAnswer;
-                          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-                            const zones = q.dropZones || [];
-                            isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
-                          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-                            const blanks = q.blanks || [];
-                            isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
-                          } else if (q.type === 'matching_list_dual') {
-                            const matchingQs = q.matchingQuestions || [];
-                            isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
-                          }
-
-                          return (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                setCurrentIndex(idx);
-                                setOverviewOpen(false);
-                              }}
-                              className={cn(
-                                "w-12 h-12 rounded-lg font-semibold text-sm transition-all border-2 relative",
-                                isCurrent && "bg-indigo-600 text-white border-indigo-600 ring-2 ring-indigo-300",
-                                !isCurrent && isCorrect && "bg-emerald-500 text-white border-emerald-500",
-                                !isCurrent && !isCorrect && "bg-red-500 text-white border-red-500"
-                              )}
-                            >
-                              {idx + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ));
-                })()}
-                
-                <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-indigo-600"></div>
-                    <span>Current</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-emerald-500"></div>
-                    <span>Correct</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-red-500"></div>
-                    <span>Incorrect</span>
-                  </div>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Score Badge */}
@@ -715,6 +599,47 @@ Be specific and constructive. Focus on what the student did well and what needs 
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           <span className="font-semibold text-slate-800">{score}/{total}</span>
           <span className="text-slate-600">({percentage}%)</span>
+        </div>
+      </div>
+
+      {/* Question Numbers Bar */}
+      <div className="px-6 py-3 border-b border-slate-200 bg-white overflow-x-auto">
+        <div className="flex gap-2 min-w-min">
+          {questions.map((q, idx) => {
+            const answer = answers[idx];
+            let isCorrect = false;
+            const isCurrent = idx === currentIndex;
+
+            if (q.isSubQuestion) {
+              isCorrect = answer === q.subQuestion.correctAnswer;
+            } else if (q.type === 'multiple_choice') {
+              isCorrect = answer === q.correctAnswer;
+            } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+              const zones = q.dropZones || [];
+              isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+            } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+              const blanks = q.blanks || [];
+              isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+            } else if (q.type === 'matching_list_dual') {
+              const matchingQs = q.matchingQuestions || [];
+              isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+            }
+
+            return (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={cn(
+                  "w-10 h-10 rounded-lg font-semibold text-sm transition-all flex-shrink-0",
+                  isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
+                  !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
+                  !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
+                )}
+              >
+                {idx + 1}
+              </button>
+            );
+          })}
         </div>
       </div>
 
