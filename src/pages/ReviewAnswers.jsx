@@ -33,6 +33,14 @@ export default function ReviewAnswers() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [aiExplanations, setAiExplanations] = useState({});
   const [loadingExplanations, setLoadingExplanations] = useState(false);
+  const [blankExplanationContent, setBlankExplanationContent] = useState({});
+  const [blankExplanationLoading, setBlankExplanationLoading] = useState({});
+  const [dropZoneExplanationContent, setDropZoneExplanationContent] = useState({});
+  const [dropZoneExplanationLoading, setDropZoneExplanationLoading] = useState({});
+  const [dropZoneHighlightedExplanations, setDropZoneHighlightedExplanations] = useState({});
+  const [matchingExplanationContent, setMatchingExplanationContent] = useState({});
+  const [matchingExplanationLoading, setMatchingExplanationLoading] = useState({});
+  const [openedExplanations, setOpenedExplanations] = useState(new Set());
   const [performanceAnalysis, setPerformanceAnalysis] = useState(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
@@ -93,7 +101,7 @@ export default function ReviewAnswers() {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  // Load saved AI data on mount and load helper content for current question
+  // Load saved AI data on mount
   React.useEffect(() => {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
@@ -104,6 +112,48 @@ export default function ReviewAnswers() {
       generateAllExplanations();
     }
   }, [attempt, questions]);
+
+  // Load explanation content when question changes
+  React.useEffect(() => {
+    if (!quiz || !currentQuestion) return;
+
+    // Load blank explanations
+    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_explanations?.[currentIndex]?.blanks) {
+      setBlankExplanationContent(quiz.ai_explanations[currentIndex].blanks || {});
+    } else {
+      setBlankExplanationContent({});
+    }
+
+    // Load drop zone explanations
+    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_explanations?.[currentIndex]?.dropZones) {
+      const dropZones = quiz.ai_explanations[currentIndex].dropZones || {};
+      const content = {};
+      const passages = {};
+      Object.keys(dropZones).forEach(zoneId => {
+        const data = dropZones[zoneId];
+        if (typeof data === 'string') {
+          content[zoneId] = data;
+        } else if (data.advice) {
+          content[zoneId] = data.advice;
+          if (data.passages) {
+            passages[zoneId] = data.passages;
+          }
+        }
+      });
+      setDropZoneExplanationContent(content);
+      setDropZoneHighlightedExplanations(passages);
+    } else {
+      setDropZoneExplanationContent({});
+      setDropZoneHighlightedExplanations({});
+    }
+
+    // Load matching explanations
+    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_explanations?.[currentIndex]?.matchingQuestions) {
+      setMatchingExplanationContent(quiz.ai_explanations[currentIndex].matchingQuestions || {});
+    } else {
+      setMatchingExplanationContent({});
+    }
+  }, [currentIndex, quiz, currentQuestion]);
 
   // Load AI helper content when question changes
   React.useEffect(() => {
