@@ -124,6 +124,9 @@ export default function DragDropDualQuestion({
     !Object.values(selectedAnswers).includes(opt)
   ) || [];
 
+  const hasAnswers = selectedAnswers && Object.keys(selectedAnswers).length > 0;
+  const isUnattempted = showResults && !hasAnswers;
+
   return (
     <div ref={containerRef} className="h-full flex relative">
       {/* Left Pane - Passage */}
