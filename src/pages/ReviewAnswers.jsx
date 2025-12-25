@@ -621,28 +621,17 @@ Provide a helpful first-person explanation:`;
         // Save to quiz entity with cleaned passages
         try {
           const existingExplanations = quiz?.ai_explanations || {};
-          const updatedExplanations = {
-            ...existingExplanations,
-            [currentIndex]: {
-              advice: parsed.advice,
-              passages: cleanedPassages
-            }
-          };
-          
           await base44.entities.Quiz.update(quiz.id, {
-            ai_explanations: updatedExplanations
+            ai_explanations: {
+              ...existingExplanations,
+              [currentIndex]: {
+                advice: parsed.advice,
+                passages: cleanedPassages
+              }
+            }
           });
-          
-          // Update local cache immediately
-          queryClient.setQueryData(['quiz', quizId], (oldData) => {
-            if (!oldData || !Array.isArray(oldData)) return oldData;
-            return oldData.map(q => 
-              q.id === quiz.id ? { ...q, ai_explanations: updatedExplanations } : q
-            );
-          });
-          
-          // Refetch to ensure consistency
-          await queryClient.refetchQueries({ queryKey: ['quiz', quizId] });
+          // Invalidate quiz query to refresh data
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
         } catch (err) {
           console.error('Failed to save RC explanation:', err);
         }
