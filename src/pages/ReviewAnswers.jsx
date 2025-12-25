@@ -53,12 +53,14 @@ export default function ReviewAnswers() {
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [showNavBar, setShowNavBar] = useState(true);
-  const [attemptedExplanations, setAttemptedExplanations] = useState(new Set());
+  const [isGeneratingExplanation, setIsGeneratingExplanation] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me()
   });
+
+  const queryClient = useQueryClient();
 
   const { data: quiz } = useQuery({
     queryKey: ['quiz', quizId],
@@ -159,15 +161,14 @@ export default function ReviewAnswers() {
 
   // Load AI explanation content when question changes
   React.useEffect(() => {
-    if (!quiz || !currentQuestion) return;
+    if (!quiz || !currentQuestion || isGeneratingExplanation) return;
 
     // Load reading comprehension explanation
     if (currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) {
       const explanation = quiz.ai_explanations?.[currentIndex];
-      const alreadyAttempted = attemptedExplanations.has(currentIndex);
       
       if (explanation) {
-        // Load existing explanation from DB
+        // Load existing explanation from quiz data
         if (typeof explanation === 'string') {
           setAiHelperContent(explanation);
           setHighlightedPassages({});
@@ -175,11 +176,10 @@ export default function ReviewAnswers() {
           setAiHelperContent(explanation.advice);
           setHighlightedPassages(explanation.passages || {});
         }
-      } else if (!alreadyAttempted) {
-        // Auto-generate only if we haven't already attempted for this question
+      } else {
+        // Auto-generate if doesn't exist
         setAiHelperContent('');
         setHighlightedPassages({});
-        setAttemptedExplanations(prev => new Set([...prev, currentIndex]));
         generateRCExplanation(false);
       }
     } else {
@@ -497,21 +497,8 @@ Provide a helpful first-person explanation:`;
   const generateRCExplanation = async (forceRegenerate = false) => {
     const explanationId = `rc-${currentIndex}`;
 
+    setIsGeneratingExplanation(true);
     setAiHelperLoading(true);
-
-    // Check if explanation already exists first
-    if (!forceRegenerate) {
-      const existingExplanation = quiz?.ai_explanations?.[currentIndex];
-      if (existingExplanation) {
-        const content = typeof existingExplanation === 'string' ? existingExplanation : existingExplanation?.advice;
-        const passages = typeof existingExplanation === 'object' ? existingExplanation?.passages : {};
-        setAiHelperContent(content || '');
-        setHighlightedPassages(passages || {});
-        setOpenedExplanations(prev => new Set([...prev, explanationId]));
-        setAiHelperLoading(false);
-        return;
-      }
-    }
 
     try {
       const q = currentQuestion;
@@ -618,39 +605,53 @@ Provide a helpful first-person explanation:`;
           cleanedPassages[passageId] = parsed.highlightedContent;
         }
         
-        setAiHelperContent(parsed.advice || text);
-        setHighlightedPassages(cleanedPassages);
-        setOpenedExplanations(prev => new Set([...prev, explanationId]));
+        const explanationData = {
+          advice: parsed.advice,
+          passages: cleanedPassages
+        };
 
-        // Save to quiz entity with cleaned passages
+        // Save to quiz entity immediately
         try {
           const existingExplanations = quiz?.ai_explanations || {};
+          const updatedExplanations = {
+            ...existingExplanations,
+            [currentIndex]: explanationData
+          };
+
           await base44.entities.Quiz.update(quiz.id, {
-            ai_explanations: {
-              ...existingExplanations,
-              [currentIndex]: {
-                advice: parsed.advice,
-                passages: cleanedPassages
-              }
-            }
+            ai_explanations: updatedExplanations
           });
-          // Invalidate quiz query to refresh data
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+
+          // Immediately update the local cache
+          queryClient.setQueryData(['quiz', quizId], (oldData) => {
+            if (!oldData || !Array.isArray(oldData)) return oldData;
+            return oldData.map(q => q.id === quiz.id ? { ...q, ai_explanations: updatedExplanations } : q);
+          });
+
+          // Force reload the explanation from updated cache
+          setAiHelperContent(parsed.advice || text);
+          setHighlightedPassages(cleanedPassages);
+          setOpenedExplanations(prev => new Set([...prev, explanationId]));
         } catch (err) {
           console.error('Failed to save RC explanation:', err);
+          // Still show the explanation even if save failed
+          setAiHelperContent(parsed.advice || text);
+          setHighlightedPassages(cleanedPassages);
+          setOpenedExplanations(prev => new Set([...prev, explanationId]));
         }
-      } else {
+        } else {
         // Fallback if JSON parsing fails
         setAiHelperContent(text);
         setOpenedExplanations(prev => new Set([...prev, explanationId]));
-      }
-    } catch (e) {
-      console.error('Error generating RC explanation:', e);
-      setAiHelperContent("Unable to generate explanation at this time.");
-    } finally {
-      setAiHelperLoading(false);
-    }
-    };
+        }
+        } catch (e) {
+        console.error('Error generating RC explanation:', e);
+        setAiHelperContent("Unable to generate explanation at this time.");
+        } finally {
+        setAiHelperLoading(false);
+        setIsGeneratingExplanation(false);
+        }
+        };
 
     const handleRCExplanation = () => generateRCExplanation(false);
 
@@ -658,7 +659,20 @@ Provide a helpful first-person explanation:`;
 
     const handleDeleteRCExplanation = async () => {
       try {
-        // Clear local state immediately
+        const existingExplanations = quiz?.ai_explanations || {};
+        const { [currentIndex]: _, ...remaining } = existingExplanations;
+
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: remaining
+        });
+
+        // Immediately update the local cache
+        queryClient.setQueryData(['quiz', quizId], (oldData) => {
+          if (!oldData || !Array.isArray(oldData)) return oldData;
+          return oldData.map(q => q.id === quiz.id ? { ...q, ai_explanations: remaining } : q);
+        });
+
+        // Clear local state
         setAiHelperContent('');
         setHighlightedPassages({});
 
@@ -669,17 +683,6 @@ Provide a helpful first-person explanation:`;
           newSet.delete(explanationId);
           return newSet;
         });
-
-        const existingExplanations = quiz?.ai_explanations || {};
-        const { [currentIndex]: _, ...remaining } = existingExplanations;
-
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: remaining
-        });
-
-        // Refetch quiz data to ensure consistency
-        await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
-        await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
       } catch (err) {
         console.error('Failed to delete RC explanation:', err);
       }
