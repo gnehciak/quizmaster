@@ -564,9 +564,9 @@ Tone: Encouraging, simple, and direct.
 IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
 **CRITICAL RULES:**
-1. **State the Correct Answer:** Start by clearly stating the correct answer.
-2. **Explain Why Wrong:** Explain why the student's answer is incorrect${passageContext ? ', using specific quotes from the passage' : ''}.
-3. **Explain Why Right:** Explain why the correct answer is right${passageContext ? ', using specific quotes from the passage' : ''}.
+1. **State the Correct Answer:** Start by clearly stating the correct answer for "${zone.label}".
+2. **Explain Why Student's Answer is Wrong:** Explain why "${userAnswer}" is incorrect for this gap${passageContext ? ', using specific quotes from the passage to show why it doesn\'t fit' : ''}.
+3. **Explain Why Correct Answer is Right:** Explain why "${correctAnswer}" is the right choice${passageContext ? ', using specific quotes from the passage to prove it fits perfectly' : ''}.
 ${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
 ${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
@@ -701,9 +701,9 @@ Tone: Encouraging, simple, and direct.
 IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
 **CRITICAL RULES:**
-1. **State the Correct Answer:** Start by clearly stating the correct answer.
-2. **Explain Why Wrong:** Explain why the student's answer is incorrect${passageContext ? ', using specific quotes from the passage' : ''}.
-3. **Explain Why Right:** Explain why the correct answer is right${passageContext ? ', using specific quotes from the passage' : ''}.
+1. **State the Correct Answer:** Start by clearly stating the correct answer for "${zone.label}".
+2. **Explain Why Student's Answer is Wrong:** Explain why "${userAnswer}" is incorrect for this gap${passageContext ? ', using specific quotes from the passage to show why it doesn\'t fit' : ''}.
+3. **Explain Why Correct Answer is Right:** Explain why "${correctAnswer}" is the right choice${passageContext ? ', using specific quotes from the passage to prove it fits perfectly' : ''}.
 ${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
 ${passageContext ? '5.' : '4.'} Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
