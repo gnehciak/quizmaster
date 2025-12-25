@@ -40,6 +40,7 @@ export default function ReviewAnswers() {
   const [dropZoneHighlightedExplanations, setDropZoneHighlightedExplanations] = useState({});
   const [matchingExplanationContent, setMatchingExplanationContent] = useState({});
   const [matchingExplanationLoading, setMatchingExplanationLoading] = useState({});
+  const [aiHelperLoading, setAiHelperLoading] = useState(false);
   const [openedExplanations, setOpenedExplanations] = useState(new Set());
   const [performanceAnalysis, setPerformanceAnalysis] = useState(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
