@@ -692,6 +692,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
             openedTips={new Set()}
             currentIndex={currentIndex}
             autoExpandTips={true}
+            onRequestExplanation={handleDropZoneExplanation}
+            explanationContent={dropZoneExplanationContent}
+            explanationLoading={dropZoneExplanationLoading}
+            explanationHighlightedPassages={dropZoneHighlightedExplanations}
+            openedExplanations={openedExplanations}
           />
         );
       case 'drag_drop_dual':
@@ -709,6 +714,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
             openedTips={new Set()}
             currentIndex={currentIndex}
             autoExpandTips={true}
+            onRequestExplanation={handleDropZoneExplanation}
+            explanationContent={dropZoneExplanationContent}
+            explanationLoading={dropZoneExplanationLoading}
+            explanationHighlightedPassages={dropZoneHighlightedExplanations}
+            openedExplanations={openedExplanations}
           />
         );
       case 'inline_dropdown_separate':
@@ -725,6 +735,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
             openedTips={new Set()}
             currentIndex={currentIndex}
             autoExpandTips={true}
+            onRequestExplanation={handleBlankExplanation}
+            explanationContent={blankExplanationContent}
+            explanationLoading={blankExplanationLoading}
+            openedExplanations={openedExplanations}
           />
         );
       case 'inline_dropdown_same':
@@ -741,6 +755,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
             openedTips={new Set()}
             currentIndex={currentIndex}
             autoExpandTips={true}
+            onRequestExplanation={handleBlankExplanation}
+            explanationContent={blankExplanationContent}
+            explanationLoading={blankExplanationLoading}
+            openedExplanations={openedExplanations}
           />
         );
       case 'matching_list_dual':
@@ -757,6 +775,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
             openedTips={new Set()}
             currentIndex={currentIndex}
             autoExpandTips={true}
+            onRequestExplanation={handleMatchingExplanation}
+            explanationContent={matchingExplanationContent}
+            explanationLoading={matchingExplanationLoading}
+            openedExplanations={openedExplanations}
           />
         );
       default:
