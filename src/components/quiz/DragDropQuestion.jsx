@@ -94,9 +94,18 @@ export default function DragDropQuestion({
     onAnswer({});
   };
 
+  const hasAnswers = selectedAnswers && Object.keys(selectedAnswers).length > 0;
+  const isUnattempted = showResults && !hasAnswers;
+
   return (
     <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
+      {isUnattempted && (
+        <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+          <X className="w-5 h-5 text-red-600" />
+          <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div 
           className="text-xl font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
