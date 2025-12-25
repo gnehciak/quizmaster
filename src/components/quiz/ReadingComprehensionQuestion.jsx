@@ -217,17 +217,7 @@ export default function ReadingComprehensionQuestion({
                 </div>
               )}
 
-              {showResults && onRequestExplanation && !aiHelperLoading && !aiHelperContent && (
-                <div className="mt-4">
-                  <Button
-                    onClick={onRequestExplanation}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Show Explanation
-                  </Button>
-                </div>
-              )}
+
 
               {!showResults && !aiHelperLoading && !aiHelperContent && onRequestHelp && (
                 <div className="mt-4">
