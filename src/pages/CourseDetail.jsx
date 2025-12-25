@@ -351,25 +351,16 @@ export default function CourseDetail() {
 
   const handleToggleVisibility = async (blockId) => {
     try {
-      console.log('Toggle visibility for block:', blockId);
-      console.log('Current blocks:', contentBlocks);
-
-      const targetBlock = contentBlocks.find(b => b.id === blockId);
-      console.log('Target block before:', targetBlock);
-
       const updatedBlocks = contentBlocks.map(b => {
         if (b.id === blockId) {
-          // Toggle: if currently false (hidden), set to undefined (visible), otherwise set to false (hidden)
-          const newVisible = b.visible === false ? undefined : false;
-          console.log('Toggling from', b.visible, 'to', newVisible);
+          // Toggle: if currently false (hidden), set to true (visible), otherwise set to false (hidden)
+          const newVisible = b.visible === false ? true : false;
           return { ...b, visible: newVisible };
         }
         return b;
       });
 
-      console.log('Sending update with blocks:', updatedBlocks);
-      const result = await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
-      console.log('Update result:', result);
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
 
       const updatedBlock = updatedBlocks.find(b => b.id === blockId);
       toast.success(updatedBlock.visible === false ? 'Content hidden from students' : 'Content visible to students');
@@ -394,15 +385,15 @@ export default function CourseDetail() {
   const isBlockVisible = (block) => {
     // For admins, always show everything
     if (isAdmin) return true;
-    
-    // Check manual visibility toggle
+
+    // Check manual visibility toggle (treat undefined as visible for backward compatibility)
     if (block.visible === false) return false;
-    
+
     // Check scheduled visibility
     const now = new Date();
     if (block.scheduledShowDate && new Date(block.scheduledShowDate) > now) return false;
     if (block.scheduledHideDate && new Date(block.scheduledHideDate) < now) return false;
-    
+
     return true;
   };
 
