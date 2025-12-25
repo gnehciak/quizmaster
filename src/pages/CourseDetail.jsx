@@ -948,7 +948,7 @@ export default function CourseDetail() {
                     <DialogTitle>{editingBlock ? 'Edit Content Block' : 'Add Content Block'}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    {!contentType && !editingBlock && addContentOpen ? (
+                    {!contentType && !editingBlock ? (
                       <div className="space-y-2">
                         <label className="text-sm font-medium mb-2 block">Select Content Type</label>
                         <div className="grid gap-2">
