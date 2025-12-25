@@ -348,7 +348,9 @@ export default function CourseDetail() {
   const handleToggleVisibility = async (blockId) => {
     const updatedBlocks = contentBlocks.map(b => {
       if (b.id === blockId) {
-        return { ...b, visible: b.visible === false ? true : false };
+        // Toggle: if currently false (hidden), set to undefined (visible), otherwise set to false (hidden)
+        const newVisible = b.visible === false ? undefined : false;
+        return { ...b, visible: newVisible };
       }
       return b;
     });
