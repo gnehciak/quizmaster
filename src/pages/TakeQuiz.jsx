@@ -1599,10 +1599,13 @@ try {
                     sections.push({ type: currentType, questions: currentSection });
                   }
 
-                  return sections.map((section, sectionIdx) => (
+                  return sections.map((section, sectionIdx) => {
+                    const sectionName = section.questions[0]?.question?.questionName || typeLabels[section.type] || section.type;
+                    
+                    return (
                     <div key={sectionIdx} className="space-y-2">
                       <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                        {section.questions[0]?.question?.questionName || typeLabels[section.type] || section.type}
+                        {sectionName}
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {section.questions.map(({ question: q, index: idx }) => {
@@ -1637,7 +1640,8 @@ try {
                         })}
                       </div>
                     </div>
-                  ));
+                    );
+                  });
                 })()}
                 
                 <div className="flex items-center gap-4 text-xs text-slate-600 pt-4 border-t">
