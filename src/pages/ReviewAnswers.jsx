@@ -542,7 +542,11 @@ Return your response as JSON in this exact format:
   }
 }
 
-IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p.id).join(', ')}). Include ALL passages in your response, even if you only highlight text in one of them. Highlight the specific sentences that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
+IMPORTANT: 
+- Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p.id).join(', ')})
+- Include ALL passages in your response, even if you only highlight text in one of them
+- Return the passage HTML EXACTLY as provided - do NOT add any title, "from [source]", or attribution lines at the beginning
+- Only add <mark class="bg-yellow-200"></mark> tags around relevant sentences to highlight them`;
 
       console.log('=== RC EXPLANATION PROMPT ===');
       console.log(prompt);
