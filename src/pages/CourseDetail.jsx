@@ -1319,7 +1319,7 @@ export default function CourseDetail() {
               const renderBlock = () => {
                 if (block.type === 'section') {
                   return (
-                    <div className="flex items-center gap-3 flex-1 -mx-4 -my-4 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500">
+                    <div className="flex items-center gap-3 flex-1 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 rounded-lg">
                       <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
                         #
                       </div>
