@@ -53,7 +53,7 @@ export default function ReviewAnswers() {
   const [dropZoneHighlightedPassages, setDropZoneHighlightedPassages] = useState({});
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [showNavBar, setShowNavBar] = useState(true);
-  const [generatedExplanations, setGeneratedExplanations] = useState({});
+  const [attemptedExplanations, setAttemptedExplanations] = useState(new Set());
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -164,7 +164,7 @@ export default function ReviewAnswers() {
     // Load reading comprehension explanation
     if (currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) {
       const explanation = quiz.ai_explanations?.[currentIndex];
-      const alreadyGenerated = generatedExplanations[currentIndex];
+      const alreadyAttempted = attemptedExplanations.has(currentIndex);
       
       if (explanation) {
         // Load existing explanation from DB
@@ -175,14 +175,11 @@ export default function ReviewAnswers() {
           setAiHelperContent(explanation.advice);
           setHighlightedPassages(explanation.passages || {});
         }
-      } else if (alreadyGenerated) {
-        // Already generated but DB might not have updated yet - use cached version
-        setAiHelperContent(alreadyGenerated.advice);
-        setHighlightedPassages(alreadyGenerated.passages || {});
-      } else {
-        // Auto-generate if doesn't exist and hasn't been generated yet
+      } else if (!alreadyAttempted) {
+        // Auto-generate only if we haven't already attempted for this question
         setAiHelperContent('');
         setHighlightedPassages({});
+        setAttemptedExplanations(prev => new Set([...prev, currentIndex]));
         generateRCExplanation(false);
       }
     } else {
@@ -621,20 +618,9 @@ Provide a helpful first-person explanation:`;
           cleanedPassages[passageId] = parsed.highlightedContent;
         }
         
-        const explanationData = {
-          advice: parsed.advice,
-          passages: cleanedPassages
-        };
-
         setAiHelperContent(parsed.advice || text);
         setHighlightedPassages(cleanedPassages);
         setOpenedExplanations(prev => new Set([...prev, explanationId]));
-
-        // Cache locally immediately
-        setGeneratedExplanations(prev => ({
-          ...prev,
-          [currentIndex]: explanationData
-        }));
 
         // Save to quiz entity with cleaned passages
         try {
@@ -642,7 +628,10 @@ Provide a helpful first-person explanation:`;
           await base44.entities.Quiz.update(quiz.id, {
             ai_explanations: {
               ...existingExplanations,
-              [currentIndex]: explanationData
+              [currentIndex]: {
+                advice: parsed.advice,
+                passages: cleanedPassages
+              }
             }
           });
           // Invalidate quiz query to refresh data
