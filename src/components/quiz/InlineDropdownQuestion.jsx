@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, Sparkles, Loader2, X } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -27,7 +27,12 @@ export default function InlineDropdownQuestion({
   tipsAllowed = 999,
   tipsUsed = 0,
   openedTips = new Set(),
-  currentIndex = 0
+  currentIndex = 0,
+  onRequestExplanation,
+  explanationContent = {},
+  explanationLoading = {},
+  openedExplanations = new Set(),
+  onRegenerateExplanation
 }) {
   const handleSelect = (blankId, value) => {
     if (showResults) return;
@@ -69,6 +74,11 @@ export default function InlineDropdownQuestion({
         const helpContent = aiHelperContent[blankId];
         const isLoadingHelp = aiHelperLoading[blankId];
         const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
+        
+        const explanationId = `blank-${currentIndex}-${blankId}`;
+        const wasExplanationOpened = openedExplanations.has(explanationId);
+        const explanation = explanationContent[blankId];
+        const isLoadingExplanation = explanationLoading[blankId];
 
         return (
           <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
@@ -138,6 +148,48 @@ export default function InlineDropdownQuestion({
                 <span className="text-xs text-slate-600">
                   Correct: <span className="font-medium text-emerald-600">{blank.correctAnswer}</span>
                 </span>
+                {onRequestExplanation && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => !explanation && onRequestExplanation(blankId)}
+                      >
+                        {isLoadingExplanation ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-indigo-500" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    {explanation && (
+                      <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
+                            {isAdmin && onRegenerateExplanation && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRegenerateExplanation(blankId)}
+                                className="h-7 px-2 gap-1"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                Regenerate
+                              </Button>
+                            )}
+                          </div>
+                          <div 
+                            className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: explanation }}
+                          />
+                        </div>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                )}
               </span>
             )}
           </span>
