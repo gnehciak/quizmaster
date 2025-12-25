@@ -94,6 +94,8 @@ export default function CourseDetail() {
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionIcon, setSectionIcon] = useState('#');
   const [sectionColor, setSectionColor] = useState('indigo');
+  const [customIconInput, setCustomIconInput] = useState('');
+  const [customColorInput, setCustomColorInput] = useState('');
 
   const quillModules = {
     toolbar: [
@@ -318,6 +320,8 @@ export default function CourseDetail() {
     setSectionTitle('');
     setSectionIcon('#');
     setSectionColor('indigo');
+    setCustomIconInput('');
+    setCustomColorInput('');
     setContentType('');
     setEditingBlock(null);
   };
@@ -341,6 +345,8 @@ export default function CourseDetail() {
       setSectionTitle(block.title || '');
       setSectionIcon(block.icon || '#');
       setSectionColor(block.color || 'indigo');
+      setCustomIconInput('');
+      setCustomColorInput('');
     }
     setAddContentOpen(true);
   };
@@ -935,6 +941,8 @@ export default function CourseDetail() {
                   setSectionTitle('');
                   setSectionIcon('#');
                   setSectionColor('indigo');
+                  setCustomIconInput('');
+                  setCustomColorInput('');
                 }
               }}>
                 <DialogTrigger asChild>
@@ -1229,25 +1237,37 @@ export default function CourseDetail() {
                             </div>
                             <div>
                               <label className="text-sm font-medium mb-2 block">Icon</label>
-                              <div className="grid grid-cols-6 gap-2">
+                              <div className="grid grid-cols-6 gap-2 mb-2">
                                 {['#', '📚', '🎯', '⭐', '🔥', '💡', '🎓', '📝', '✨', '🚀', '🎨', '🏆'].map((icon) => (
                                   <button
                                     key={icon}
                                     type="button"
-                                    onClick={() => setSectionIcon(icon)}
+                                    onClick={() => {
+                                      setSectionIcon(icon);
+                                      setCustomIconInput('');
+                                    }}
                                     className={cn(
                                       "p-3 rounded-lg border-2 text-xl transition-all hover:scale-110",
-                                      sectionIcon === icon ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"
+                                      sectionIcon === icon && !customIconInput ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"
                                     )}
                                   >
                                     {icon}
                                   </button>
                                 ))}
                               </div>
+                              <Input
+                                value={customIconInput}
+                                onChange={(e) => {
+                                  setCustomIconInput(e.target.value);
+                                  if (e.target.value) setSectionIcon(e.target.value);
+                                }}
+                                placeholder="Or enter custom icon (emoji or text)..."
+                                className="text-center"
+                              />
                             </div>
                             <div>
                               <label className="text-sm font-medium mb-2 block">Color Theme</label>
-                              <div className="grid grid-cols-4 gap-2">
+                              <div className="grid grid-cols-4 gap-2 mb-2">
                                 {[
                                   { name: 'indigo', from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
                                   { name: 'blue', from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
@@ -1261,17 +1281,105 @@ export default function CourseDetail() {
                                   <button
                                     key={color.name}
                                     type="button"
-                                    onClick={() => setSectionColor(color.name)}
+                                    onClick={() => {
+                                      setSectionColor(color.name);
+                                      setCustomColorInput('');
+                                    }}
                                     className={cn(
                                       "p-4 rounded-lg border-2 transition-all hover:scale-105 bg-gradient-to-r",
                                       color.from, color.to,
-                                      sectionColor === color.name ? "border-slate-800 ring-2 ring-slate-800" : "border-slate-200 hover:border-slate-300"
+                                      sectionColor === color.name && !customColorInput ? "border-slate-800 ring-2 ring-slate-800" : "border-slate-200 hover:border-slate-300"
                                     )}
                                   >
                                     <div className={cn("w-6 h-6 rounded-full mx-auto", color.bg)} />
                                   </button>
                                 ))}
                               </div>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={customColorInput}
+                                  onChange={(e) => {
+                                    setCustomColorInput(e.target.value);
+                                    if (e.target.value) setSectionColor(e.target.value);
+                                  }}
+                                  placeholder="Tailwind color name (e.g. teal, amber)"
+                                  className="flex-1"
+                                />
+                                <input
+                                  type="color"
+                                  onChange={(e) => {
+                                    const hex = e.target.value;
+                                    setCustomColorInput(hex);
+                                    setSectionColor(hex);
+                                  }}
+                                  className="w-12 h-10 rounded border border-slate-300 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Preview */}
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Preview</label>
+                              {(() => {
+                                const getColorStyles = (colorValue) => {
+                                  // Check if it's a hex color
+                                  if (colorValue?.startsWith('#')) {
+                                    return {
+                                      gradient: { background: `linear-gradient(to right, ${colorValue}20, ${colorValue}30)` },
+                                      border: { borderColor: colorValue },
+                                      icon: { backgroundColor: colorValue }
+                                    };
+                                  }
+                                  
+                                  // Preset colors
+                                  const colorMap = {
+                                    indigo: { from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
+                                    blue: { from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
+                                    green: { from: 'from-green-50', to: 'to-emerald-50', border: 'border-green-500', bg: 'bg-green-600' },
+                                    orange: { from: 'from-orange-50', to: 'to-amber-50', border: 'border-orange-500', bg: 'bg-orange-600' },
+                                    red: { from: 'from-red-50', to: 'to-pink-50', border: 'border-red-500', bg: 'bg-red-600' },
+                                    purple: { from: 'from-purple-50', to: 'to-fuchsia-50', border: 'border-purple-500', bg: 'bg-purple-600' },
+                                    slate: { from: 'from-slate-50', to: 'to-gray-50', border: 'border-slate-500', bg: 'bg-slate-600' },
+                                    pink: { from: 'from-pink-50', to: 'to-rose-50', border: 'border-pink-500', bg: 'bg-pink-600' },
+                                    teal: { from: 'from-teal-50', to: 'to-cyan-50', border: 'border-teal-500', bg: 'bg-teal-600' },
+                                    amber: { from: 'from-amber-50', to: 'to-yellow-50', border: 'border-amber-500', bg: 'bg-amber-600' },
+                                    emerald: { from: 'from-emerald-50', to: 'to-green-50', border: 'border-emerald-500', bg: 'bg-emerald-600' },
+                                    cyan: { from: 'from-cyan-50', to: 'to-blue-50', border: 'border-cyan-500', bg: 'bg-cyan-600' },
+                                    sky: { from: 'from-sky-50', to: 'to-blue-50', border: 'border-sky-500', bg: 'bg-sky-600' },
+                                    violet: { from: 'from-violet-50', to: 'to-purple-50', border: 'border-violet-500', bg: 'bg-violet-600' },
+                                    fuchsia: { from: 'from-fuchsia-50', to: 'to-pink-50', border: 'border-fuchsia-500', bg: 'bg-fuchsia-600' },
+                                    rose: { from: 'from-rose-50', to: 'to-pink-50', border: 'border-rose-500', bg: 'bg-rose-600' },
+                                    lime: { from: 'from-lime-50', to: 'to-green-50', border: 'border-lime-500', bg: 'bg-lime-600' },
+                                  };
+                                  return colorMap[colorValue] || colorMap.indigo;
+                                };
+                                
+                                const colors = getColorStyles(sectionColor);
+                                const isHexColor = sectionColor?.startsWith('#');
+                                
+                                return (
+                                  <div 
+                                    className={cn(
+                                      "flex items-center gap-3 px-4 py-3 border-l-4 rounded-lg",
+                                      !isHexColor && `bg-gradient-to-r ${colors.from} ${colors.to} ${colors.border}`
+                                    )}
+                                    style={isHexColor ? { ...colors.gradient, borderLeftColor: colors.border.borderColor } : {}}
+                                  >
+                                    <div 
+                                      className={cn(
+                                        "w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-lg flex-shrink-0",
+                                        !isHexColor && colors.bg
+                                      )}
+                                      style={isHexColor ? colors.icon : {}}
+                                    >
+                                      {sectionIcon || '#'}
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-800">
+                                      {sectionTitle || 'Section Title'}
+                                    </h3>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         )}
@@ -1385,21 +1493,57 @@ export default function CourseDetail() {
               const blockLocked = isBlockLocked(block);
               const renderBlock = () => {
                 if (block.type === 'section') {
-                  const colorMap = {
-                    indigo: { from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
-                    blue: { from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
-                    green: { from: 'from-green-50', to: 'to-emerald-50', border: 'border-green-500', bg: 'bg-green-600' },
-                    orange: { from: 'from-orange-50', to: 'to-amber-50', border: 'border-orange-500', bg: 'bg-orange-600' },
-                    red: { from: 'from-red-50', to: 'to-pink-50', border: 'border-red-500', bg: 'bg-red-600' },
-                    purple: { from: 'from-purple-50', to: 'to-fuchsia-50', border: 'border-purple-500', bg: 'bg-purple-600' },
-                    slate: { from: 'from-slate-50', to: 'to-gray-50', border: 'border-slate-500', bg: 'bg-slate-600' },
-                    pink: { from: 'from-pink-50', to: 'to-rose-50', border: 'border-pink-500', bg: 'bg-pink-600' },
+                  const getColorStyles = (colorValue) => {
+                    // Check if it's a hex color
+                    if (colorValue?.startsWith('#')) {
+                      return {
+                        gradient: { background: `linear-gradient(to right, ${colorValue}20, ${colorValue}30)` },
+                        border: { borderColor: colorValue },
+                        icon: { backgroundColor: colorValue }
+                      };
+                    }
+                    
+                    // Preset colors
+                    const colorMap = {
+                      indigo: { from: 'from-indigo-50', to: 'to-purple-50', border: 'border-indigo-500', bg: 'bg-indigo-600' },
+                      blue: { from: 'from-blue-50', to: 'to-cyan-50', border: 'border-blue-500', bg: 'bg-blue-600' },
+                      green: { from: 'from-green-50', to: 'to-emerald-50', border: 'border-green-500', bg: 'bg-green-600' },
+                      orange: { from: 'from-orange-50', to: 'to-amber-50', border: 'border-orange-500', bg: 'bg-orange-600' },
+                      red: { from: 'from-red-50', to: 'to-pink-50', border: 'border-red-500', bg: 'bg-red-600' },
+                      purple: { from: 'from-purple-50', to: 'to-fuchsia-50', border: 'border-purple-500', bg: 'bg-purple-600' },
+                      slate: { from: 'from-slate-50', to: 'to-gray-50', border: 'border-slate-500', bg: 'bg-slate-600' },
+                      pink: { from: 'from-pink-50', to: 'to-rose-50', border: 'border-pink-500', bg: 'bg-pink-600' },
+                      teal: { from: 'from-teal-50', to: 'to-cyan-50', border: 'border-teal-500', bg: 'bg-teal-600' },
+                      amber: { from: 'from-amber-50', to: 'to-yellow-50', border: 'border-amber-500', bg: 'bg-amber-600' },
+                      emerald: { from: 'from-emerald-50', to: 'to-green-50', border: 'border-emerald-500', bg: 'bg-emerald-600' },
+                      cyan: { from: 'from-cyan-50', to: 'to-blue-50', border: 'border-cyan-500', bg: 'bg-cyan-600' },
+                      sky: { from: 'from-sky-50', to: 'to-blue-50', border: 'border-sky-500', bg: 'bg-sky-600' },
+                      violet: { from: 'from-violet-50', to: 'to-purple-50', border: 'border-violet-500', bg: 'bg-violet-600' },
+                      fuchsia: { from: 'from-fuchsia-50', to: 'to-pink-50', border: 'border-fuchsia-500', bg: 'bg-fuchsia-600' },
+                      rose: { from: 'from-rose-50', to: 'to-pink-50', border: 'border-rose-500', bg: 'bg-rose-600' },
+                      lime: { from: 'from-lime-50', to: 'to-green-50', border: 'border-lime-500', bg: 'bg-lime-600' },
+                    };
+                    return colorMap[colorValue] || colorMap.indigo;
                   };
-                  const colors = colorMap[block.color || 'indigo'];
+                  
+                  const colors = getColorStyles(block.color);
+                  const isHexColor = block.color?.startsWith('#');
                   
                   return (
-                    <div className={cn("flex items-center gap-3 flex-1 px-4 py-3 bg-gradient-to-r border-l-4 rounded-lg", colors.from, colors.to, colors.border)}>
-                      <div className={cn("w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-lg flex-shrink-0", colors.bg)}>
+                    <div 
+                      className={cn(
+                        "flex items-center gap-3 flex-1 px-4 py-3 border-l-4 rounded-lg",
+                        !isHexColor && `bg-gradient-to-r ${colors.from} ${colors.to} ${colors.border}`
+                      )}
+                      style={isHexColor ? { ...colors.gradient, borderLeftColor: colors.border.borderColor } : {}}
+                    >
+                      <div 
+                        className={cn(
+                          "w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-lg flex-shrink-0",
+                          !isHexColor && colors.bg
+                        )}
+                        style={isHexColor ? colors.icon : {}}
+                      >
                         {block.icon || '#'}
                       </div>
                       <h3 className="text-xl font-bold text-slate-800">{block.title}</h3>
