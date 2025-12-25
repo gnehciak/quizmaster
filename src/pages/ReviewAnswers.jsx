@@ -523,24 +523,45 @@ Provide a helpful first-person explanation:`;
 
       const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
 
-      const prompt = `Tell the student what the correct answer is. Explain how to find the correct answer in the text. Keep it concise (3-4 sentences).
+      const prompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
+      Tone: Encouraging, simple, and direct.
 
-Question: ${questionText?.replace(/<[^>]*>/g, '')}
-Student's Answer: ${userAnswer}
-Correct Answer: ${correctAnswer}
+      **CRITICAL RULES:**
+      1. **Highlighting:** - Locate ALL specific sentences or phrases in the text that prove the Correct Answer. 
+         - Wrap EACH distinct piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>.
+         - Keep any existing formatting such as <strong> tags inside the highlighted sections.
+         - You may highlight multiple separate sections if the proof is spread across the text.
+      2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
+         - Do NOT summarize, truncate, or alter the non-highlighted text.
+      3. **Advice Strategy (Tell & Explain):** - **State the Answer:** Start your advice by clearly stating the correct answer (e.g., "The correct answer is Option A").
+         - **Explain:** Explain *why* this is the correct answer by directly referencing the text you highlighted.
+         - Connect the keywords in the question to the evidence in the text.
+      4. **JSON Logic:**
+         - If the input Passage(s) is a single string, use the [For single passage] format.
+         - If the input Passage(s) is an array/list, use the [For multiple passages] format.
+         - Return valid raw JSON only.
 
-Passages:
-${passagesList}
+      **INPUT DATA:**
+      Question: ${questionText?.replace(/<[^>]*>/g, '')}
+      Passage(s): ${passagesList}
+      Options: ${q.isSubQuestion ? q.subQuestion.options?.join(', ') : q.options?.join(', ')}
+      Correct Answer: ${correctAnswer}
 
-Return your response as JSON in this exact format:
-{
-  "advice": "Your explanation here in first person",
-  "passages": {
-    "${passagesForPrompt[0].id}": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"${passagesForPrompt.length > 1 ? `,\n    "${passagesForPrompt[1].id}": "Full passage HTML with <mark class='bg-yellow-200'>highlighted</mark> relevant sentences"` : ''}
-  }
-}
+      **OUTPUT FORMAT (JSON):**
 
-IMPORTANT: Use the EXACT passage IDs shown above (${passagesForPrompt.map(p => p.id).join(', ')}). Include ALL passages in your response, even if you only highlight text in one of them. Highlight the specific sentences that support your explanation by wrapping them in <mark class="bg-yellow-200"></mark> tags.`;
+      [For single passage]
+      {
+        "advice": "Start by stating the correct answer. Then, explain simply why the highlighted text supports it (2-3 sentences).",
+        "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+      }
+
+      [For multiple passages]
+      {
+        "advice": "Start by stating the correct answer. Then, explain simply why the highlighted text supports it (2-3 sentences).",
+        "passages": [
+          {"passageId": "${passagesForPrompt[0].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"}${passagesForPrompt.length > 1 ? `,\n          {"passageId": "${passagesForPrompt[1].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}` : ''}
+        ]
+      }`;
 
       console.log('=== RC EXPLANATION PROMPT ===');
       console.log(prompt);
