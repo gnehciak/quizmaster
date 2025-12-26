@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import React, { useEffect } from 'react';
+
 export default function ReadingComprehensionQuestion({ 
   question, 
   selectedAnswer,
@@ -83,6 +85,32 @@ export default function ReadingComprehensionQuestion({
   }, [isDragging]);
 
   const activePassage = passages.find(p => p.id === activeTab) || passages[0];
+
+  // Keyboard shortcuts for answer selection (1-4 keys)
+  useEffect(() => {
+    if (showResults) return;
+
+    const handleKeyPress = (e) => {
+      // Only trigger if not typing in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      const key = e.key;
+      const options = singleQuestion ? subQuestion?.options : question.comprehensionQuestions?.[0]?.options;
+      
+      if (!options) return;
+
+      // Numbers 1-4 for answer selection
+      if (key >= '1' && key <= '4') {
+        const index = parseInt(key) - 1;
+        if (index < options.length) {
+          onAnswer(options[index]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showResults, singleQuestion, subQuestion, question, onAnswer]);
 
   return (
     <div ref={containerRef} className="h-full flex relative">

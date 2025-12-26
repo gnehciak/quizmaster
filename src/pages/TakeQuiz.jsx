@@ -239,6 +239,25 @@ export default function TakeQuiz() {
     }
   };
 
+  // Arrow key navigation
+  useEffect(() => {
+    if (showResults || !quizStarted || submitted) return;
+
+    const handleKeyPress = (e) => {
+      // Only trigger if not typing in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowRight' && currentIndex < totalQuestions - 1) {
+        handleNext();
+      } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        handlePrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showResults, quizStarted, submitted, currentIndex, totalQuestions]);
+
   const handlePrev = () => {
     // Track time spent on current question
     const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
