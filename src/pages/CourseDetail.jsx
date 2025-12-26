@@ -30,7 +30,8 @@ import {
   Clock,
   Calendar,
   MoreVertical,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
