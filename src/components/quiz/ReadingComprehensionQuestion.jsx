@@ -223,7 +223,10 @@ export default function ReadingComprehensionQuestion({
                       </span>
                       
                       {!showResults && optIdx < 4 && (
-                        <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-600 rounded border border-slate-300">
+                        <kbd 
+                          className="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 rounded border border-slate-300"
+                          title={`Press ${optIdx + 1} to select`}
+                        >
                           {optIdx + 1}
                         </kbd>
                       )}
@@ -392,7 +395,10 @@ export default function ReadingComprehensionQuestion({
                         </span>
                         
                         {!showResults && optIdx < 4 && (
-                          <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-600 rounded border border-slate-300">
+                          <kbd 
+                            className="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 rounded border border-slate-300"
+                            title={`Press ${optIdx + 1} to select`}
+                          >
                             {optIdx + 1}
                           </kbd>
                         )}
