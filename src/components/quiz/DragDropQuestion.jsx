@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
@@ -33,58 +33,6 @@ export default function DragDropQuestion({
   onDeleteExplanation
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
-  const containerRef = useRef(null);
-  const scrollIntervalRef = useRef(null);
-
-  // Auto-scroll when dragging near edges
-  useEffect(() => {
-    const handleDrag = (e) => {
-      if (!draggedItem || !containerRef.current) return;
-
-      const container = containerRef.current;
-      const scrollThreshold = 100;
-      const scrollSpeed = 10;
-      const rect = container.getBoundingClientRect();
-      const mouseY = e.clientY - rect.top;
-
-      // Clear existing interval
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-
-      // Scroll down if near bottom
-      if (mouseY > rect.height - scrollThreshold) {
-        scrollIntervalRef.current = setInterval(() => {
-          container.scrollTop += scrollSpeed;
-        }, 16);
-      }
-      // Scroll up if near top
-      else if (mouseY < scrollThreshold) {
-        scrollIntervalRef.current = setInterval(() => {
-          container.scrollTop -= scrollSpeed;
-        }, 16);
-      }
-    };
-
-    const handleDragEnd = () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    };
-
-    document.addEventListener('drag', handleDrag);
-    document.addEventListener('dragend', handleDragEnd);
-
-    return () => {
-      document.removeEventListener('drag', handleDrag);
-      document.removeEventListener('dragend', handleDragEnd);
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-      }
-    };
-  }, [draggedItem]);
   
   // Get all used answers
   const usedAnswers = Object.values(selectedAnswers);
@@ -157,7 +105,7 @@ export default function DragDropQuestion({
   const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <div ref={containerRef} className="h-full p-8 overflow-y-auto">
+    <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
       {isUnattempted && (
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
