@@ -4,8 +4,6 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-import React, { useEffect } from 'react';
-
 export default function ReadingComprehensionQuestion({ 
   question, 
   selectedAnswer,
@@ -216,7 +214,7 @@ export default function ReadingComprehensionQuestion({
                       </div>
                       
                       <span className={cn(
-                        "text-sm",
+                        "text-sm flex-1",
                         isCorrect && "text-emerald-700 font-medium",
                         isWrong && "text-red-600",
                         !showResults && isSelected && "text-slate-800 font-medium"
@@ -224,11 +222,17 @@ export default function ReadingComprehensionQuestion({
                         {option}
                       </span>
                       
+                      {!showResults && optIdx < 4 && (
+                        <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-600 rounded border border-slate-300">
+                          {optIdx + 1}
+                        </kbd>
+                      )}
+                      
                       {showResults && isCorrect && (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 ml-auto" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       )}
                       {showResults && isWrong && (
-                        <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 ml-auto" />
+                        <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                       )}
                     </button>
                   );
@@ -379,7 +383,7 @@ export default function ReadingComprehensionQuestion({
                         </div>
                         
                         <span className={cn(
-                          "text-sm",
+                          "text-sm flex-1",
                           isCorrect && "text-emerald-700 font-medium",
                           isWrong && "text-red-600",
                           !showResults && isSelected && "text-slate-800 font-medium"
@@ -387,11 +391,17 @@ export default function ReadingComprehensionQuestion({
                           {option}
                         </span>
                         
+                        {!showResults && optIdx < 4 && (
+                          <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-600 rounded border border-slate-300">
+                            {optIdx + 1}
+                          </kbd>
+                        )}
+                        
                         {showResults && isCorrect && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 ml-auto" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                         )}
                         {showResults && isWrong && (
-                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 ml-auto" />
+                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                         )}
                       </button>
                     );
