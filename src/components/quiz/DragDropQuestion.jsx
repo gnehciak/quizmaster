@@ -59,6 +59,17 @@ export default function DragDropQuestion({
       const distanceFromBottom = rect.bottom - moveEvent.clientY;
       const distanceFromTop = moveEvent.clientY - rect.top;
       
+      // Log cursor coordinates and bottom bar detection
+      const screenHeight = window.innerHeight;
+      const bottomBarHeight = screenHeight - rect.bottom;
+      const isAtBottomBar = moveEvent.clientY > screenHeight - bottomBarHeight;
+      
+      console.log('Cursor Y:', moveEvent.clientY);
+      console.log('Screen Height:', screenHeight);
+      console.log('Bottom Bar Height:', bottomBarHeight);
+      console.log('At Bottom Bar:', isAtBottomBar);
+      console.log('Distance from Bottom:', distanceFromBottom);
+      
       // Clear any existing interval
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
@@ -67,17 +78,21 @@ export default function DragDropQuestion({
       
       // Scroll down when near bottom
       if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+        console.log('SCROLLING DOWN');
         scrollIntervalRef.current = setInterval(() => {
           if (container.scrollTop < container.scrollHeight - container.clientHeight) {
             container.scrollTop += scrollSpeed;
+            console.log('Scrolling down, scrollTop:', container.scrollTop);
           }
         }, 16); // ~60fps
       }
       // Scroll up when near top
       else if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+        console.log('SCROLLING UP');
         scrollIntervalRef.current = setInterval(() => {
           if (container.scrollTop > 0) {
             container.scrollTop -= scrollSpeed;
+            console.log('Scrolling up, scrollTop:', container.scrollTop);
           }
         }, 16);
       }
