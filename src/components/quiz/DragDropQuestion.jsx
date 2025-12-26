@@ -33,8 +33,6 @@ export default function DragDropQuestion({
   onDeleteExplanation
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
-  const scrollContainerRef = React.useRef(null);
-  const scrollIntervalRef = React.useRef(null);
   
   // Get all used answers
   const usedAnswers = Object.values(selectedAnswers);
@@ -51,65 +49,11 @@ export default function DragDropQuestion({
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    
-    if (!scrollContainerRef.current || !draggedItem) return;
-    
-    const container = scrollContainerRef.current;
-    const rect = container.getBoundingClientRect();
-    const scrollThreshold = 100; // pixels from edge to trigger scroll
-    const scrollSpeed = 5; // pixels per frame
-    
-    const distanceFromBottom = rect.bottom - e.clientY;
-    const distanceFromTop = e.clientY - rect.top;
-    
-    // Log cursor coordinates and bottom bar detection
-    const screenHeight = window.innerHeight;
-    const bottomBarHeight = screenHeight - rect.bottom;
-    const isAtBottomBar = e.clientY > screenHeight - bottomBarHeight;
-    
-    console.log('Cursor Y:', e.clientY);
-    console.log('Screen Height:', screenHeight);
-    console.log('Bottom Bar Height:', bottomBarHeight);
-    console.log('At Bottom Bar:', isAtBottomBar);
-    console.log('Distance from Bottom:', distanceFromBottom);
-    
-    // Clear any existing interval
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-    
-    // Scroll down when near bottom
-    if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
-      console.log('SCROLLING DOWN');
-      scrollIntervalRef.current = setInterval(() => {
-        if (container.scrollTop < container.scrollHeight - container.clientHeight) {
-          container.scrollTop += scrollSpeed;
-          console.log('Scrolling down, scrollTop:', container.scrollTop);
-        }
-      }, 16); // ~60fps
-    }
-    // Scroll up when near top
-    else if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
-      console.log('SCROLLING UP');
-      scrollIntervalRef.current = setInterval(() => {
-        if (container.scrollTop > 0) {
-          container.scrollTop -= scrollSpeed;
-          console.log('Scrolling up, scrollTop:', container.scrollTop);
-        }
-      }, 16);
-    }
   };
 
   const handleDrop = (e, zoneId) => {
     e.preventDefault();
     if (showResults || !draggedItem) return;
-    
-    // Clear scroll interval
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
     
     const newAnswers = { ...selectedAnswers };
     
@@ -134,12 +78,6 @@ export default function DragDropQuestion({
   const handleDropToAvailable = (e) => {
     e.preventDefault();
     if (showResults || !draggedItem) return;
-    
-    // Clear scroll interval
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
     
     const newAnswers = { ...selectedAnswers };
     
@@ -167,7 +105,7 @@ export default function DragDropQuestion({
   const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <div ref={scrollContainerRef} className="h-full p-8 overflow-y-auto">
+    <div className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
       {isUnattempted && (
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
