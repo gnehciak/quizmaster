@@ -46,79 +46,70 @@ export default function DragDropQuestion({
     if (showResults) return;
     setDraggedItem({ item: option, fromZone });
     e.dataTransfer.effectAllowed = 'move';
-    
-    // Start auto-scroll on drag
-    const handleDragMove = (moveEvent) => {
-      if (!scrollContainerRef.current) return;
-      
-      const container = scrollContainerRef.current;
-      const rect = container.getBoundingClientRect();
-      const scrollThreshold = 100; // pixels from edge to trigger scroll
-      const scrollSpeed = 5; // pixels per frame
-      
-      const distanceFromBottom = rect.bottom - moveEvent.clientY;
-      const distanceFromTop = moveEvent.clientY - rect.top;
-      
-      // Log cursor coordinates and bottom bar detection
-      const screenHeight = window.innerHeight;
-      const bottomBarHeight = screenHeight - rect.bottom;
-      const isAtBottomBar = moveEvent.clientY > screenHeight - bottomBarHeight;
-      
-      console.log('Cursor Y:', moveEvent.clientY);
-      console.log('Screen Height:', screenHeight);
-      console.log('Bottom Bar Height:', bottomBarHeight);
-      console.log('At Bottom Bar:', isAtBottomBar);
-      console.log('Distance from Bottom:', distanceFromBottom);
-      
-      // Clear any existing interval
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-      
-      // Scroll down when near bottom
-      if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
-        console.log('SCROLLING DOWN');
-        scrollIntervalRef.current = setInterval(() => {
-          if (container.scrollTop < container.scrollHeight - container.clientHeight) {
-            container.scrollTop += scrollSpeed;
-            console.log('Scrolling down, scrollTop:', container.scrollTop);
-          }
-        }, 16); // ~60fps
-      }
-      // Scroll up when near top
-      else if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
-        console.log('SCROLLING UP');
-        scrollIntervalRef.current = setInterval(() => {
-          if (container.scrollTop > 0) {
-            container.scrollTop -= scrollSpeed;
-            console.log('Scrolling up, scrollTop:', container.scrollTop);
-          }
-        }, 16);
-      }
-    };
-    
-    document.addEventListener('drag', handleDragMove);
-    
-    const cleanup = () => {
-      document.removeEventListener('drag', handleDragMove);
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    };
-    
-    document.addEventListener('dragend', cleanup, { once: true });
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (!scrollContainerRef.current || !draggedItem) return;
+    
+    const container = scrollContainerRef.current;
+    const rect = container.getBoundingClientRect();
+    const scrollThreshold = 100; // pixels from edge to trigger scroll
+    const scrollSpeed = 5; // pixels per frame
+    
+    const distanceFromBottom = rect.bottom - e.clientY;
+    const distanceFromTop = e.clientY - rect.top;
+    
+    // Log cursor coordinates and bottom bar detection
+    const screenHeight = window.innerHeight;
+    const bottomBarHeight = screenHeight - rect.bottom;
+    const isAtBottomBar = e.clientY > screenHeight - bottomBarHeight;
+    
+    console.log('Cursor Y:', e.clientY);
+    console.log('Screen Height:', screenHeight);
+    console.log('Bottom Bar Height:', bottomBarHeight);
+    console.log('At Bottom Bar:', isAtBottomBar);
+    console.log('Distance from Bottom:', distanceFromBottom);
+    
+    // Clear any existing interval
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+    
+    // Scroll down when near bottom
+    if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+      console.log('SCROLLING DOWN');
+      scrollIntervalRef.current = setInterval(() => {
+        if (container.scrollTop < container.scrollHeight - container.clientHeight) {
+          container.scrollTop += scrollSpeed;
+          console.log('Scrolling down, scrollTop:', container.scrollTop);
+        }
+      }, 16); // ~60fps
+    }
+    // Scroll up when near top
+    else if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+      console.log('SCROLLING UP');
+      scrollIntervalRef.current = setInterval(() => {
+        if (container.scrollTop > 0) {
+          container.scrollTop -= scrollSpeed;
+          console.log('Scrolling up, scrollTop:', container.scrollTop);
+        }
+      }, 16);
+    }
   };
 
   const handleDrop = (e, zoneId) => {
     e.preventDefault();
     if (showResults || !draggedItem) return;
+    
+    // Clear scroll interval
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
     
     const newAnswers = { ...selectedAnswers };
     
@@ -143,6 +134,12 @@ export default function DragDropQuestion({
   const handleDropToAvailable = (e) => {
     e.preventDefault();
     if (showResults || !draggedItem) return;
+    
+    // Clear scroll interval
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
     
     const newAnswers = { ...selectedAnswers };
     
