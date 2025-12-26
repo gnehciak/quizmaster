@@ -33,6 +33,8 @@ export default function DragDropQuestion({
   onDeleteExplanation
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
+  const scrollContainerRef = React.useRef(null);
+  const scrollIntervalRef = React.useRef(null);
   
   // Get all used answers
   const usedAnswers = Object.values(selectedAnswers);
@@ -44,6 +46,54 @@ export default function DragDropQuestion({
     if (showResults) return;
     setDraggedItem({ item: option, fromZone });
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Start auto-scroll on drag
+    const handleDragMove = (moveEvent) => {
+      if (!scrollContainerRef.current) return;
+      
+      const container = scrollContainerRef.current;
+      const rect = container.getBoundingClientRect();
+      const scrollThreshold = 100; // pixels from edge to trigger scroll
+      const scrollSpeed = 5; // pixels per frame
+      
+      const distanceFromBottom = rect.bottom - moveEvent.clientY;
+      const distanceFromTop = moveEvent.clientY - rect.top;
+      
+      // Clear any existing interval
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+      
+      // Scroll down when near bottom
+      if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+        scrollIntervalRef.current = setInterval(() => {
+          if (container.scrollTop < container.scrollHeight - container.clientHeight) {
+            container.scrollTop += scrollSpeed;
+          }
+        }, 16); // ~60fps
+      }
+      // Scroll up when near top
+      else if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+        scrollIntervalRef.current = setInterval(() => {
+          if (container.scrollTop > 0) {
+            container.scrollTop -= scrollSpeed;
+          }
+        }, 16);
+      }
+    };
+    
+    document.addEventListener('drag', handleDragMove);
+    
+    const cleanup = () => {
+      document.removeEventListener('drag', handleDragMove);
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+    };
+    
+    document.addEventListener('dragend', cleanup, { once: true });
   };
 
   const handleDragOver = (e) => {
@@ -105,7 +155,7 @@ export default function DragDropQuestion({
   const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <div className="h-full p-8 overflow-y-auto">
+    <div ref={scrollContainerRef} className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
       {isUnattempted && (
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
