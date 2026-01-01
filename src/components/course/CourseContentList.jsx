@@ -188,7 +188,18 @@ export default function CourseContentList({
           </div>
 
           <div className="flex items-center gap-2">
-            {!isAdmin && (
+            {isAdmin ? (
+                <>
+                    <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}`)}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                            <Pencil className="w-3 h-3" /> Edit
+                        </Button>
+                    </Link>
+                    <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
+                        <Button size="sm">Start</Button>
+                    </Link>
+                </>
+            ) : (
                 <>
                 {hasAccess ? (
                   hasCompleted ? (
