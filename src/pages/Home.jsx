@@ -3,6 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, BookOpen, PenTool, GraduationCap } from 'lucide-react';
 import Hero from '@/components/home/Hero';
+import StatsSection from '@/components/home/StatsSection';
+import KeyFeatures from '@/components/home/KeyFeatures';
+import BundlesSection from '@/components/home/BundlesSection';
 import CourseSection from '@/components/home/CourseSection';
 import FeatureShowcase from '@/components/home/FeatureShowcase';
 import ContactFooter from '@/components/home/ContactFooter';
@@ -78,6 +81,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Hero />
+      <StatsSection />
+      <KeyFeatures />
+      <BundlesSection />
       
       <div id="courses">
         <CourseSection 
