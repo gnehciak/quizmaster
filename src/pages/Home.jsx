@@ -127,7 +127,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
       {user?.role === 'admin' && (
-        <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+        <div className="fixed bottom-6 right-6 z-[100] flex gap-2">
           {editMode ? (
             <>
               <Button onClick={() => setEditMode(false)} variant="outline" className="shadow-lg bg-white">

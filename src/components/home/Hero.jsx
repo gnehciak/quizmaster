@@ -273,7 +273,7 @@ export default function Hero({ content, onUpdate, editMode }) {
             const Icon = ICON_MAP[slide.badgeIconName] || Sparkles;
             return (
               <CarouselItem key={slide.id}>
-                <div className="relative h-[700px] md:h-[800px] flex items-center">
+                <div className="relative h-[600px] md:h-[700px] flex items-center">
                   <div className="absolute inset-y-0 right-0 w-[55%] z-0">
                     <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
                     <img 
