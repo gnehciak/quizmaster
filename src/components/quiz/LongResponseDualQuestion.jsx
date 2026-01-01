@@ -108,6 +108,9 @@ export default function LongResponseDualQuestion({
               placeholder="Type your extended response here..."
               className="h-full"
               minHeight="100%"
+              hideRawView={true}
+              disableLinks={true}
+              disableHighlight={true}
             />
             {showResults && !isAdmin && (
                <div className="absolute inset-0 bg-slate-50/50 z-10 cursor-not-allowed" />
