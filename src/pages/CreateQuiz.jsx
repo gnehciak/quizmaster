@@ -26,11 +26,15 @@ import {
   Eye,
   GripVertical,
   PlayCircle,
-  Download
+  Download,
+  Settings,
+  List
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
+import QuestionPreview from '@/components/quiz/QuestionPreview';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CreateQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
