@@ -1,11 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CourseCard from '@/components/course/CourseCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Edit, BookOpen, PenTool, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function CourseSection({ title, description, courses, accessMap, categoryLink, icon: Icon, color = "indigo" }) {
+const ICON_MAP = {
+  BookOpen: BookOpen,
+  PenTool: PenTool,
+  GraduationCap: GraduationCap
+};
+
+export default function CourseSection({ 
+  title, 
+  description, 
+  courses, 
+  accessMap, 
+  categoryLink, 
+  iconName, 
+  color = "indigo",
+  onUpdate,
+  editMode
+}) {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   const bgColors = {
     indigo: "bg-indigo-50",
     purple: "bg-purple-50",
@@ -20,8 +55,80 @@ export default function CourseSection({ title, description, courses, accessMap, 
     amber: "text-amber-600"
   };
 
+  const Icon = ICON_MAP[iconName] || BookOpen;
+
+  const handleUpdate = (field, value) => {
+    if (onUpdate) {
+      onUpdate({ title, description, categoryLink, iconName, color, [field]: value });
+    }
+  };
+
   return (
-    <section className="py-20 border-b border-slate-100">
+    <section className="py-20 border-b border-slate-100 relative group/section">
+      {editMode && onUpdate && (
+        <div className="absolute top-4 right-4 z-10">
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="secondary" className="shadow-lg gap-2">
+                <Edit className="w-4 h-4" /> Edit Section Info
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Course Section</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Section Title</Label>
+                  <Input value={title} onChange={(e) => handleUpdate('title', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea value={description} onChange={(e) => handleUpdate('description', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category Link (optional)</Label>
+                  <Input value={categoryLink} onChange={(e) => handleUpdate('categoryLink', e.target.value)} placeholder="/courses/category" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Icon</Label>
+                  <Select 
+                    value={iconName} 
+                    onValueChange={(val) => handleUpdate('iconName', val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(ICON_MAP).map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Color Theme</Label>
+                  <Select 
+                    value={color} 
+                    onValueChange={(val) => handleUpdate('color', val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indigo">Indigo</SelectItem>
+                      <SelectItem value="purple">Purple</SelectItem>
+                      <SelectItem value="emerald">Emerald</SelectItem>
+                      <SelectItem value="amber">Amber</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="max-w-2xl">

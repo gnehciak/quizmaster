@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, BookOpen, PenTool, GraduationCap, Edit, Save, X } from 'lucide-react';
+import { Loader2, Edit, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Hero from '@/components/home/Hero';
-// import StatsSection from '@/components/home/StatsSection'; // Removed as requested
 import KeyFeatures from '@/components/home/KeyFeatures';
 import BundlesSection from '@/components/home/BundlesSection';
 import CourseSection from '@/components/home/CourseSection';
@@ -12,8 +11,6 @@ import FeatureShowcase from '@/components/home/FeatureShowcase';
 import ContactFooter from '@/components/home/ContactFooter';
 
 export default function Home() {
-  const [searchTerm, setSearchTerm] = useState('');
-
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -61,10 +58,10 @@ export default function Home() {
     });
 
   const [editMode, setEditMode] = useState(false);
-  const [tempContent, setTempContent] = useState(null);
+  const [tempContent, setTempContent] = useState({});
 
   React.useEffect(() => {
-    if (siteConfig) {
+    if (siteConfig?.content) {
       setTempContent(siteConfig.content);
     }
   }, [siteConfig]);
@@ -72,8 +69,6 @@ export default function Home() {
   const handleUpdateSection = (sectionKey, sectionData) => {
     const newContent = { ...tempContent, [sectionKey]: sectionData };
     setTempContent(newContent);
-    // Auto-save or wait for save button? Let's auto-save for smoother experience or provide save button.
-    // Given "comprehensive", explicit save is safer.
   };
 
   const handleSaveConfig = async () => {
@@ -124,6 +119,20 @@ export default function Home() {
     );
   }
 
+  // Helper to get section config or defaults for course sections
+  const getSectionConfig = (key, defaultTitle, defaultDesc, defaultIcon, defaultColor) => {
+    return tempContent[key] || {
+      title: defaultTitle,
+      description: defaultDesc,
+      iconName: defaultIcon,
+      color: defaultColor
+    };
+  };
+
+  const ocConfig = getSectionConfig('ocSection', 'OC Reading Trial Test', 'Comprehensive preparation for Opportunity Class placement with focus on reading comprehension and critical thinking.', 'BookOpen', 'indigo');
+  const selConfig = getSectionConfig('selectiveSection', 'Selective Reading & Writing', 'Advanced trial tests and classes designed for Selective High School placement success.', 'PenTool', 'purple');
+  const otherConfig = getSectionConfig('otherSection', 'More Courses', 'Explore our range of general knowledge and skill-building courses.', 'GraduationCap', 'emerald');
+
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
       {user?.role === 'admin' && (
@@ -146,47 +155,62 @@ export default function Home() {
       )}
 
       <Hero 
-        content={editMode ? tempContent?.hero : (siteConfig?.content?.hero)} 
+        content={editMode ? tempContent.hero : (siteConfig?.content?.hero)} 
         onUpdate={(data) => handleUpdateSection('hero', data)}
         editMode={editMode}
       />
-      {/* StatsSection removed */}
-      <KeyFeatures />
-      <BundlesSection />
-      <FeatureShowcase />
+      
+      <KeyFeatures 
+        content={editMode ? tempContent.keyFeatures : (siteConfig?.content?.keyFeatures)}
+        onUpdate={(data) => handleUpdateSection('keyFeatures', data)}
+        editMode={editMode}
+      />
+      
+      <BundlesSection 
+        content={editMode ? tempContent.bundles : (siteConfig?.content?.bundles)}
+        onUpdate={(data) => handleUpdateSection('bundles', data)}
+        editMode={editMode}
+      />
+      
+      <FeatureShowcase 
+        content={editMode ? tempContent.featureShowcase : (siteConfig?.content?.featureShowcase)}
+        onUpdate={(data) => handleUpdateSection('featureShowcase', data)}
+        editMode={editMode}
+      />
       
       <div id="courses">
         <CourseSection 
-          title="OC Reading Trial Test" 
-          description="Comprehensive preparation for Opportunity Class placement with focus on reading comprehension and critical thinking."
+          {...ocConfig}
           courses={ocCourses}
           accessMap={accessMap}
-          icon={BookOpen}
-          color="indigo"
+          onUpdate={(data) => handleUpdateSection('ocSection', data)}
+          editMode={editMode}
         />
 
         <CourseSection 
-          title="Selective Reading & Writing" 
-          description="Advanced trial tests and classes designed for Selective High School placement success."
+          {...selConfig}
           courses={selectiveCourses}
           accessMap={accessMap}
-          icon={PenTool}
-          color="purple"
+          onUpdate={(data) => handleUpdateSection('selectiveSection', data)}
+          editMode={editMode}
         />
 
         {otherCourses.length > 0 && (
           <CourseSection 
-            title="More Courses" 
-            description="Explore our range of general knowledge and skill-building courses."
+            {...otherConfig}
             courses={otherCourses}
             accessMap={accessMap}
-            icon={GraduationCap}
-            color="emerald"
+            onUpdate={(data) => handleUpdateSection('otherSection', data)}
+            editMode={editMode}
           />
         )}
       </div>
 
-      <ContactFooter />
+      <ContactFooter 
+        content={editMode ? tempContent.contactFooter : (siteConfig?.content?.contactFooter)}
+        onUpdate={(data) => handleUpdateSection('contactFooter', data)}
+        editMode={editMode}
+      />
     </div>
   );
 }
