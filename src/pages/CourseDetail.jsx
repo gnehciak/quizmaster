@@ -61,6 +61,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import CourseHero from '@/components/course/CourseHero';
+import CourseAdminTools from '@/components/course/CourseAdminTools';
+import CourseStudentsDialog from '@/components/course/CourseStudentsDialog';
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -98,6 +101,8 @@ export default function CourseDetail() {
   const [customIconInput, setCustomIconInput] = useState('');
   const [customColorInput, setCustomColorInput] = useState('');
   const [editMode, setEditMode] = useState(false);
+  const [studentsDialogOpen, setStudentsDialogOpen] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
 
   const quillModules = {
     toolbar: [
@@ -169,6 +174,36 @@ export default function CourseDetail() {
   const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
   const isAdmin = user?.role === 'admin' || user?.role === 'teacher';
   const contentBlocks = course?.content_blocks || [];
+
+  // Calculate Progress
+  const calculateProgress = () => {
+    if (!contentBlocks.length) return 0;
+    
+    // Count total interactive items that can be completed (quizzes)
+    const quizBlocks = contentBlocks.filter(b => b.type === 'quiz');
+    if (!quizBlocks.length) return 0;
+
+    const completedQuizzes = quizBlocks.filter(block => {
+      const quizAttempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
+      return quizAttempts.length > 0;
+    });
+
+    return (completedQuizzes.length / quizBlocks.length) * 100;
+  };
+
+  const progress = calculateProgress();
+
+  // Find first incomplete block for "Continue" button
+  const getFirstIncompleteBlock = () => {
+    const firstIncomplete = contentBlocks.find(block => {
+      if (block.type === 'quiz') {
+        const attempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
+        return attempts.length === 0;
+      }
+      return false; // Assume other content is "completed" once viewed, or logic TBD
+    });
+    return firstIncomplete?.id;
+  };
 
   // Handle payment status from URL
   React.useEffect(() => {
@@ -580,6 +615,44 @@ export default function CourseDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
+      <CourseStudentsDialog 
+        open={studentsDialogOpen} 
+        onOpenChange={setStudentsDialogOpen} 
+        courseId={courseId} 
+      />
+
+      {/* Unlock Dialog */}
+      <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unlock Course</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Enter Access Code</Label>
+              <Input
+                placeholder="Paste code here..."
+                value={unlockCode}
+                onChange={(e) => setUnlockCode(e.target.value)}
+              />
+              {error && <p className="text-sm text-red-600">{error}</p>}
+            </div>
+            <Button 
+              onClick={() => {
+                handleCodeUnlock().then(() => {
+                  if (!error) setUnlockDialogOpen(false);
+                });
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              disabled={!unlockCode.trim() || processing}
+            >
+              {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Unlock className="w-4 h-4 mr-2" />}
+              Unlock Access
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Purchase Success Dialog */}
       <Dialog open={purchaseSuccessOpen} onOpenChange={setPurchaseSuccessOpen}>
         <DialogContent className="max-w-md">
@@ -608,40 +681,44 @@ export default function CourseDetail() {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-3 flex-1">
-              <Link to={createPageUrl('Home')}>
-                <Button variant="ghost" size="icon">
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
-            </div>
-            {isAdmin && (
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant={editMode ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={() => setEditMode(!editMode)} 
-                  className="gap-2"
-                >
-                  <Pencil className="w-4 h-4" />
-                  {editMode ? 'Done Editing' : 'Edit Mode'}
-                </Button>
-                {editMode && (
-                  <Button variant="outline" size="sm" onClick={handleEditCourse} className="gap-2">
-                    <Pencil className="w-4 h-4" />
-                    Edit Course
-                  </Button>
-                )}
-              </div>
-            )}
+      {/* Top Navigation */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <Link to={createPageUrl('Home')} className="flex items-center text-slate-600 hover:text-slate-900 transition-colors">
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            <span className="font-medium">Back to Courses</span>
+          </Link>
+          <div className="font-semibold text-slate-800 truncate max-w-md hidden sm:block">
+            {course.title}
           </div>
-          <p className="text-slate-600">{course.description}</p>
+          <div className="w-20"></div> {/* Spacer for balance */}
         </div>
       </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* Course Hero */}
+        <CourseHero 
+          course={course}
+          access={access}
+          progress={progress}
+          hasAccess={hasAccess}
+          isLocked={course.is_locked}
+          onUnlock={() => setUnlockDialogOpen(true)}
+          onPurchase={handlePurchase}
+          firstIncompleteBlockId={getFirstIncompleteBlock()}
+        />
+
+        {/* Admin Toolbar */}
+        {isAdmin && (
+          <CourseAdminTools 
+            onEdit={handleEditCourse}
+            onAddContent={() => setAddContentOpen(true)}
+            onManageStudents={() => setStudentsDialogOpen(true)}
+            onAnalytics={() => window.location.href = createPageUrl('QuizAnalytics')}
+            editMode={editMode}
+            setEditMode={setEditMode}
+          />
+        )}
 
       {/* Edit Course Dialog */}
       <Dialog open={editCourseOpen} onOpenChange={(open) => {
@@ -829,115 +906,44 @@ export default function CourseDetail() {
       </Dialog>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        {/* Admin: Class Code Display */}
+        {/* Admin: Class Code Display (Compact) */}
         {isAdmin && course?.is_locked && course?.unlock_code && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-800">Class code</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="w-5 h-5 text-slate-600" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleResetCode} className="gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    Reset Code
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-4 mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl font-semibold text-slate-800 tracking-wide">
-                {course.unlock_code}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyCode}
-                className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-              >
-                <Copy className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Unlock Section */}
-        {!hasAccess && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-8">
-            <div className="text-center mb-8">
-              <Lock className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                This course is locked
-              </h2>
-              <p className="text-slate-600">
-                Unlock this course to access all quizzes and content
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Unlock with Code */}
-              <div className="border border-slate-200 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Key className="w-6 h-6 text-indigo-500" />
-                  <h3 className="font-semibold text-slate-800">Have a code?</h3>
-                </div>
-                <Input
-                  placeholder="Enter unlock code"
-                  value={unlockCode}
-                  onChange={(e) => setUnlockCode(e.target.value)}
-                  className="mb-3"
-                />
-                {error && (
-                  <p className="text-sm text-red-600 mb-3">{error}</p>
-                )}
-                <Button 
-                  onClick={handleCodeUnlock}
-                  className="w-full"
-                  disabled={!unlockCode.trim()}
-                >
-                  <Unlock className="w-4 h-4 mr-2" />
-                  Unlock with Code
-                </Button>
+              <div className="bg-white p-2 rounded-lg border border-indigo-100">
+                <Key className="w-5 h-5 text-indigo-600" />
               </div>
-
-              {/* Purchase */}
-              {course.price && (
-                <div className="border border-slate-200 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CreditCard className="w-6 h-6 text-indigo-500" />
-                    <h3 className="font-semibold text-slate-800">Purchase</h3>
-                  </div>
-                  <p className="text-3xl font-bold text-indigo-600 mb-4">
-                    ${course.price}
-                  </p>
-                  {error && (
-                    <p className="text-sm text-red-600 mb-3">{error}</p>
-                  )}
-                  <Button 
-                    onClick={handlePurchase}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700"
-                    disabled={processing}
+              <div>
+                <p className="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Access Code</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold text-slate-800 tracking-widest">{course.unlock_code}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleCopyCode}
+                    className="h-6 w-6 text-indigo-400 hover:text-indigo-600"
                   >
-                    {processing ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <CreditCard className="w-4 h-4 mr-2" />
-                    )}
-                    Purchase Course
+                    <Copy className="w-3 h-3" />
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleResetCode}
+              className="text-indigo-600 hover:bg-indigo-100"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
           </div>
         )}
 
         {/* Course Content */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-800">
+        <div className="space-y-4" id="course-content">
+          <div className="flex items-center justify-between mb-2 px-2">
+            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
               Course Content
             </h2>
             {isAdmin && editMode && (
@@ -1923,9 +1929,9 @@ export default function CourseDetail() {
                     handleReorderContent(startIndex, idx);
                   }}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3" id={`block-${block.id}`}>
                     {isAdmin && editMode && (
-                      <div className="cursor-grab active:cursor-grabbing pt-1">
+                      <div className="cursor-grab active:cursor-grabbing">
                         <GripVertical className="w-5 h-5 text-slate-400" />
                       </div>
                     )}
