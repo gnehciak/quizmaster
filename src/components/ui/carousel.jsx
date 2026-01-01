@@ -1,5 +1,5 @@
 import * as React from "react"
-import useEmblaCarousel from "embla-carousel-react";
+import useEmblaCarousel from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -100,7 +100,7 @@ const Carousel = React.forwardRef((
       }}>
       <div
         ref={ref}
-        onKeyDownCapture={handleKeyDown}
+        onKeyDown={handleKeyDown}
         className={cn("relative", className)}
         role="region"
         aria-roledescription="carousel"
@@ -190,4 +190,4 @@ const CarouselNext = React.forwardRef(({ className, variant = "outline", size = 
 })
 CarouselNext.displayName = "CarouselNext"
 
-export { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext };
+export { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext }
