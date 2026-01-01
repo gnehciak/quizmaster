@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2, BookOpen, PenTool, GraduationCap } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2, BookOpen, PenTool, GraduationCap, Edit, Save, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Hero from '@/components/home/Hero';
-import StatsSection from '@/components/home/StatsSection';
+// import StatsSection from '@/components/home/StatsSection'; // Removed as requested
 import KeyFeatures from '@/components/home/KeyFeatures';
 import BundlesSection from '@/components/home/BundlesSection';
 import CourseSection from '@/components/home/CourseSection';
@@ -34,6 +35,51 @@ export default function Home() {
     queryFn: () => base44.entities.CourseAccess.filter({ user_email: user?.email }),
     enabled: !!user?.email
   });
+
+  // Site Config for Home Page
+  const { data: siteConfig, isLoading: configLoading } = useQuery({
+    queryKey: ['siteConfig', 'home'],
+    queryFn: async () => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'home' });
+      return configs[0] || { key: 'home', content: {} };
+    }
+  });
+
+  const updateConfigMutation = useQueryClient().getMutationCache().find({ mutationKey: ['updateSiteConfig'] }) || 
+    useMutation({
+      mutationFn: async (newContent) => {
+        const configs = await base44.entities.SiteConfig.filter({ key: 'home' });
+        if (configs.length > 0) {
+          return base44.entities.SiteConfig.update(configs[0].id, { content: newContent });
+        } else {
+          return base44.entities.SiteConfig.create({ key: 'home', content: newContent });
+        }
+      },
+      onSuccess: () => {
+        useQueryClient().invalidateQueries({ queryKey: ['siteConfig', 'home'] });
+      }
+    });
+
+  const [editMode, setEditMode] = useState(false);
+  const [tempContent, setTempContent] = useState(null);
+
+  React.useEffect(() => {
+    if (siteConfig) {
+      setTempContent(siteConfig.content);
+    }
+  }, [siteConfig]);
+
+  const handleUpdateSection = (sectionKey, sectionData) => {
+    const newContent = { ...tempContent, [sectionKey]: sectionData };
+    setTempContent(newContent);
+    // Auto-save or wait for save button? Let's auto-save for smoother experience or provide save button.
+    // Given "comprehensive", explicit save is safer.
+  };
+
+  const handleSaveConfig = async () => {
+    await updateConfigMutation.mutateAsync(tempContent);
+    setEditMode(false);
+  };
 
   const accessMap = React.useMemo(() => {
     const map = {};
@@ -70,7 +116,7 @@ export default function Home() {
     !ocCourses.includes(c) && !selectiveCourses.includes(c)
   );
 
-  if (isLoading || accessLoading) {
+  if (isLoading || accessLoading || configLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
@@ -79,11 +125,35 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Hero />
-      <StatsSection />
+    <div className="min-h-screen bg-white flex flex-col relative">
+      {user?.role === 'admin' && (
+        <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+          {editMode ? (
+            <>
+              <Button onClick={() => setEditMode(false)} variant="outline" className="shadow-lg bg-white">
+                <X className="w-4 h-4 mr-2" /> Cancel
+              </Button>
+              <Button onClick={handleSaveConfig} className="shadow-lg bg-green-600 hover:bg-green-700">
+                <Save className="w-4 h-4 mr-2" /> Save Changes
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setEditMode(true)} className="shadow-lg bg-slate-900 text-white">
+              <Edit className="w-4 h-4 mr-2" /> Edit Page
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Hero 
+        content={editMode ? tempContent?.hero : (siteConfig?.content?.hero)} 
+        onUpdate={(data) => handleUpdateSection('hero', data)}
+        editMode={editMode}
+      />
+      {/* StatsSection removed */}
       <KeyFeatures />
       <BundlesSection />
+      <FeatureShowcase />
       
       <div id="courses">
         <CourseSection 
@@ -116,8 +186,6 @@ export default function Home() {
         )}
       </div>
 
-      <FeatureShowcase />
-      
       <ContactFooter />
     </div>
   );
