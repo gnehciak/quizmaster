@@ -100,10 +100,17 @@ export default function CreateQuiz() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      const sanitizedData = {
+        ...data,
+        timer_duration: data.timer_duration === '' ? 30 : data.timer_duration,
+        attempts_allowed: data.attempts_allowed === '' ? 999 : data.attempts_allowed,
+        tips_allowed: data.tips_allowed === '' ? 999 : data.tips_allowed,
+      };
+
       if (quizId) {
-        return base44.entities.Quiz.update(quizId, data);
+        return base44.entities.Quiz.update(quizId, sanitizedData);
       }
-      return base44.entities.Quiz.create(data);
+      return base44.entities.Quiz.create(sanitizedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
@@ -579,10 +586,10 @@ export default function CreateQuiz() {
                         <div className="flex items-center gap-3">
                           <Input
                             type="text"
-                            value={quiz.timer_duration || 30}
+                            value={quiz.timer_duration === 0 ? 0 : (quiz.timer_duration === '' ? '' : (quiz.timer_duration || ''))}
                             onChange={(e) => {
                               const value = e.target.value.replace(/[^0-9]/g, '');
-                              setQuiz(prev => ({ ...prev, timer_duration: value ? parseInt(value) : 30 }));
+                              setQuiz(prev => ({ ...prev, timer_duration: value === '' ? '' : parseInt(value) }));
                             }}
                             placeholder="30"
                             className="w-24"
@@ -599,10 +606,10 @@ export default function CreateQuiz() {
                       <div className="flex items-center gap-3">
                         <Input
                           type="text"
-                          value={quiz.attempts_allowed || 999}
+                          value={quiz.attempts_allowed === 0 ? 0 : (quiz.attempts_allowed === '' ? '' : (quiz.attempts_allowed || ''))}
                           onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9]/g, '');
-                            setQuiz(prev => ({ ...prev, attempts_allowed: value ? parseInt(value) : 999 }));
+                            setQuiz(prev => ({ ...prev, attempts_allowed: value === '' ? '' : parseInt(value) }));
                           }}
                           placeholder="999"
                           className="w-32"
@@ -637,10 +644,10 @@ export default function CreateQuiz() {
                           <span className="text-sm text-slate-700">Limit tips per attempt:</span>
                           <Input
                             type="text"
-                            value={quiz.tips_allowed || 999}
+                            value={quiz.tips_allowed === 0 ? 0 : (quiz.tips_allowed === '' ? '' : (quiz.tips_allowed || ''))}
                             onChange={(e) => {
                               const value = e.target.value.replace(/[^0-9]/g, '');
-                              setQuiz(prev => ({ ...prev, tips_allowed: value ? parseInt(value) : 999 }));
+                              setQuiz(prev => ({ ...prev, tips_allowed: value === '' ? '' : parseInt(value) }));
                             }}
                             placeholder="999"
                             className="w-24"
