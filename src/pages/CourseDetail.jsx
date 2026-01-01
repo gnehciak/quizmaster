@@ -720,6 +720,8 @@ export default function CourseDetail() {
           />
         )}
 
+      </div>
+
       {/* Edit Course Dialog */}
       <Dialog open={editCourseOpen} onOpenChange={(open) => {
         setEditCourseOpen(open);
