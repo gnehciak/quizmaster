@@ -262,310 +262,397 @@ export default function CreateQuiz() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {previewMode ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">{quiz.title}</h1>
-            <p className="text-slate-600 mb-6">{quiz.description}</p>
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+              <h1 className="text-3xl font-bold text-slate-800 mb-2">{quiz.title || 'Untitled Quiz'}</h1>
+              {quiz.description && (
+                <div 
+                  className="text-slate-600 prose prose-slate mx-auto"
+                  dangerouslySetInnerHTML={{ __html: quiz.description }}
+                />
+              )}
+              <div className="flex items-center justify-center gap-4 mt-6 text-sm text-slate-500">
+                <span className="flex items-center gap-1">
+                  <FileQuestion className="w-4 h-4" />
+                  {quiz.questions?.length || 0} Questions
+                </span>
+                {quiz.timer_enabled && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {quiz.timer_duration} Minutes
+                  </span>
+                )}
+              </div>
+            </div>
             
             <div className="space-y-8">
               {quiz.questions?.map((q, idx) => (
-                <div key={q.id} className="border-t pt-6">
-                  <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                    Question {idx + 1}: {q.question}
-                  </h3>
-                  {q.type === 'multiple_choice' && (
-                    <div className="space-y-2">
-                      {q.options?.map((opt, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>
-                          <span>{opt}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <QuestionPreview key={q.id} question={q} index={idx} />
               ))}
+              
+              {(!quiz.questions || quiz.questions.length === 0) && (
+                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 border-dashed">
+                  <FileQuestion className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">No questions added yet</p>
+                  <Button 
+                    variant="link" 
+                    onClick={() => setPreviewMode(false)}
+                    className="text-indigo-600"
+                  >
+                    Go back to editor to add questions
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
-          <>
-        {/* Quiz Info */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-          <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-            <FileQuestion className="w-5 h-5 text-indigo-500" />
-            Quiz Details
-          </h2>
-          
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2 space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={quiz.title}
-                onChange={(e) => setQuiz(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter quiz title..."
-                className="text-lg"
-              />
-            </div>
+          <Tabs defaultValue="questions" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="questions" className="gap-2">
+                <List className="w-4 h-4" />
+                Questions
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Settings & Details
+              </TabsTrigger>
+            </TabsList>
             
-            <div className="sm:col-span-2 space-y-2">
-              <Label>Description (optional)</Label>
-              <RichTextEditor
-                value={quiz.description || ''}
-                onChange={(value) => setQuiz(prev => ({ ...prev, description: value }))}
-                placeholder="Brief description of the quiz..."
-              />
-            </div>
-            
-            <div className="space-y-2 relative">
-              <Label>Category</Label>
-              <Input
-                placeholder="Search and select category..."
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                onFocus={() => setCategoryDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setCategoryDropdownOpen(false), 200)}
-              />
-              {categoryDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {sortedCategories
-                    .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
-                    .map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => {
-                          setQuiz(prev => ({ 
-                            ...prev, 
-                            category_id: cat.id,
-                            category: cat.name
-                          }));
-                          setCategorySearch(cat.name);
-                          setCategoryDropdownOpen(false);
-                        }}
-                        className="w-full px-4 py-2 text-left hover:bg-slate-100 transition-colors"
-                      >
-                        {cat.name}
-                      </button>
+            <TabsContent value="questions" className="space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Questions ({quiz.questions?.length || 0})
+                </h2>
+                <Button
+                  onClick={addQuestion}
+                  className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Question
+                </Button>
+              </div>
+
+              {/* Questions List & Editors */}
+              {quiz.questions && quiz.questions.length > 0 ? (
+                <>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-slate-500">Reorder Questions</h3>
+                    </div>
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="questions">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                            {quiz.questions?.map((question, idx) => (
+                              <Draggable key={question.id} draggableId={question.id} index={idx}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`bg-white rounded-lg border p-3 transition-all flex items-center gap-3 ${
+                                      snapshot.isDragging ? 'border-indigo-400 shadow-lg z-10' : 'border-slate-200 hover:border-slate-300'
+                                    }`}
+                                  >
+                                    <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600">
+                                      <GripVertical className="w-5 h-5" />
+                                    </div>
+                                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-medium text-slate-600">
+                                      {idx + 1}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm font-medium text-slate-800 truncate">
+                                        {(question.question || 'Untitled Question').replace(/<[^>]*>/g, '')}
+                                      </div>
+                                      <div className="text-xs text-slate-500">
+                                        {question.type?.replace(/_/g, ' ')}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const el = document.getElementById(`question-editor-${idx}`);
+                                          if (el) {
+                                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            // Ensure it's not collapsed
+                                            if (collapsedQuestions.has(idx)) {
+                                              toggleCollapseQuestion(idx);
+                                            }
+                                          }
+                                        }}
+                                        className="text-slate-500 hover:text-indigo-600"
+                                      >
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => deleteQuestion(idx)}
+                                        className="text-slate-500 hover:text-red-600"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  </div>
+
+                  <div className="space-y-6">
+                    {quiz.questions?.map((question, idx) => (
+                      <div key={question.id} id={`question-editor-${idx}`} className="scroll-mt-24">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                            Question {idx + 1}
+                          </span>
+                        </div>
+                        <QuestionEditor
+                          question={question}
+                          onChange={(updated) => updateQuestion(idx, updated)}
+                          onDelete={() => deleteQuestion(idx)}
+                          isCollapsed={collapsedQuestions.has(idx)}
+                          onToggleCollapse={() => toggleCollapseQuestion(idx)}
+                          existingQuestionNames={questionNames.map(qn => qn.name)}
+                        />
+                      </div>
                     ))}
-                  {sortedCategories.filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
-                    <div className="px-4 py-2 text-sm text-slate-500">No categories found</div>
-                  )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                  <FileQuestion className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">Start adding questions</h3>
+                  <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                    Create your quiz by adding different types of questions below.
+                  </p>
+                  <Button
+                    onClick={addQuestion}
+                    size="lg"
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add First Question
+                  </Button>
                 </div>
               )}
-            </div>
 
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={quiz.status || 'draft'}
-                onValueChange={(value) => setQuiz(prev => ({ ...prev, status: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Timer Settings */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-          <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-indigo-500" />
-            Quiz Settings
-          </h2>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="timer_enabled"
-                checked={quiz.timer_enabled || false}
-                onChange={(e) => setQuiz(prev => ({ ...prev, timer_enabled: e.target.checked }))}
-                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-              />
-              <Label htmlFor="timer_enabled" className="cursor-pointer">
-                Enable time limit for this quiz
-              </Label>
-            </div>
-
-            {quiz.timer_enabled && (
-              <div className="space-y-2 pl-7">
-                <Label>Duration (minutes)</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="text"
-                    value={quiz.timer_duration || 30}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      setQuiz(prev => ({ ...prev, timer_duration: value ? parseInt(value) : 30 }));
-                    }}
-                    placeholder="30"
-                    className="w-32"
-                  />
-                  <span className="text-sm text-slate-500">
-                    Quiz will auto-submit when time expires
-                  </span>
+              {quiz.questions && quiz.questions.length > 0 && (
+                <div className="pt-8 pb-20">
+                  <Button
+                    variant="outline"
+                    onClick={addQuestion}
+                    className="w-full h-16 border-dashed border-2 gap-2 text-slate-500 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 text-lg transition-all"
+                  >
+                    <Plus className="w-6 h-6" />
+                    Add Another Question
+                  </Button>
                 </div>
-              </div>
-            )}
+              )}
+            </TabsContent>
 
-            <div className="space-y-2">
-              <Label>Attempts Allowed</Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="text"
-                  value={quiz.attempts_allowed || 999}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, '');
-                    setQuiz(prev => ({ ...prev, attempts_allowed: value ? parseInt(value) : 999 }));
-                  }}
-                  placeholder="999"
-                  className="w-32"
-                />
-                <span className="text-sm text-slate-500">
-                  Set to 999 for unlimited attempts
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="allow_tips"
-                checked={quiz.allow_tips || false}
-                onChange={(e) => setQuiz(prev => ({ ...prev, allow_tips: e.target.checked }))}
-                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-              />
-              <Label htmlFor="allow_tips" className="cursor-pointer">
-                Allow AI help tips during quiz
-              </Label>
-            </div>
-
-            {quiz.allow_tips && (
-              <div className="space-y-2 pl-7">
-                <Label>Tips Allowed</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="text"
-                    value={quiz.tips_allowed || 999}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      setQuiz(prev => ({ ...prev, tips_allowed: value ? parseInt(value) : 999 }));
-                    }}
-                    placeholder="999"
-                    className="w-32"
-                  />
-                  <span className="text-sm text-slate-500">
-                    Set to 999 for unlimited tips
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Questions */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-800">
-              Questions ({quiz.questions?.length || 0})
-            </h2>
-          </div>
-
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="questions">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                  {quiz.questions?.map((question, idx) => (
-                    <Draggable key={question.id} draggableId={question.id} index={idx}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`bg-white rounded-lg border-2 p-3 transition-all ${
-                            snapshot.isDragging ? 'border-indigo-400 shadow-lg' : 'border-slate-200'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                              <GripVertical className="w-5 h-5 text-slate-400" />
-                            </div>
-                            <span className="text-sm font-semibold text-slate-600 min-w-[80px]">
-                              Question {idx + 1}
-                            </span>
-                            <span className="text-sm text-slate-500 flex-1 truncate">
-                              {(question.question || 'Untitled question').replace(/<[^>]*>/g, '')}
-                            </span>
-                            <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
-                              {question.type?.replace('_', ' ')}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const el = document.getElementById(`question-editor-${idx}`);
-                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              }}
-                              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteQuestion(idx)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Delete
-                            </Button>
-                          </div>
+            <TabsContent value="settings" className="space-y-6">
+              {/* Quiz Info */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+                <h2 className="font-semibold text-slate-800 flex items-center gap-2 text-lg border-b pb-4">
+                  <FileQuestion className="w-5 h-5 text-indigo-500" />
+                  Basic Information
+                </h2>
+                
+                <div className="grid gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-base">Quiz Title</Label>
+                    <Input
+                      value={quiz.title}
+                      onChange={(e) => setQuiz(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter a catchy title for your quiz..."
+                      className="text-lg h-12"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <div className="prose-editor-wrapper">
+                      <RichTextEditor
+                        value={quiz.description || ''}
+                        onChange={(value) => setQuiz(prev => ({ ...prev, description: value }))}
+                        placeholder="What is this quiz about? Provide instructions or context..."
+                        minHeight="150px"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2 relative">
+                      <Label>Category</Label>
+                      <Input
+                        placeholder="Select or search category..."
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        onFocus={() => setCategoryDropdownOpen(true)}
+                        onBlur={() => setTimeout(() => setCategoryDropdownOpen(false), 200)}
+                      />
+                      {categoryDropdownOpen && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {sortedCategories
+                            .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                            .map((cat) => (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => {
+                                  setQuiz(prev => ({ 
+                                    ...prev, 
+                                    category_id: cat.id,
+                                    category: cat.name
+                                  }));
+                                  setCategorySearch(cat.name);
+                                  setCategoryDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-2 text-left hover:bg-slate-100 transition-colors"
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          {sortedCategories.filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
+                            <div className="px-4 py-2 text-sm text-slate-500">No categories found</div>
+                          )}
                         </div>
                       )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Publish Status</Label>
+                      <Select
+                        value={quiz.status || 'draft'}
+                        onValueChange={(value) => setQuiz(prev => ({ ...prev, status: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft (Hidden)</SelectItem>
+                          <SelectItem value="published">Published (Visible)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-
-          {/* Question Editors */}
-          <div className="space-y-4 mt-8">
-            {quiz.questions?.map((question, idx) => (
-              <div key={question.id} id={`question-editor-${idx}`}>
-                <h3 className="text-sm font-medium text-slate-500 mb-2">
-                  Question {idx + 1}
-                </h3>
-                <QuestionEditor
-                  question={question}
-                  onChange={(updated) => updateQuestion(idx, updated)}
-                  onDelete={() => deleteQuestion(idx)}
-                  isCollapsed={collapsedQuestions.has(idx)}
-                  onToggleCollapse={() => toggleCollapseQuestion(idx)}
-                  existingQuestionNames={questionNames.map(qn => qn.name)}
-                />
               </div>
-            ))}
-          </div>
 
-          <motion.div layout>
-            <Button
-              variant="outline"
-              onClick={addQuestion}
-              className="w-full h-14 border-dashed border-2 gap-2 text-slate-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50"
-            >
-              <Plus className="w-5 h-5" />
-              Add Question
-            </Button>
-          </motion.div>
-        </div>
-        </>
+              {/* Timer Settings */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+                <h2 className="font-semibold text-slate-800 flex items-center gap-2 text-lg border-b pb-4">
+                  <Clock className="w-5 h-5 text-indigo-500" />
+                  Rules & Settings
+                </h2>
+
+                <div className="grid gap-6">
+                  <div className="flex items-start gap-3 p-4 border rounded-xl bg-slate-50">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        id="timer_enabled"
+                        checked={quiz.timer_enabled || false}
+                        onChange={(e) => setQuiz(prev => ({ ...prev, timer_enabled: e.target.checked }))}
+                        className="w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="timer_enabled" className="text-base font-medium cursor-pointer block mb-1">
+                        Time Limit
+                      </Label>
+                      <p className="text-sm text-slate-500 mb-3">
+                        Limit how much time students have to complete the quiz
+                      </p>
+                      
+                      {quiz.timer_enabled && (
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="text"
+                            value={quiz.timer_duration || 30}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setQuiz(prev => ({ ...prev, timer_duration: value ? parseInt(value) : 30 }));
+                            }}
+                            placeholder="30"
+                            className="w-24"
+                          />
+                          <span className="text-sm font-medium text-slate-700">minutes</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Attempts Allowed</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="text"
+                          value={quiz.attempts_allowed || 999}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            setQuiz(prev => ({ ...prev, attempts_allowed: value ? parseInt(value) : 999 }));
+                          }}
+                          placeholder="999"
+                          className="w-32"
+                        />
+                        <span className="text-sm text-slate-500">
+                          (999 = unlimited)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-4 border rounded-xl bg-slate-50">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        id="allow_tips"
+                        checked={quiz.allow_tips || false}
+                        onChange={(e) => setQuiz(prev => ({ ...prev, allow_tips: e.target.checked }))}
+                        className="w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="allow_tips" className="text-base font-medium cursor-pointer block mb-1">
+                        AI Help Tips
+                      </Label>
+                      <p className="text-sm text-slate-500 mb-3">
+                        Allow students to ask for AI-generated hints during the quiz
+                      </p>
+                      
+                      {quiz.allow_tips && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-slate-700">Limit tips per attempt:</span>
+                          <Input
+                            type="text"
+                            value={quiz.tips_allowed || 999}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              setQuiz(prev => ({ ...prev, tips_allowed: value ? parseInt(value) : 999 }));
+                            }}
+                            placeholder="999"
+                            className="w-24"
+                          />
+                          <span className="text-sm text-slate-500">(999 = unlimited)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
 
