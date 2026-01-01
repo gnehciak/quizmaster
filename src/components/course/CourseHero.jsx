@@ -24,18 +24,55 @@ export default function CourseHero({
   onPurchase, 
   firstIncompleteBlockId,
   isLocked,
-  hasAccess
+  hasAccess,
+  editMode,
+  onUpdate
 }) {
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [localTitle, setLocalTitle] = React.useState(course.title);
+  const [localDesc, setLocalDesc] = React.useState(course.description);
+
+  React.useEffect(() => {
+    setLocalTitle(course.title);
+    setLocalDesc(course.description);
+  }, [course.title, course.description]);
+
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    // You might want to pass a toast handler here or handle it in parent
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        onUpdate({ image_url: file_url });
+    } catch (error) {
+        console.error("Upload failed", error);
+    }
+    setIsUploading(false);
+  };
+
+  const handleRegenerateImage = async () => {
+    setIsGenerating(true);
+    try {
+        const prompt = `A modern, minimalist, educational cover image for a course titled "${localTitle}". Category: ${course.category || 'Education'}. Vibrant colors, vector art style, clean design, 4k quality.`;
+        const { url } = await base44.integrations.Core.GenerateImage({ prompt });
+        onUpdate({ image_url: url });
+    } catch (error) {
+        console.error("Generation failed", error);
+    }
+    setIsGenerating(false);
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm mb-8">
+    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm mb-8 group/hero">
       <div className="grid md:grid-cols-12 gap-0">
         {/* Image Section */}
-        <div className="md:col-span-5 lg:col-span-4 relative h-64 md:h-auto min-h-[300px]">
+        <div className="md:col-span-5 lg:col-span-4 relative h-64 md:h-auto min-h-[300px] bg-slate-100">
           {course.image_url ? (
             <img 
               src={course.image_url} 
@@ -47,10 +84,51 @@ export default function CourseHero({
               <BookOpen className="w-20 h-20 text-indigo-200" />
             </div>
           )}
+          
           {course.category && (
-            <Badge className="absolute top-4 left-4 bg-white/90 text-slate-800 hover:bg-white backdrop-blur-sm">
+            <Badge className="absolute top-4 left-4 bg-white/90 text-slate-800 hover:bg-white backdrop-blur-sm z-10">
               {course.category}
             </Badge>
+          )}
+
+          {editMode && (
+             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/hero:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4 z-20">
+                <input 
+                    type="file" 
+                    id="hero-image-upload" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                />
+                <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full max-w-[200px]"
+                    onClick={() => document.getElementById('hero-image-upload').click()}
+                    disabled={isUploading || isGenerating}
+                >
+                    {isUploading ? "Uploading..." : <><Upload className="w-4 h-4 mr-2" /> Upload Image</>}
+                </Button>
+                <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full max-w-[200px]"
+                    onClick={handleRegenerateImage}
+                    disabled={isUploading || isGenerating}
+                >
+                     {isGenerating ? "Generating..." : <><Sparkles className="w-4 h-4 mr-2" /> AI Generate</>}
+                </Button>
+                {course.image_url && (
+                    <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="w-full max-w-[200px]"
+                        onClick={() => onUpdate({ image_url: '' })}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" /> Remove
+                    </Button>
+                )}
+             </div>
           )}
         </div>
 
@@ -58,17 +136,46 @@ export default function CourseHero({
         <div className="md:col-span-7 lg:col-span-8 p-6 md:p-8 flex flex-col justify-between">
           <div>
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-3xl font-bold text-slate-900 leading-tight">
-                {course.title}
-              </h1>
-              <Button variant="ghost" size="icon" onClick={handleShare} className="text-slate-400 hover:text-indigo-600">
-                <Share2 className="w-5 h-5" />
-              </Button>
+              {editMode ? (
+                  <div className="flex-1">
+                      <input
+                          value={localTitle}
+                          onChange={(e) => setLocalTitle(e.target.value)}
+                          onBlur={() => {
+                              if (localTitle !== course.title) onUpdate({ title: localTitle });
+                          }}
+                          className="w-full text-3xl font-bold text-slate-900 leading-tight bg-transparent border-b border-dashed border-slate-300 focus:border-indigo-500 focus:outline-none px-1 py-1"
+                          placeholder="Course Title"
+                      />
+                  </div>
+              ) : (
+                  <h1 className="text-3xl font-bold text-slate-900 leading-tight">
+                    {course.title}
+                  </h1>
+              )}
+              
+              {!editMode && (
+                <Button variant="ghost" size="icon" onClick={handleShare} className="text-slate-400 hover:text-indigo-600">
+                    <Share2 className="w-5 h-5" />
+                </Button>
+              )}
             </div>
 
-            <p className="text-slate-600 text-lg mb-6 line-clamp-3">
-              {course.description}
-            </p>
+            {editMode ? (
+                <textarea
+                    value={localDesc}
+                    onChange={(e) => setLocalDesc(e.target.value)}
+                    onBlur={() => {
+                        if (localDesc !== course.description) onUpdate({ description: localDesc });
+                    }}
+                    className="w-full text-slate-600 text-lg mb-6 bg-transparent border rounded-lg border-dashed border-slate-300 focus:border-indigo-500 focus:outline-none p-3 min-h-[120px] resize-none"
+                    placeholder="Course Description"
+                />
+            ) : (
+                <p className="text-slate-600 text-lg mb-6 line-clamp-3">
+                    {course.description}
+                </p>
+            )}
 
             <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-slate-500">
               <div className="flex items-center gap-1.5">
