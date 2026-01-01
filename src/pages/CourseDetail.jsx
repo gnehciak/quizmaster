@@ -696,7 +696,7 @@ export default function CourseDetail() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-2">
         {/* Course Hero */}
         <CourseHero 
           course={course}
