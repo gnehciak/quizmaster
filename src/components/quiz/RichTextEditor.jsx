@@ -11,53 +11,62 @@ export default function RichTextEditor({
   onChange, 
   placeholder, 
   className,
-  minHeight = '100px'
+  minHeight = '100px',
+  hideRawView = false,
+  disableLinks = false,
+  disableHighlight = false
 }) {
   const [showRaw, setShowRaw] = useState(false);
 
-  const quillModules = {
+  const modules = React.useMemo(() => ({
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link'],
-      [{ 'background': [] }],
+      ...(disableLinks ? [] : [['link']]),
+      ...(disableHighlight ? [] : [[{ 'background': [] }]]),
       [{ 'align': [] }]
     ]
-  };
+  }), [disableLinks, disableHighlight]);
 
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background', 'align'];
+  const formats = [
+    'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
+    ...(disableLinks ? [] : ['link']),
+    ...(disableHighlight ? [] : ['background'])
+  ];
 
   return (
-    <div className="relative">
-      <div className="absolute top-2 right-2 z-10">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setShowRaw(!showRaw)}
-          className="h-7 px-2 gap-1.5 bg-white shadow-sm"
-        >
-          {showRaw ? (
-            <>
-              <Eye className="w-3.5 h-3.5" />
-              <span className="text-xs">Formatted</span>
-            </>
-          ) : (
-            <>
-              <Code2 className="w-3.5 h-3.5" />
-              <span className="text-xs">Raw</span>
-            </>
-          )}
-        </Button>
-      </div>
+    <div className={cn("relative flex flex-col", className)}>
+      {!hideRawView && (
+        <div className="absolute top-2 right-2 z-10">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowRaw(!showRaw)}
+            className="h-7 px-2 gap-1.5 bg-white shadow-sm"
+          >
+            {showRaw ? (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span className="text-xs">Formatted</span>
+              </>
+            ) : (
+              <>
+                <Code2 className="w-3.5 h-3.5" />
+                <span className="text-xs">Raw</span>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {showRaw ? (
         <Textarea
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={cn("font-mono text-xs", className)}
+          className="font-mono text-xs flex-1"
           style={{ minHeight }}
         />
       ) : (
@@ -65,9 +74,9 @@ export default function RichTextEditor({
           value={value || ''}
           onChange={onChange}
           placeholder={placeholder}
-          modules={quillModules}
-          formats={quillFormats}
-          className={cn("bg-white rounded-lg", className)}
+          modules={modules}
+          formats={formats}
+          className="bg-white rounded-lg flex-1 flex flex-col [&>.ql-container]:flex-1 [&>.ql-container]:rounded-b-lg [&>.ql-toolbar]:rounded-t-lg"
           style={{ minHeight }}
         />
       )}
