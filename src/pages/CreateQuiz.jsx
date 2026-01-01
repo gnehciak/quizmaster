@@ -28,7 +28,8 @@ import {
   PlayCircle,
   Download,
   Settings,
-  List
+  List,
+  Trash2
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import QuestionPreview from '@/components/quiz/QuestionPreview';
