@@ -21,8 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, Trash2, Pencil, GripVertical, LayoutGrid, List, ListOrdered, Upload, Loader2, X } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Plus, BookOpen, Search, Sparkles, ChevronLeft, FolderEdit, LayoutGrid, List, ListOrdered, Upload, Loader2, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CourseManageCard from '@/components/course/CourseManageCard';
 
@@ -33,9 +32,7 @@ export default function ManageCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [categoryName, setCategoryName] = useState('');
+
   const [viewMode, setViewMode] = useState('card');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState(null);
@@ -91,27 +88,7 @@ export default function ManageCourses() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courses'] })
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: (data) => base44.entities.CourseCategory.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
-      setCategoryName('');
-    }
-  });
 
-  const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CourseCategory.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
-      setEditingCategory(null);
-      setCategoryName('');
-    }
-  });
-
-  const deleteCategoryMutation = useMutation({
-    mutationFn: (id) => base44.entities.CourseCategory.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courseCategories'] })
-  });
 
   // Filter courses
   const filteredCourses = courses.filter((course) => {
@@ -216,41 +193,7 @@ export default function ManageCourses() {
     queryClient.invalidateQueries({ queryKey: ['courses'] });
   };
 
-  const handleCreateCategory = () => {
-    if (!categoryName.trim()) return;
-    createCategoryMutation.mutate({ name: categoryName });
-  };
 
-  const handleEditCategory = (category) => {
-    setEditingCategory(category);
-    setCategoryName(category.name);
-  };
-
-  const handleUpdateCategory = () => {
-    if (!editingCategory || !categoryName.trim()) return;
-    updateCategoryMutation.mutate({ id: editingCategory.id, data: { name: categoryName } });
-  };
-
-  const handleDeleteCategory = (id) => {
-    if (window.confirm('Delete this category?')) {
-      deleteCategoryMutation.mutate(id);
-    }
-  };
-
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(categories);
-    const [reordered] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reordered);
-    
-    // Update order for all categories
-    items.forEach((cat, idx) => {
-      base44.entities.CourseCategory.update(cat.id, { order: idx });
-    });
-    
-    queryClient.invalidateQueries({ queryKey: ['courseCategories'] });
-  };
 
   if (userLoading) {
     return (
@@ -288,137 +231,12 @@ export default function ManageCourses() {
             </div>
 
             <div className="flex gap-2">
-              <Dialog open={categoryDialogOpen} onOpenChange={(open) => {
-                setCategoryDialogOpen(open);
-                if (!open) {
-                  setEditingCategory(null);
-                  setCategoryName('');
-                }
-              }}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <FolderEdit className="w-4 h-4" />
-                    Edit Categories
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Manage Course Categories</DialogTitle>
-                  </DialogHeader>
-                  
-                  <div className="space-y-6">
-                    {/* Add New Category */}
-                    <div className="space-y-3">
-                      <Label>Add New Category</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={categoryName}
-                          onChange={(e) => setCategoryName(e.target.value)}
-                          placeholder="e.g. Programming"
-                          disabled={!!editingCategory}
-                        />
-                        <Button 
-                          onClick={handleCreateCategory} 
-                          disabled={!categoryName.trim() || !!editingCategory}
-                          className="gap-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Existing Categories */}
-                    <div className="space-y-3">
-                      <Label>Existing Categories (drag to reorder)</Label>
-                      <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="categories">
-                          {(provided) => (
-                            <div 
-                              {...provided.droppableProps} 
-                              ref={provided.innerRef}
-                              className="space-y-2 max-h-96 overflow-y-auto"
-                            >
-                              {categories.map((category, index) => (
-                                <Draggable key={category.id} draggableId={category.id} index={index}>
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      className={`flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 ${
-                                        snapshot.isDragging ? 'shadow-lg border-indigo-400' : ''
-                                      }`}
-                                    >
-                                      <div {...provided.dragHandleProps}>
-                                        <GripVertical className="w-4 h-4 text-slate-400 cursor-grab active:cursor-grabbing" />
-                                      </div>
-                                      
-                                      {editingCategory?.id === category.id ? (
-                                        <>
-                                          <Input
-                                            value={categoryName}
-                                            onChange={(e) => setCategoryName(e.target.value)}
-                                            className="flex-1"
-                                          />
-                                          <Button
-                                            size="sm"
-                                            onClick={handleUpdateCategory}
-                                            disabled={!categoryName.trim()}
-                                          >
-                                            Save
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => {
-                                              setEditingCategory(null);
-                                              setCategoryName('');
-                                            }}
-                                          >
-                                            Cancel
-                                          </Button>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <span className="flex-1 font-medium text-slate-800">
-                                            {category.name}
-                                          </span>
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => handleEditCategory(category)}
-                                            className="text-slate-400 hover:text-indigo-600"
-                                          >
-                                            <Pencil className="w-4 h-4" />
-                                          </Button>
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => handleDeleteCategory(category.id)}
-                                            className="text-slate-400 hover:text-red-600"
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
-                              {categories.length === 0 && (
-                                <p className="text-center text-slate-500 py-4">
-                                  No categories yet. Add one to get started.
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </Droppable>
-                      </DragDropContext>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Link to={createPageUrl('ManageCourseCategories')}>
+                <Button variant="outline" className="gap-2">
+                  <FolderEdit className="w-4 h-4" />
+                  Manage Categories
+                </Button>
+              </Link>
 
               <Dialog open={dialogOpen} onOpenChange={(open) => {
                 setDialogOpen(open);
