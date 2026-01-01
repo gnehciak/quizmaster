@@ -15,13 +15,11 @@ export default function RichTextEditor({
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link'],
-      [{ 'background': [] }],
       [{ 'align': [] }]
     ]
   };
 
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background', 'align'];
+  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align'];
 
   return (
     <div className={cn("flex flex-col h-full rich-text-editor-wrapper", className)}>
