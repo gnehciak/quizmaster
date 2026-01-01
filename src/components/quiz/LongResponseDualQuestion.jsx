@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from './RichTextEditor';
 import { cn } from '@/lib/utils';
 import { GripVertical } from 'lucide-react';
 
@@ -14,9 +15,9 @@ export default function LongResponseDualQuestion({
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
 
-  const handleChange = (e) => {
+  const handleChange = (value) => {
     if (showResults && !isAdmin) return;
-    onAnswer(e.target.value);
+    onAnswer(value);
   };
 
   const handleMouseDown = (e) => {
@@ -100,15 +101,17 @@ export default function LongResponseDualQuestion({
         </div>
         
         <div className="flex-1 p-6 flex flex-col overflow-y-auto">
-          <Textarea
-            value={selectedAnswer || ''}
-            onChange={handleChange}
-            placeholder="Type your extended response here..."
-            className="flex-1 w-full min-h-[300px] resize-none border-slate-200 focus-visible:ring-indigo-500 p-4 text-base leading-relaxed"
-            disabled={showResults && !isAdmin}
-          />
-          <div className="mt-2 text-xs text-slate-400 text-right">
-            {(selectedAnswer || '').length} characters
+          <div className="flex-1 flex flex-col min-h-0">
+            <RichTextEditor
+              value={selectedAnswer || ''}
+              onChange={handleChange}
+              placeholder="Type your extended response here..."
+              className="h-full"
+              minHeight="100%"
+            />
+            {showResults && !isAdmin && (
+               <div className="absolute inset-0 bg-slate-50/50 z-10 cursor-not-allowed" />
+            )}
           </div>
         </div>
       </div>
