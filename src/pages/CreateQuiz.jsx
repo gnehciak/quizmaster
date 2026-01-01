@@ -36,6 +36,12 @@ import QuestionPreview from '@/components/quiz/QuestionPreview';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function CreateQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -64,6 +70,7 @@ export default function CreateQuiz() {
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [previewQuestion, setPreviewQuestion] = useState(null);
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -381,6 +388,15 @@ export default function CreateQuiz() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
+                                        onClick={() => setPreviewQuestion(question)}
+                                        className="text-slate-500 hover:text-indigo-600"
+                                        title="Preview Question"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => {
                                           const el = document.getElementById(`question-editor-${idx}`);
                                           if (el) {
@@ -663,6 +679,23 @@ export default function CreateQuiz() {
           </Tabs>
         )}
       </div>
+
+      {/* Question Preview Dialog */}
+      <Dialog open={!!previewQuestion} onOpenChange={(open) => !open && setPreviewQuestion(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Question Preview</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {previewQuestion && (
+              <QuestionPreview 
+                question={previewQuestion} 
+                index={quiz.questions?.findIndex(q => q.id === previewQuestion.id) ?? 0} 
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Sticky Save Button */}
       <div className="fixed bottom-6 right-6 z-20">
