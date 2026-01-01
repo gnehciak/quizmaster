@@ -39,7 +39,7 @@ export default function CourseCard({ course, index, hasAccess, user }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+      className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full"
     >
       {/* Image */}
       <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden">
@@ -56,34 +56,34 @@ export default function CourseCard({ course, index, hasAccess, user }) {
         )}
         
         {!hasAccess && (
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center">
-            <div className="text-center text-white">
-              <Lock className="w-12 h-12 mx-auto mb-2" />
-              <p className="text-sm font-medium">Locked</p>
+          <div className="absolute top-3 right-3">
+            <div className="bg-slate-900/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-lg">
+              <Lock className="w-3 h-3" />
+              Locked
             </div>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <Link 
-            to={createPageUrl(`CourseDetail?id=${course.id}`)} 
-            className="flex-1 hover:text-indigo-600 transition-colors"
-          >
-            <h3 className="text-xl font-bold text-slate-800">
-              {course.title}
-            </h3>
-          </Link>
+      <div className="p-6 flex flex-col flex-1">
+        <div className="mb-4">
           {course.category && (
-            <Badge className={cn('text-xs font-medium border', categoryColors[course.category] || categoryColors.other)}>
+            <Badge className={cn('text-xs font-medium border mb-3 w-fit', categoryColors[course.category] || categoryColors.other)}>
               {course.category}
             </Badge>
           )}
+          <Link 
+            to={createPageUrl(`CourseDetail?id=${course.id}`)} 
+            className="block group"
+          >
+            <h3 className="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight">
+              {course.title}
+            </h3>
+          </Link>
         </div>
 
-        <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+        <p className="text-slate-600 text-sm mb-6 line-clamp-2">
           {course.description || 'No description available'}
         </p>
 
