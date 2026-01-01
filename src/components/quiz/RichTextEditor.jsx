@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function RichTextEditor({ 
@@ -8,62 +11,66 @@ export default function RichTextEditor({
   onChange, 
   placeholder, 
   className,
-  minHeight
+  minHeight = '100px'
 }) {
+  const [showRaw, setShowRaw] = useState(false);
+
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link'],
+      [{ 'background': [] }],
       [{ 'align': [] }]
     ]
   };
 
-  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align'];
+  const quillFormats = ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'background', 'align'];
 
   return (
-    <div className={cn("flex flex-col h-full rich-text-editor-wrapper", className)}>
-      <ReactQuill
-        value={value || ''}
-        onChange={onChange}
-        placeholder={placeholder}
-        modules={quillModules}
-        formats={quillFormats}
-        className="flex-1 flex flex-col overflow-hidden"
-        theme="snow"
-      />
-      <style>{`
-        .rich-text-editor-wrapper .quill {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-        .rich-text-editor-wrapper .ql-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          font-family: inherit;
-          font-size: 1rem;
-        }
-        .rich-text-editor-wrapper .ql-editor {
-          flex: 1;
-          overflow-y: auto;
-          font-family: inherit;
-        }
-        .rich-text-editor-wrapper .ql-toolbar {
-          border-top-left-radius: 0.5rem;
-          border-top-right-radius: 0.5rem;
-          background-color: #f8fafc;
-          border-color: #e2e8f0;
-        }
-        .rich-text-editor-wrapper .ql-container {
-          border-bottom-left-radius: 0.5rem;
-          border-bottom-right-radius: 0.5rem;
-          background-color: white;
-          border-color: #e2e8f0;
-        }
-      `}</style>
+    <div className="relative">
+      <div className="absolute top-2 right-2 z-10">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowRaw(!showRaw)}
+          className="h-7 px-2 gap-1.5 bg-white shadow-sm"
+        >
+          {showRaw ? (
+            <>
+              <Eye className="w-3.5 h-3.5" />
+              <span className="text-xs">Formatted</span>
+            </>
+          ) : (
+            <>
+              <Code2 className="w-3.5 h-3.5" />
+              <span className="text-xs">Raw</span>
+            </>
+          )}
+        </Button>
+      </div>
+
+      {showRaw ? (
+        <Textarea
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={cn("font-mono text-xs", className)}
+          style={{ minHeight }}
+        />
+      ) : (
+        <ReactQuill
+          value={value || ''}
+          onChange={onChange}
+          placeholder={placeholder}
+          modules={quillModules}
+          formats={quillFormats}
+          className={cn("bg-white rounded-lg", className)}
+          style={{ minHeight }}
+        />
+      )}
     </div>
   );
 }
