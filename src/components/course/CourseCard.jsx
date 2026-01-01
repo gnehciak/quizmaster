@@ -68,9 +68,14 @@ export default function CourseCard({ course, index, hasAccess, user }) {
       {/* Content */}
       <div className="p-6">
         <div className="flex items-start justify-between gap-2 mb-3">
-          <h3 className="text-xl font-bold text-slate-800 flex-1">
-            {course.title}
-          </h3>
+          <Link 
+            to={createPageUrl(`CourseDetail?id=${course.id}`)} 
+            className="flex-1 hover:text-indigo-600 transition-colors"
+          >
+            <h3 className="text-xl font-bold text-slate-800">
+              {course.title}
+            </h3>
+          </Link>
           {course.category && (
             <Badge className={cn('text-xs font-medium border', categoryColors[course.category] || categoryColors.other)}>
               {course.category}
@@ -83,16 +88,13 @@ export default function CourseCard({ course, index, hasAccess, user }) {
         </p>
 
         {course.features && course.features.length > 0 && (
-          <div className="space-y-1 mb-4">
-            {course.features.slice(0, 3).map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-sm text-slate-600">
-                <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span className="line-clamp-1">{feature}</span>
+          <div className="space-y-2 mb-6">
+            {course.features.map((feature, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>{feature}</span>
               </div>
             ))}
-            {course.features.length > 3 && (
-              <p className="text-xs text-slate-500 pl-6">+{course.features.length - 3} more</p>
-            )}
           </div>
         )}
 
@@ -101,17 +103,30 @@ export default function CourseCard({ course, index, hasAccess, user }) {
           <span>{formatDuration(course.enrollment_duration)}</span>
         </div>
 
-        <div className="flex items-center justify-between">
-          {course.is_locked && !hasAccess && course.price && (
-            <span className="text-lg font-bold text-indigo-600">
-              ${course.price}
-            </span>
-          )}
+        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+          <div className="flex flex-col">
+            {course.is_locked && !hasAccess ? (
+              course.price ? (
+                <>
+                  <span className="text-xs text-slate-500 font-medium">Price</span>
+                  <span className="text-2xl font-extrabold text-indigo-600">
+                    ${course.price}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xl font-bold text-green-600">Free</span>
+              )
+            ) : (
+              <span className="text-lg font-bold text-emerald-600">
+                {hasAccess ? 'Enrolled' : 'Unlocked'}
+              </span>
+            )}
+          </div>
           
           {user ? (
             <Link 
               to={createPageUrl(`CourseDetail?id=${course.id}`)}
-              className="ml-auto"
+              className=""
             >
               <Button className={cn("gap-2", !hasAccess && "bg-green-600 hover:bg-green-700")}>
                 {hasAccess ? 'View Course' : 'Unlock/Purchase'}
