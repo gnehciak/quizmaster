@@ -309,7 +309,8 @@ ${aiInput}`;
     drag_drop_dual: 'Drag & Drop (Dual Pane)',
     inline_dropdown_separate: 'Fill in the Blanks (Separate Options)',
     inline_dropdown_same: 'Fill in the Blanks (Same Options)',
-    matching_list_dual: 'Matching List (Dual Pane)'
+    matching_list_dual: 'Matching List (Dual Pane)',
+    long_response_dual: 'Long Response (Dual Pane)'
   };
 
   // Matching List handlers
@@ -1315,6 +1316,34 @@ ${aiInput}`;
               <Plus className="w-4 h-4" />
               Add Matching Question
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Long Response Dual Pane */}
+      {question.type === 'long_response_dual' && (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Question Text (Left Pane)</Label>
+            <RichTextEditor
+              value={question.question || ''}
+              onChange={(value) => updateField('question', value)}
+              placeholder="Enter the essay prompt or question here..."
+              minHeight="200px"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Marking Criteria (for AI Grading)</Label>
+            <p className="text-xs text-slate-500">
+              Describe how this question should be marked. Include key points, required structure, or specific vocabulary.
+            </p>
+            <Textarea
+              value={question.marking_criteria || ''}
+              onChange={(e) => updateField('marking_criteria', e.target.value)}
+              placeholder="e.g. 1. Addresses the main argument (2 marks) 2. Uses evidence from text (3 marks)..."
+              className="min-h-[150px]"
+            />
           </div>
         </div>
       )}
