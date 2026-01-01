@@ -32,7 +32,14 @@ export default function Hero() {
       primaryAction: { text: "Explore Courses", link: createPageUrl('Home') + '#courses' },
       secondaryAction: { text: "See Features", link: createPageUrl('Home') + '#features' },
       image: (
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-bl from-indigo-50 to-white skew-x-12 translate-x-20 z-0" />
+        <div className="absolute inset-y-0 right-0 w-[55%] z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1600" 
+            alt="Student studying" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
       )
     },
     {
@@ -45,10 +52,17 @@ export default function Hero() {
         </>
       ),
       description: "Don't let the interface surprise you on test day. Our system mimics the official digital test format down to the smallest detail.",
-      primaryAction: { text: "Try Demo Quiz", link: createPageUrl('Home') + '#courses' }, // Linking to courses as demo usually sits there
+      primaryAction: { text: "Try Demo Quiz", link: createPageUrl('Home') + '#courses' },
       secondaryAction: { text: "View Features", link: createPageUrl('Home') + '#features' },
       image: (
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-bl from-blue-50 to-white skew-x-12 translate-x-20 z-0" />
+        <div className="absolute inset-y-0 right-0 w-[55%] z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1600" 
+            alt="Digital exam interface" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
       )
     },
     {
@@ -64,7 +78,14 @@ export default function Hero() {
       primaryAction: { text: "Get Started Free", link: createPageUrl('Home') + '#courses' },
       secondaryAction: null,
       image: (
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-bl from-emerald-50 to-white skew-x-12 translate-x-20 z-0" />
+        <div className="absolute inset-y-0 right-0 w-[55%] z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1600" 
+            alt="Free resources" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
       )
     },
     {
@@ -80,7 +101,14 @@ export default function Hero() {
       primaryAction: { text: "View Analytics", link: createPageUrl('Profile') },
       secondaryAction: { text: "Learn More", link: createPageUrl('Home') + '#features' },
       image: (
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-bl from-rose-50 to-white skew-x-12 translate-x-20 z-0" />
+        <div className="absolute inset-y-0 right-0 w-[55%] z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1600" 
+            alt="Data analytics" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
       )
     }
   ];
