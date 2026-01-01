@@ -2,11 +2,21 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Lock, Unlock, DollarSign, ExternalLink, Copy } from 'lucide-react';
+import { Edit, Trash2, Lock, Unlock, DollarSign, ExternalLink, Copy, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 export default function CourseManageCard({ course, index, onEdit, onDelete, onDuplicate, viewMode = 'card' }) {
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+  };
   
   if (viewMode === 'compact') {
     return (
@@ -189,87 +199,103 @@ export default function CourseManageCard({ course, index, onEdit, onDelete, onDu
       )}
 
       <div className="p-6">
-        {/* Title */}
-        <h3 className="font-bold text-lg text-slate-800 mb-2 line-clamp-2">
-          {course.title}
-        </h3>
+        {/* Title & ID */}
+        <div className="mb-3">
+          <h3 className="font-bold text-lg text-slate-800 mb-1 line-clamp-1" title={course.title}>
+            {course.title}
+          </h3>
+          <div className="flex items-center gap-2 group/id">
+            <code className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 font-mono">
+              ID: {course.id.substring(0, 8)}...
+            </code>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                copyToClipboard(course.id);
+              }}
+              className="opacity-0 group-hover/id:opacity-100 transition-opacity p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600"
+              title="Copy ID"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
 
         {/* Description */}
         {course.description && (
-          <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-            {course.description}
+          <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[2.5rem]">
+            {stripHtml(course.description)}
           </p>
         )}
 
         {/* Metadata */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4 min-h-[24px]">
           {course.category && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-6 bg-slate-100 text-slate-600 border border-slate-200">
               {course.category}
             </Badge>
           )}
-          <Badge variant="outline" className="text-xs">
-            {course.content_blocks?.length || 0} content blocks
+          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-6 bg-slate-100 text-slate-600 border border-slate-200">
+            {course.content_blocks?.length || 0} blocks
           </Badge>
           {course.is_locked ? (
-            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+            <Badge className="text-[10px] px-2 py-0.5 h-6 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">
               <Lock className="w-3 h-3 mr-1" />
               Locked
             </Badge>
           ) : (
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+            <Badge className="text-[10px] px-2 py-0.5 h-6 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
               <Unlock className="w-3 h-3 mr-1" />
               Free
-            </Badge>
-          )}
-          {course.price && (
-            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100">
-              <DollarSign className="w-3 h-3 mr-1" />
-              {course.price}
             </Badge>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-5 gap-2">
           <Button
             onClick={() => onEdit(course)}
-            className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="col-span-2 gap-2 bg-slate-900 hover:bg-slate-800 h-9 text-xs"
           >
-            <Edit className="w-4 h-4" />
-            Edit Course
+            <Edit className="w-3.5 h-3.5" />
+            Edit
           </Button>
           
-          <Link to={createPageUrl(`CourseDetail?id=${course.id}`)}>
+          <Link to={createPageUrl(`CourseDetail?id=${course.id}`)} className="col-span-1">
             <Button 
               variant="outline" 
-              size="icon"
-              className="hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-600"
+              className="w-full h-9 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600"
               title="Open Course"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </Link>
           
           <Button 
             variant="outline" 
-            size="icon"
             onClick={() => onDuplicate(course)}
-            className="hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600"
+            className="col-span-1 h-9 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-600"
             title="Duplicate Course"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-3.5 h-3.5" />
           </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => onDelete(course.id)}
-            className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-            title="Delete Course"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+
+          <div className="col-span-1 relative group/menu">
+            <Button 
+              variant="outline" 
+              className="w-full h-9 hover:bg-slate-50"
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </Button>
+            <div className="absolute right-0 bottom-full mb-1 hidden group-hover/menu:block min-w-[120px] bg-white rounded-lg shadow-xl border border-slate-200 p-1 z-10">
+              <button 
+                onClick={() => onDelete(course.id)}
+                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
+              >
+                <Trash2 className="w-3 h-3" /> Delete Course
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
