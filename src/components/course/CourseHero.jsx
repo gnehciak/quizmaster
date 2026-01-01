@@ -14,8 +14,23 @@ import {
   CalendarDays,
   Upload,
   Trash2,
-  Sparkles
+  Sparkles,
+  Settings,
+  Move
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 import { createPageUrl } from '@/utils';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
@@ -36,11 +51,32 @@ export default function CourseHero({
   const [isUploading, setIsUploading] = React.useState(false);
   const [localTitle, setLocalTitle] = React.useState(course.title);
   const [localDesc, setLocalDesc] = React.useState(course.description);
+  
+  // Image settings state
+  const [imageFit, setImageFit] = React.useState(course.image_settings?.objectFit || 'cover');
+  const [imagePos, setImagePos] = React.useState(course.image_settings?.objectPosition || 'center center');
 
   React.useEffect(() => {
     setLocalTitle(course.title);
     setLocalDesc(course.description);
-  }, [course.title, course.description]);
+    if (course.image_settings) {
+        setImageFit(course.image_settings.objectFit || 'cover');
+        setImagePos(course.image_settings.objectPosition || 'center center');
+    }
+  }, [course.title, course.description, course.image_settings]);
+
+  const updateImageSettings = (fit, pos) => {
+    const newFit = fit || imageFit;
+    const newPos = pos || imagePos;
+    setImageFit(newFit);
+    setImagePos(newPos);
+    onUpdate({ 
+        image_settings: {
+            objectFit: newFit,
+            objectPosition: newPos
+        }
+    });
+  };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -81,7 +117,11 @@ export default function CourseHero({
             <img 
               src={course.image_url} 
               alt={course.title}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full transition-all duration-300"
+              style={{
+                objectFit: imageFit,
+                objectPosition: imagePos
+              }}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
@@ -122,6 +162,39 @@ export default function CourseHero({
                 >
                      {isGenerating ? "Generating..." : <><Sparkles className="w-4 h-4 mr-2" /> AI Generate</>}
                 </Button>
+                
+                {course.image_url && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="sm" className="w-full max-w-[200px]">
+                                <Settings className="w-4 h-4 mr-2" /> Adjust Image
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>Image Fit</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup value={imageFit} onValueChange={(v) => updateImageSettings(v, null)}>
+                                <DropdownMenuRadioItem value="cover">Cover (Fill Area)</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="contain">Contain (Show Full)</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="fill">Stretch</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Position</DropdownMenuLabel>
+                            <div className="grid grid-cols-3 gap-1 p-2">
+                                {['top left', 'top center', 'top right', 'center left', 'center center', 'center right', 'bottom left', 'bottom center', 'bottom right'].map((pos) => (
+                                    <button
+                                        key={pos}
+                                        className={`w-8 h-8 rounded border flex items-center justify-center hover:bg-slate-100 ${imagePos === pos ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-slate-200'}`}
+                                        onClick={() => updateImageSettings(null, pos)}
+                                        title={pos}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${imagePos === pos ? 'bg-indigo-600' : 'bg-slate-300'}`} />
+                                    </button>
+                                ))}
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+
                 {course.image_url && (
                     <Button 
                         variant="destructive" 
@@ -216,35 +289,12 @@ export default function CourseHero({
                   <span className="font-bold text-indigo-600">{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
-                
-                <div className="flex gap-3 mt-6">
-                  {progress < 100 ? (
-                    <Button 
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-base py-6 rounded-xl"
-                      onClick={() => {
-                        const targetId = firstIncompleteBlockId ? `block-${firstIncompleteBlockId}` : 'course-content';
-                        const element = document.getElementById(targetId);
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          // Optionally highlight it
-                          element.classList.add('ring-2', 'ring-indigo-500');
-                          setTimeout(() => element.classList.remove('ring-2', 'ring-indigo-500'), 2000);
-                        } else {
-                          // If detailed block ID not found, scroll to content list
-                          document.getElementById('course-content')?.scrollIntoView({ behavior: 'smooth' });
-                        }
-                      }}
-                    >
-                      <PlayCircle className="w-5 h-5 mr-2" />
-                      {progress > 0 ? 'Continue Learning' : 'Start Course'}
-                    </Button>
-                  ) : (
-                    <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-base py-6 rounded-xl">
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Course Completed
-                    </Button>
-                  )}
-                </div>
+                {progress === 100 && (
+                    <div className="mt-3 flex items-center gap-2 text-emerald-600 font-medium bg-emerald-50 p-2 rounded-lg">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span>Course Completed</span>
+                    </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row gap-3">
