@@ -677,7 +677,7 @@ export default function ManageQuizzes() {
               </Link>
           }
           </motion.div>
-        }
+        )}
       </div>
     </div>);
 
