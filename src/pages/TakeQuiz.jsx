@@ -68,6 +68,8 @@ export default function TakeQuiz() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusLeaveCount, setFocusLeaveCount] = useState(0);
   const [showFocusWarning, setShowFocusWarning] = useState(false);
+  const [editTipDialogOpen, setEditTipDialogOpen] = useState(false);
+  const [editingTipJson, setEditingTipJson] = useState('');
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
 
@@ -677,6 +679,36 @@ export default function TakeQuiz() {
     }
   };
 
+  const handleManualEditAiHelp = () => {
+    const tipData = quiz?.ai_helper_tips?.[currentIndex] || { advice: '', passages: {} };
+    setEditingTipJson(JSON.stringify(tipData, null, 2));
+    setEditTipDialogOpen(true);
+  };
+
+  const handleSaveManualEdit = async () => {
+    try {
+      const parsed = JSON.parse(editingTipJson);
+      const existingTips = quiz?.ai_helper_tips || {};
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: parsed
+        }
+      });
+      
+      // Update local state
+      setAiHelperContent(parsed.advice || '');
+      setHighlightedPassages(parsed.passages || {});
+      
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      setEditTipDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to save manual edit:', err);
+      alert('Invalid JSON format: ' + err.message);
+    }
+  };
+
   const handleBlankHelp = async (blankId) => {
     const tipId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
@@ -1150,6 +1182,7 @@ try {
           onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleAiHelperOpen : null}
           onRegenerateHelp={handleRegenerateAiHelp}
           onDeleteHelp={handleDeleteAiHelp}
+          onManualEditHelp={handleManualEditAiHelp}
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}
           tipsUsed={tipsUsed}
@@ -1915,6 +1948,37 @@ try {
             </Button>
           </div>
           </DialogContent>
+          </Dialog>
+
+          {/* Manual Edit Tip Dialog */}
+          <Dialog open={editTipDialogOpen} onOpenChange={setEditTipDialogOpen}>
+            <DialogContent className="max-w-3xl max-h-[80vh]">
+              <DialogHeader>
+                <DialogTitle>Edit AI Tip (JSON)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Tip Data (JSON format)</Label>
+                  <Textarea
+                    value={editingTipJson}
+                    onChange={(e) => setEditingTipJson(e.target.value)}
+                    className="font-mono text-xs min-h-[400px]"
+                    placeholder='{"advice": "your advice here", "passages": {}}'
+                  />
+                  <p className="text-xs text-slate-500">
+                    Edit the JSON structure directly. Make sure it's valid JSON format.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setEditTipDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveManualEdit} className="bg-indigo-600 hover:bg-indigo-700">
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
           </Dialog>
           </div>
           );
