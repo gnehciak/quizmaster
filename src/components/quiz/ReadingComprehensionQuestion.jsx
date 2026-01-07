@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X, FileEdit } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X, FileEdit, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
@@ -19,6 +19,7 @@ export default function ReadingComprehensionQuestion({
   onRegenerateHelp = null,
   onDeleteHelp = null,
   onEditHelp = null,
+  onEditPrompt = null,
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
@@ -282,7 +283,7 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp))) && (
+                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt))) && (
                    <div className="absolute top-2 right-2 flex gap-1">
                      {showResults && onRegenerateExplanation && (
                        <Button
@@ -340,6 +341,18 @@ export default function ReadingComprehensionQuestion({
                          title="Edit tip JSON"
                        >
                          <FileEdit className="w-4 h-4" />
+                       </Button>
+                     )}
+                     {!showResults && onEditPrompt && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onEditPrompt}
+                         className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                         title="Edit prompt template"
+                       >
+                         <Code className="w-4 h-4" />
                        </Button>
                      )}
                      {showResults && onDeleteExplanation && (
