@@ -1452,11 +1452,9 @@ Be specific and constructive. Focus on what the student did well and what needs 
       <div className="flex items-center justify-between px-6 py-4 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-4">
           {/* Back Button */}
-          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-            <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </Link>
+          <button onClick={() => window.history.back()} className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Question Counter & Stats Button */}
@@ -1736,12 +1734,10 @@ Be specific and constructive. Focus on what the student did well and what needs 
             <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
         ) : (
-          <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-            <Button className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold">
-              Finish Review
-              <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+          <Button onClick={() => window.history.back()} className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-6 text-base font-semibold">
+            Finish Review
+            <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
         )}
       </div>
 
