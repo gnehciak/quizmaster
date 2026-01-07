@@ -213,11 +213,9 @@ export default function CreateQuiz() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('ManageQuizzes')}>
-                <Button variant="ghost" size="icon" className="hover:bg-slate-100">
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
-              </Link>
+              <Button variant="ghost" size="icon" className="hover:bg-slate-100" onClick={() => window.history.back()}>
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
               <div>
                 <h1 className="text-lg font-semibold text-slate-800">
                   {quizId ? 'Edit Quiz' : 'Create Quiz'}

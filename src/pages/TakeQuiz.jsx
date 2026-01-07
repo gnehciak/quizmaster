@@ -1429,12 +1429,10 @@ try {
           )}
 
           <div className="mt-6 text-center">
-            <Link to={urlParams.get('courseId') ? createPageUrl(`CourseDetail?id=${urlParams.get('courseId')}`) : createPageUrl('Home')}>
-              <Button variant="ghost" size="sm">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Cancel
+            </Button>
             </div>
 
             {/* Start Confirmation Dialog */}
