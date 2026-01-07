@@ -33,7 +33,9 @@ export default function InlineDropdownQuestion({
   explanationLoading = {},
   openedExplanations = new Set(),
   onRegenerateExplanation,
-  onDeleteExplanation
+  onDeleteExplanation,
+  onRegenerateHelp = null,
+  onDeleteHelp = null
 }) {
   const handleSelect = (blankId, value) => {
     if (showResults) return;
@@ -129,7 +131,35 @@ export default function InlineDropdownQuestion({
                 {helpContent && (
                   <PopoverContent className="w-80 max-h-96 overflow-y-auto">
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-slate-800">Word Definitions</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm text-slate-800">Word Definitions</h4>
+                        {isAdmin && (onRegenerateHelp || onDeleteHelp) && (
+                          <div className="flex items-center gap-1">
+                            {onRegenerateHelp && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRegenerateHelp(blankId)}
+                                disabled={isLoadingHelp}
+                                className="h-7 px-2 gap-1"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                Regenerate
+                              </Button>
+                            )}
+                            {onDeleteHelp && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onDeleteHelp(blankId)}
+                                className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <div 
                         className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: helpContent }}
