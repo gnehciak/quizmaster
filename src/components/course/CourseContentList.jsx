@@ -193,7 +193,7 @@ export default function CourseContentList({
           <div className="flex items-center gap-2">
             {isAdmin ? (
                 <>
-                    <Link to={createPageUrl(`QuizAnalytics?id=${quiz.id}`)}>
+                    <Link to={createPageUrl(`QuizAttempts?id=${quiz.id}`)}>
                         <Button variant="outline" size="sm" className="gap-2">
                             <BarChart3 className="w-3 h-3" /> Stats
                         </Button>
