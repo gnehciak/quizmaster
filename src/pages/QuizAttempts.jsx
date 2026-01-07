@@ -140,11 +140,9 @@ export default function QuizAttempts() {
       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center gap-3 mb-2">
-            <Link to={createPageUrl('ManageQuizzes')}>
-              <Button variant="ghost" size="icon">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-slate-800">{quiz.title}</h1>
               <p className="text-sm text-slate-600">Quiz Analytics & Attempts</p>
