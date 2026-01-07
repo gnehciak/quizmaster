@@ -25,6 +25,8 @@ export default function ReadingComprehensionQuestion({
   onRequestExplanation = null,
   onRegenerateExplanation = null,
   onDeleteExplanation = null,
+  onManualEditHelp = null,
+  onManualEditExplanation = null,
   openedExplanations = new Set()
 }) {
   const passages = question.passages?.length > 0 
@@ -304,6 +306,18 @@ export default function ReadingComprehensionQuestion({
                           title="Delete AI tip"
                         >
                           <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {((showResults && onManualEditExplanation) || (!showResults && onManualEditHelp)) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => showResults ? onManualEditExplanation() : onManualEditHelp()}
+                          className="h-8 w-8 p-0"
+                          title="Edit manually"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </Button>
                       )}
                       {showResults && onRegenerateExplanation && (
