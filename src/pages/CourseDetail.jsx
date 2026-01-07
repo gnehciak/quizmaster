@@ -685,10 +685,10 @@ export default function CourseDetail() {
       {/* Top Navigation */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <Link to={createPageUrl('Home')} className="flex items-center text-slate-600 hover:text-slate-900 transition-colors">
+          <button onClick={() => window.history.back()} className="flex items-center text-slate-600 hover:text-slate-900 transition-colors">
             <ChevronLeft className="w-5 h-5 mr-1" />
-            <span className="font-medium">Back to Courses</span>
-          </Link>
+            <span className="font-medium">Back</span>
+          </button>
           <div className="font-semibold text-slate-800 truncate max-w-md hidden sm:block">
             {course.title}
           </div>
