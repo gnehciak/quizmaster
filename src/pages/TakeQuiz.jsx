@@ -140,6 +140,11 @@ export default function TakeQuiz() {
     select: (data) => data[0]
   });
 
+  const { data: globalPrompts = [] } = useQuery({
+    queryKey: ['aiPrompts'],
+    queryFn: () => base44.entities.AIPrompt.list()
+  });
+
   const { data: userAttempts = [] } = useQuery({
     queryKey: ['quizAttempts', quizId, user?.email],
     queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quizId, user_email: user?.email }),
@@ -724,8 +729,8 @@ export default function TakeQuiz() {
         throw new Error('Blank not found or has no options');
       }
 
-      // Use custom prompt if exists, otherwise default
-      const customPrompt = quiz?.ai_prompt_templates?.[currentIndex]?.blanks;
+      // Use global prompt if exists, otherwise default
+      const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks');
       const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
@@ -748,7 +753,7 @@ Format your response as HTML with this structure:
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
 
-      const promptTemplate = customPrompt || defaultPrompt;
+      const promptTemplate = globalPrompt?.template || defaultPrompt;
       const prompt = promptTemplate.replace('{{OPTIONS}}', blank.options.join(', '));
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
@@ -855,7 +860,7 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
   };
 
   const handleOpenEditBlankPrompt = () => {
-    const customPrompt = quiz?.ai_prompt_templates?.[currentIndex]?.blanks;
+    const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks');
     const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
@@ -878,25 +883,27 @@ Format your response as HTML with this structure:
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
     
-    setEditBlankPrompt(customPrompt || defaultPrompt);
+    setEditBlankPrompt(globalPrompt?.template || defaultPrompt);
     setEditBlankPromptDialogOpen(true);
   };
 
   const handleSaveBlankPrompt = async () => {
     try {
-      const existingTemplates = quiz?.ai_prompt_templates || {};
+      const existingPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks');
       
-      await base44.entities.Quiz.update(quizId, {
-        ai_prompt_templates: {
-          ...existingTemplates,
-          [currentIndex]: {
-            ...(existingTemplates[currentIndex] || {}),
-            blanks: editBlankPrompt
-          }
-        }
-      });
+      if (existingPrompt) {
+        await base44.entities.AIPrompt.update(existingPrompt.id, {
+          template: editBlankPrompt
+        });
+      } else {
+        await base44.entities.AIPrompt.create({
+          key: 'dropdown_blanks',
+          template: editBlankPrompt,
+          description: 'Prompt template for dropdown/fill-in-the-blank questions'
+        });
+      }
 
-      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
       setEditBlankPromptDialogOpen(false);
     } catch (err) {
       alert('Failed to save prompt: ' + err.message);
@@ -2203,11 +2210,11 @@ try {
           <Dialog open={editBlankPromptDialogOpen} onOpenChange={setEditBlankPromptDialogOpen}>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Edit Dropdown Prompt Template</DialogTitle>
+                <DialogTitle>Edit Dropdown Prompt Template (Global)</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <strong>Instructions:</strong> Use <code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> as a placeholder where the word options should be inserted.
+                  <strong>Instructions:</strong> Use <code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> as a placeholder where the word options should be inserted. This prompt is used globally for all dropdown questions across all quizzes.
                 </div>
                 <textarea
                   value={editBlankPrompt}
