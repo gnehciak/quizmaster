@@ -17,7 +17,9 @@ import {
   Upload,
   Youtube,
   MoreVertical,
-  CheckCircle2
+  CheckCircle2,
+  BarChart3,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -154,11 +156,12 @@ export default function CourseContentList({
       const sortedAttempts = attempts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       const latestAttempt = sortedAttempts[0];
       const hasCompleted = !!latestAttempt;
+      const canRetry = hasCompleted && (attemptsUsed < attemptsAllowed);
 
       return (
         <div className="flex items-center gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors w-full">
             <div className="flex-shrink-0">
-                {hasCompleted && hasAccess ? (
+                {hasCompleted && (hasAccess || isAdmin) ? (
                     <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-200">
                         <span className="text-sm font-bold text-emerald-700">{latestAttempt.percentage}%</span>
                     </div>
@@ -181,7 +184,7 @@ export default function CourseContentList({
                 )}
                 {attemptsAllowed < 999 && (
                     <Badge variant="secondary" className="text-xs font-normal">
-                        {attemptsAllowed - attemptsUsed} attempts left
+                        {Math.max(0, attemptsAllowed - attemptsUsed)} attempts left
                     </Badge>
                 )}
             </div>
@@ -190,6 +193,16 @@ export default function CourseContentList({
           <div className="flex items-center gap-2">
             {isAdmin ? (
                 <>
+                    <Link to={createPageUrl(`QuizAnalytics?id=${quiz.id}`)}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                            <BarChart3 className="w-3 h-3" /> Stats
+                        </Button>
+                    </Link>
+                    {hasCompleted && (
+                        <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${block.courseId || ''}&attemptId=${latestAttempt.id}`)}>
+                            <Button variant="outline" size="sm">Review</Button>
+                        </Link>
+                    )}
                     <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}`)}>
                         <Button variant="outline" size="sm" className="gap-2">
                             <Pencil className="w-3 h-3" /> Edit
@@ -202,15 +215,24 @@ export default function CourseContentList({
             ) : (
                 <>
                 {hasAccess ? (
-                  hasCompleted ? (
-                    <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${block.courseId || ''}&attemptId=${latestAttempt.id}`)}>
-                      <Button variant="outline" size="sm">Review</Button>
-                    </Link>
-                  ) : (
-                    <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
-                      <Button size="sm">Start</Button>
-                    </Link>
-                  )
+                  <>
+                    {hasCompleted && (
+                        <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${block.courseId || ''}&attemptId=${latestAttempt.id}`)}>
+                            <Button variant="outline" size="sm">Review</Button>
+                        </Link>
+                    )}
+                    {canRetry ? (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
+                            <Button size="sm" className="gap-2">
+                                <RotateCcw className="w-3 h-3" /> Retry
+                            </Button>
+                        </Link>
+                    ) : !hasCompleted ? (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
+                            <Button size="sm">Start</Button>
+                        </Link>
+                    ) : null}
+                  </>
                 ) : (
                    <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
                         <Lock className="w-4 h-4 text-slate-400" />
