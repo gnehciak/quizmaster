@@ -729,13 +729,25 @@ export default function TakeQuiz() {
         throw new Error('Blank not found or has no options');
       }
 
+      // Get the blank index
+      const blankIndex = q.blanks.findIndex(b => b.id === blankId);
+      const blankNumber = blankIndex + 1;
+      const totalBlanks = q.blanks.length;
+
+      // Get passage text (strip HTML tags for cleaner context)
+      const passageText = (q.passage || q.textWithBlanks || '').replace(/<[^>]*>/g, '');
+
       // Use global prompt if exists, otherwise default
       const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks');
       const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
-1. A very brief definition (one short sentence)
+1. A very brief definition aligning with the context (one short sentence)
 2. An example sentence using the word
+
+Passage: {{PASSAGE}}
+
+This is for blank {{BLANK_NUMBER}} of {{TOTAL_BLANKS}}.
 
 Words: {{OPTIONS}}
 
@@ -753,8 +765,11 @@ Format your response as HTML with this structure:
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
 
-      const promptTemplate = globalPrompt?.template || defaultPrompt;
-      const prompt = promptTemplate.replace('{{OPTIONS}}', blank.options.join(', '));
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace('{{PASSAGE}}', passageText);
+      prompt = prompt.replace('{{BLANK_NUMBER}}', blankNumber.toString());
+      prompt = prompt.replace('{{TOTAL_BLANKS}}', totalBlanks.toString());
+      prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -864,8 +879,12 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
     const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
-1. A very brief definition (one short sentence)
+1. A very brief definition aligning with the context (one short sentence)
 2. An example sentence using the word
+
+Passage: {{PASSAGE}}
+
+This is for blank {{BLANK_NUMBER}} of {{TOTAL_BLANKS}}.
 
 Words: {{OPTIONS}}
 
@@ -2214,7 +2233,14 @@ try {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <strong>Instructions:</strong> Use <code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> as a placeholder where the word options should be inserted. This prompt is used globally for all dropdown questions across all quizzes.
+                  <strong>Instructions:</strong> Available placeholders:
+                  <ul className="mt-2 space-y-1">
+                    <li><code className="bg-white px-1 rounded">{'{{PASSAGE}}'}</code> - The full passage text</li>
+                    <li><code className="bg-white px-1 rounded">{'{{BLANK_NUMBER}}'}</code> - Which blank this is (e.g., 1, 2, 3)</li>
+                    <li><code className="bg-white px-1 rounded">{'{{TOTAL_BLANKS}}'}</code> - Total number of blanks</li>
+                    <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - The word options for this blank</li>
+                  </ul>
+                  <p className="mt-2">This prompt is used globally for all dropdown questions across all quizzes.</p>
                 </div>
                 <textarea
                   value={editBlankPrompt}
