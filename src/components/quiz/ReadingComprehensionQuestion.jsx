@@ -280,7 +280,7 @@ export default function ReadingComprehensionQuestion({
               {!aiHelperLoading && aiHelperContent && (
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg relative">
                   <div 
-                    className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
+                    className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0 pr-20"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
                   {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt))) && (
