@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
@@ -18,6 +18,7 @@ export default function ReadingComprehensionQuestion({
   onRequestHelp = null,
   onRegenerateHelp = null,
   onDeleteHelp = null,
+  onEditHelp = null,
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
@@ -25,6 +26,7 @@ export default function ReadingComprehensionQuestion({
   onRequestExplanation = null,
   onRegenerateExplanation = null,
   onDeleteExplanation = null,
+  onEditExplanation = null,
   openedExplanations = new Set()
 }) {
   const passages = question.passages?.length > 0 
