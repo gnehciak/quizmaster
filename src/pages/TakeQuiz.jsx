@@ -100,27 +100,6 @@ export default function TakeQuiz() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Track window focus/blur during quiz (disabled for admins)
-  useEffect(() => {
-    if (!user || !quizStarted || submitted || showResults || user.role === 'admin') return;
-
-    const handleBlur = () => {
-      const newCount = focusLeaveCount + 1;
-      setFocusLeaveCount(newCount);
-      setShowFocusWarning(true);
-
-      // Auto-submit after 3rd violation
-      if (newCount >= 3) {
-        setTimeout(() => {
-          handleConfirmSubmit();
-        }, 2000);
-      }
-    };
-
-    window.addEventListener('blur', handleBlur);
-    return () => window.removeEventListener('blur', handleBlur);
-  }, [user, quizStarted, submitted, showResults, focusLeaveCount]);
-
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -150,6 +129,27 @@ export default function TakeQuiz() {
     queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quizId, user_email: user?.email }),
     enabled: !!quizId && !!user?.email
   });
+
+  // Track window focus/blur during quiz (disabled for admins)
+  useEffect(() => {
+    if (!user || !quizStarted || submitted || showResults || user.role === 'admin') return;
+
+    const handleBlur = () => {
+      const newCount = focusLeaveCount + 1;
+      setFocusLeaveCount(newCount);
+      setShowFocusWarning(true);
+
+      // Auto-submit after 3rd violation
+      if (newCount >= 3) {
+        setTimeout(() => {
+          handleConfirmSubmit();
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('blur', handleBlur);
+    return () => window.removeEventListener('blur', handleBlur);
+  }, [user, quizStarted, submitted, showResults, focusLeaveCount]);
 
   // Redirect to review page if in review mode
   React.useEffect(() => {
