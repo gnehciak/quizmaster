@@ -15,6 +15,11 @@ import {
 import { User, LogOut, Settings, BarChart3, Users, BookOpen, FileQuestion } from 'lucide-react';
 
 export default function Layout({ children, currentPageName }) {
+  // Scroll to top on page change
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPageName]);
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
