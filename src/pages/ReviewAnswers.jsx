@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,6 +54,8 @@ export default function ReviewAnswers() {
   const [matchingHelperContent, setMatchingHelperContent] = useState({});
   const [showNavBar, setShowNavBar] = useState(true);
   const [isGeneratingExplanation, setIsGeneratingExplanation] = useState(false);
+  const [editExplanationDialogOpen, setEditExplanationDialogOpen] = useState(false);
+  const [editExplanationJson, setEditExplanationJson] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -953,6 +955,35 @@ Provide HTML formatted explanation:`;
       }
     };
 
+    const handleOpenEditExplanation = () => {
+      const explanationData = quiz?.ai_explanations?.[currentIndex] || { advice: '', passages: {} };
+      setEditExplanationJson(JSON.stringify(explanationData, null, 2));
+      setEditExplanationDialogOpen(true);
+    };
+
+    const handleSaveExplanationJson = async () => {
+      try {
+        const parsed = JSON.parse(editExplanationJson);
+        const existingExplanations = quiz?.ai_explanations || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: parsed
+          }
+        });
+
+        // Update local state
+        setAiHelperContent(parsed.advice || '');
+        setHighlightedPassages(parsed.passages || {});
+        
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        setEditExplanationDialogOpen(false);
+      } catch (err) {
+        alert('Invalid JSON: ' + err.message);
+      }
+    };
+
   const handleRegenerateMatchingExplanation = async (questionId) => {
     setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: true }));
 
@@ -1265,6 +1296,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
           autoExpandExplanation={true}
           onRegenerateExplanation={handleRegenerateRCExplanation}
           onDeleteExplanation={handleDeleteRCExplanation}
+          onEditExplanation={handleOpenEditExplanation}
           openedExplanations={openedExplanations}
         />
       );
@@ -1712,6 +1744,30 @@ Be specific and constructive. Focus on what the student did well and what needs 
           </Link>
         )}
       </div>
+
+      {/* Edit Explanation JSON Dialog */}
+      <Dialog open={editExplanationDialogOpen} onOpenChange={setEditExplanationDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Explanation JSON</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editExplanationJson}
+              onChange={(e) => setEditExplanationJson(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditExplanationDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveExplanationJson} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

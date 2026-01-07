@@ -11,9 +11,9 @@ import Profile from './pages/Profile';
 import QuizAnalytics from './pages/QuizAnalytics';
 import QuizAttempts from './pages/QuizAttempts';
 import ReviewAnswers from './pages/ReviewAnswers';
-import TakeQuiz from './pages/TakeQuiz';
 import UserDetails from './pages/UserDetails';
 import UserManagement from './pages/UserManagement';
+import TakeQuiz from './pages/TakeQuiz';
 import __Layout from './Layout.jsx';
 
 
@@ -31,9 +31,9 @@ export const PAGES = {
     "QuizAnalytics": QuizAnalytics,
     "QuizAttempts": QuizAttempts,
     "ReviewAnswers": ReviewAnswers,
-    "TakeQuiz": TakeQuiz,
     "UserDetails": UserDetails,
     "UserManagement": UserManagement,
+    "TakeQuiz": TakeQuiz,
 }
 
 export const pagesConfig = {

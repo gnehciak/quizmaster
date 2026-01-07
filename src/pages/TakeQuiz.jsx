@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize, FileEdit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -70,6 +70,8 @@ export default function TakeQuiz() {
   const [showFocusWarning, setShowFocusWarning] = useState(false);
   const isReviewMode = urlParams.get('review') === 'true';
   const queryClient = useQueryClient();
+  const [editTipDialogOpen, setEditTipDialogOpen] = useState(false);
+  const [editTipJson, setEditTipJson] = useState('');
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -677,6 +679,35 @@ export default function TakeQuiz() {
     }
   };
 
+  const handleOpenEditTip = () => {
+    const tipData = quiz?.ai_helper_tips?.[currentIndex] || { advice: '', passages: {} };
+    setEditTipJson(JSON.stringify(tipData, null, 2));
+    setEditTipDialogOpen(true);
+  };
+
+  const handleSaveTipJson = async () => {
+    try {
+      const parsed = JSON.parse(editTipJson);
+      const existingTips = quiz?.ai_helper_tips || {};
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: parsed
+        }
+      });
+
+      // Update local state
+      setAiHelperContent(parsed.advice || '');
+      setHighlightedPassages(parsed.passages || {});
+      
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      setEditTipDialogOpen(false);
+    } catch (err) {
+      alert('Invalid JSON: ' + err.message);
+    }
+  };
+
   const handleBlankHelp = async (blankId) => {
     const tipId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
@@ -1150,6 +1181,7 @@ try {
           onRequestHelp={quiz?.allow_tips && practiceTipsEnabled ? handleAiHelperOpen : null}
           onRegenerateHelp={handleRegenerateAiHelp}
           onDeleteHelp={handleDeleteAiHelp}
+          onEditHelp={handleOpenEditTip}
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}
           tipsUsed={tipsUsed}
@@ -1915,6 +1947,30 @@ try {
             </Button>
           </div>
           </DialogContent>
+          </Dialog>
+
+          {/* Edit Tip JSON Dialog */}
+          <Dialog open={editTipDialogOpen} onOpenChange={setEditTipDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Tip JSON</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <textarea
+                  value={editTipJson}
+                  onChange={(e) => setEditTipJson(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditTipDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveTipJson} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
           </Dialog>
           </div>
           );
