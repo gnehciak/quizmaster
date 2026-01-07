@@ -280,67 +280,91 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp))) && (
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      {showResults && onDeleteExplanation && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={onDeleteExplanation}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                          title="Delete explanation"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {!showResults && onDeleteHelp && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={onDeleteHelp}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                          title="Delete AI tip"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {showResults && onRegenerateExplanation && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={onRegenerateExplanation}
-                          disabled={aiHelperLoading}
-                          className="h-8 w-8 p-0"
-                          title="Regenerate explanation"
-                        >
-                          {aiHelperLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                      {!showResults && onRegenerateHelp && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={onRegenerateHelp}
-                          disabled={aiHelperLoading}
-                          className="h-8 w-8 p-0"
-                          title="Regenerate AI tip"
-                        >
-                          {aiHelperLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
+                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp))) && (
+                   <div className="absolute top-2 right-2 flex gap-1">
+                     {showResults && onRegenerateExplanation && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onRegenerateExplanation}
+                         disabled={aiHelperLoading}
+                         className="h-8 w-8 p-0"
+                         title="Regenerate explanation"
+                       >
+                         {aiHelperLoading ? (
+                           <Loader2 className="w-4 h-4 animate-spin" />
+                         ) : (
+                           <RefreshCw className="w-4 h-4" />
+                         )}
+                       </Button>
+                     )}
+                     {!showResults && onRegenerateHelp && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onRegenerateHelp}
+                         disabled={aiHelperLoading}
+                         className="h-8 w-8 p-0"
+                         title="Regenerate AI tip"
+                       >
+                         {aiHelperLoading ? (
+                           <Loader2 className="w-4 h-4 animate-spin" />
+                         ) : (
+                           <RefreshCw className="w-4 h-4" />
+                         )}
+                       </Button>
+                     )}
+                     {showResults && onEditExplanation && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onEditExplanation}
+                         className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                         title="Edit explanation JSON"
+                       >
+                         <FileEdit className="w-4 h-4" />
+                       </Button>
+                     )}
+                     {!showResults && onEditHelp && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onEditHelp}
+                         className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                         title="Edit tip JSON"
+                       >
+                         <FileEdit className="w-4 h-4" />
+                       </Button>
+                     )}
+                     {showResults && onDeleteExplanation && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onDeleteExplanation}
+                         className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                         title="Delete explanation"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </Button>
+                     )}
+                     {!showResults && onDeleteHelp && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onDeleteHelp}
+                         className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                         title="Delete AI tip"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </Button>
+                     )}
+                   </div>
                   )}
                 </div>
               )}
