@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ReadingComprehensionQuestion({ 
@@ -18,6 +18,7 @@ export default function ReadingComprehensionQuestion({
   onRequestHelp = null,
   onRegenerateHelp = null,
   onDeleteHelp = null,
+  onManualEditHelp = null,
   isAdmin = false,
   tipsAllowed = 999,
   tipsUsed = 0,
@@ -280,7 +281,7 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp))) && (
+                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onManualEditHelp))) && (
                     <div className="absolute top-2 right-2 flex gap-1">
                       {showResults && onDeleteExplanation && (
                         <Button
@@ -304,6 +305,18 @@ export default function ReadingComprehensionQuestion({
                           title="Delete AI tip"
                         >
                           <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {!showResults && onManualEditHelp && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={onManualEditHelp}
+                          className="h-8 w-8 p-0 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                          title="Manual edit tip JSON"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </Button>
                       )}
                       {showResults && onRegenerateExplanation && (
