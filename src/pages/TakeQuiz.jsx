@@ -724,13 +724,15 @@ export default function TakeQuiz() {
         throw new Error('Blank not found or has no options');
       }
 
-      const prompt = `You are a Year 6 teacher helping a student understand vocabulary words.
+      // Use custom prompt if exists, otherwise default
+      const customPrompt = quiz?.ai_prompt_templates?.[currentIndex]?.blanks;
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
 1. A very brief definition (one short sentence)
 2. An example sentence using the word
 
-Words: ${blank.options.join(', ')}
+Words: {{OPTIONS}}
 
 Format your response as HTML with this structure:
 <div class="space-y-2">
@@ -745,6 +747,9 @@ Format your response as HTML with this structure:
 </div>
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
+
+      const promptTemplate = customPrompt || defaultPrompt;
+      const prompt = promptTemplate.replace('{{OPTIONS}}', blank.options.join(', '));
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -850,13 +855,14 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
   };
 
   const handleOpenEditBlankPrompt = () => {
+    const customPrompt = quiz?.ai_prompt_templates?.[currentIndex]?.blanks;
     const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
 
 For each of these words, provide:
 1. A very brief definition (one short sentence)
 2. An example sentence using the word
 
-Words: [OPTIONS_WILL_BE_INSERTED_HERE]
+Words: {{OPTIONS}}
 
 Format your response as HTML with this structure:
 <div class="space-y-2">
@@ -872,8 +878,29 @@ Format your response as HTML with this structure:
 
 Keep it simple and clear. Do NOT indicate which word is correct.`;
     
-    setEditBlankPrompt(defaultPrompt);
+    setEditBlankPrompt(customPrompt || defaultPrompt);
     setEditBlankPromptDialogOpen(true);
+  };
+
+  const handleSaveBlankPrompt = async () => {
+    try {
+      const existingTemplates = quiz?.ai_prompt_templates || {};
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_prompt_templates: {
+          ...existingTemplates,
+          [currentIndex]: {
+            ...(existingTemplates[currentIndex] || {}),
+            blanks: editBlankPrompt
+          }
+        }
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      setEditBlankPromptDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save prompt: ' + err.message);
+    }
   };
 
   const handleBlankHelp = async (blankId) => {
@@ -2179,19 +2206,21 @@ try {
                 <DialogTitle>Edit Dropdown Prompt Template</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="text-sm text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <strong>Note:</strong> This is a reference template. The actual prompt is generated in the code. 
-                  This dialog is for viewing and understanding the prompt structure. To make changes, you'll need to modify the code in the handleRegenerateBlankHelp function.
+                <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <strong>Instructions:</strong> Use <code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> as a placeholder where the word options should be inserted.
                 </div>
                 <textarea
                   value={editBlankPrompt}
                   onChange={(e) => setEditBlankPrompt(e.target.value)}
-                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg bg-slate-50"
-                  readOnly
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                  placeholder="Enter your custom prompt template..."
                 />
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => setEditBlankPromptDialogOpen(false)}>
-                    Close
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveBlankPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Prompt
                   </Button>
                 </div>
               </div>
