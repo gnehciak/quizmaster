@@ -42,20 +42,21 @@ export default function Home() {
     }
   });
 
-  const updateConfigMutation = useQueryClient().getMutationCache().find({ mutationKey: ['updateSiteConfig'] }) || 
-    useMutation({
-      mutationFn: async (newContent) => {
-        const configs = await base44.entities.SiteConfig.filter({ key: 'home' });
-        if (configs.length > 0) {
-          return base44.entities.SiteConfig.update(configs[0].id, { content: newContent });
-        } else {
-          return base44.entities.SiteConfig.create({ key: 'home', content: newContent });
-        }
-      },
-      onSuccess: () => {
-        useQueryClient().invalidateQueries({ queryKey: ['siteConfig', 'home'] });
+  const queryClient = useQueryClient();
+  
+  const updateConfigMutation = useMutation({
+    mutationFn: async (newContent) => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'home' });
+      if (configs.length > 0) {
+        return base44.entities.SiteConfig.update(configs[0].id, { content: newContent });
+      } else {
+        return base44.entities.SiteConfig.create({ key: 'home', content: newContent });
       }
-    });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['siteConfig', 'home'] });
+    }
+  });
 
   const [editMode, setEditMode] = useState(false);
   const [tempContent, setTempContent] = useState({});
