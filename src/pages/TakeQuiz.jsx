@@ -77,6 +77,8 @@ export default function TakeQuiz() {
   const [editBlankId, setEditBlankId] = useState(null);
   const [editBlankPromptDialogOpen, setEditBlankPromptDialogOpen] = useState(false);
   const [editBlankPrompt, setEditBlankPrompt] = useState('');
+  const [editRCPromptDialogOpen, setEditRCPromptDialogOpen] = useState(false);
+  const [editRCPrompt, setEditRCPrompt] = useState('');
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -525,7 +527,9 @@ export default function TakeQuiz() {
       const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`).join('\n') : '';
       const answerContext = correctAnswer ? `\n\nCorrect Answer: ${correctAnswer}` : '';
 
-      const prompt = `You are a Year 6 teacher helping a student find evidence in a text.
+      // Use global prompt if exists, otherwise default
+      const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension');
+      const defaultPrompt = `You are a Year 6 teacher helping a student find evidence in a text.
       Tone: Simple, direct.
 
       **CRITICAL RULES:**
@@ -565,6 +569,12 @@ export default function TakeQuiz() {
           {"passageId": "passage_456", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}
         ]
       }`;
+
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace('{{QUESTION}}', questionText);
+      prompt = prompt.replace('{{PASSAGE}}', passageContext);
+      prompt = prompt.replace('{{OPTIONS}}', optionsContext);
+      prompt = prompt.replace('{{CORRECT_ANSWER}}', answerContext);
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -924,6 +934,76 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
 
       queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
       setEditBlankPromptDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save prompt: ' + err.message);
+    }
+  };
+
+  const handleOpenEditRCPrompt = () => {
+    const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension');
+    const defaultPrompt = `You are a Year 6 teacher helping a student find evidence in a text.
+Tone: Simple, direct.
+
+**CRITICAL RULES:**
+1. **Highlighting:** - Locate ALL specific sentences or phrases that prove the Correct Answer. 
+   - Wrap EACH distinct piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>.
+   - Keep any existing formatting such as <strong> tags inside the highlighted sections.
+   - You may highlight multiple separate sections if the proof is spread across the text.
+2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
+   - Do NOT summarize, truncate, or alter the non-highlighted text.
+3. **Advice Strategy:** - The 'advice' must explain the connection between the highlighted text and the question. 
+   - If multiple parts are highlighted, explain how they together support the conclusion.
+   - Do NOT explicitly state the Correct Answer (e.g., do not say "The answer is A").
+4. **JSON Logic:**
+   - If the input Passage(s) is a single string, use the [For single passage] format.
+   - If the input Passage(s) is an array/list, use the [For multiple passages] format.
+   - Return valid raw JSON only.
+
+**INPUT DATA:**
+Question: {{QUESTION}}
+Passage(s): {{PASSAGE}}
+Options: {{OPTIONS}}
+Correct Answer: {{CORRECT_ANSWER}}
+
+**OUTPUT FORMAT (JSON):**
+
+[For single passage]
+{
+  "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+}
+
+[For multiple passages]
+{
+  "advice": "Explain simply why the highlighted text supports the correct answer (2-3 sentences). Do not state what the correct answer is.",
+  "passages": [
+    {"passageId": "passage_123", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"},
+    {"passageId": "passage_456", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}
+  ]
+}`;
+    
+    setEditRCPrompt(globalPrompt?.template || defaultPrompt);
+    setEditRCPromptDialogOpen(true);
+  };
+
+  const handleSaveRCPrompt = async () => {
+    try {
+      const existingPrompt = globalPrompts.find(p => p.key === 'reading_comprehension');
+      
+      if (existingPrompt) {
+        await base44.entities.AIPrompt.update(existingPrompt.id, {
+          template: editRCPrompt
+        });
+      } else {
+        await base44.entities.AIPrompt.create({
+          key: 'reading_comprehension',
+          template: editRCPrompt,
+          description: 'Prompt template for reading comprehension questions'
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+      setEditRCPromptDialogOpen(false);
     } catch (err) {
       alert('Failed to save prompt: ' + err.message);
     }
@@ -1403,6 +1483,7 @@ try {
           onRegenerateHelp={handleRegenerateAiHelp}
           onDeleteHelp={handleDeleteAiHelp}
           onEditHelp={handleOpenEditTip}
+          onEditPrompt={handleOpenEditRCPrompt}
           isAdmin={user?.role === 'admin'}
           tipsAllowed={quiz?.tips_allowed || 999}
           tipsUsed={tipsUsed}
@@ -2253,6 +2334,41 @@ try {
                     Cancel
                   </Button>
                   <Button onClick={handleSaveBlankPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Prompt
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Reading Comprehension Prompt Dialog */}
+          <Dialog open={editRCPromptDialogOpen} onOpenChange={setEditRCPromptDialogOpen}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Edit Reading Comprehension Prompt Template (Global)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <strong>Instructions:</strong> Available placeholders:
+                  <ul className="mt-2 space-y-1">
+                    <li><code className="bg-white px-1 rounded">{'{{QUESTION}}'}</code> - The question text</li>
+                    <li><code className="bg-white px-1 rounded">{'{{PASSAGE}}'}</code> - The full passage(s) text</li>
+                    <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - The answer options</li>
+                    <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                  </ul>
+                  <p className="mt-2">This prompt is used globally for all reading comprehension questions across all quizzes.</p>
+                </div>
+                <textarea
+                  value={editRCPrompt}
+                  onChange={(e) => setEditRCPrompt(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                  placeholder="Enter your custom prompt template..."
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditRCPromptDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveRCPrompt} className="bg-indigo-600 hover:bg-indigo-700">
                     Save Prompt
                   </Button>
                 </div>
