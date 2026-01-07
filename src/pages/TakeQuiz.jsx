@@ -72,6 +72,11 @@ export default function TakeQuiz() {
   const queryClient = useQueryClient();
   const [editTipDialogOpen, setEditTipDialogOpen] = useState(false);
   const [editTipJson, setEditTipJson] = useState('');
+  const [editBlankTipDialogOpen, setEditBlankTipDialogOpen] = useState(false);
+  const [editBlankTipJson, setEditBlankTipJson] = useState('');
+  const [editBlankId, setEditBlankId] = useState(null);
+  const [editBlankPromptDialogOpen, setEditBlankPromptDialogOpen] = useState(false);
+  const [editBlankPrompt, setEditBlankPrompt] = useState('');
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -809,6 +814,68 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
     }
   };
 
+  const handleOpenEditBlankTip = (blankId) => {
+    const tipData = quiz?.ai_helper_tips?.[currentIndex]?.blanks?.[blankId] || '';
+    setEditBlankTipJson(tipData);
+    setEditBlankId(blankId);
+    setEditBlankTipDialogOpen(true);
+  };
+
+  const handleSaveBlankTipJson = async () => {
+    try {
+      const existingTips = quiz?.ai_helper_tips || {};
+      const questionTips = existingTips[currentIndex] || {};
+      const blankTips = questionTips.blanks || {};
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: {
+            ...questionTips,
+            blanks: {
+              ...blankTips,
+              [editBlankId]: editBlankTipJson
+            }
+          }
+        }
+      });
+
+      setBlankHelperContent(prev => ({ ...prev, [editBlankId]: editBlankTipJson }));
+      
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      setEditBlankTipDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save: ' + err.message);
+    }
+  };
+
+  const handleOpenEditBlankPrompt = () => {
+    const defaultPrompt = `You are a Year 6 teacher helping a student understand vocabulary words.
+
+For each of these words, provide:
+1. A very brief definition (one short sentence)
+2. An example sentence using the word
+
+Words: [OPTIONS_WILL_BE_INSERTED_HERE]
+
+Format your response as HTML with this structure:
+<div class="space-y-2">
+<div>
+<strong>word1:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
+<div>
+<strong>word2:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
+</div>
+
+Keep it simple and clear. Do NOT indicate which word is correct.`;
+    
+    setEditBlankPrompt(defaultPrompt);
+    setEditBlankPromptDialogOpen(true);
+  };
+
   const handleBlankHelp = async (blankId) => {
     const tipId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
@@ -1357,6 +1424,8 @@ try {
             currentIndex={currentIndex}
             onRegenerateHelp={handleRegenerateBlankHelp}
             onDeleteHelp={handleDeleteBlankHelp}
+            onEditHelp={handleOpenEditBlankTip}
+            onEditPrompt={handleOpenEditBlankPrompt}
           />
         );
       case 'inline_dropdown_same':
@@ -1375,6 +1444,8 @@ try {
             currentIndex={currentIndex}
             onRegenerateHelp={handleRegenerateBlankHelp}
             onDeleteHelp={handleDeleteBlankHelp}
+            onEditHelp={handleOpenEditBlankTip}
+            onEditPrompt={handleOpenEditBlankPrompt}
           />
         );
       case 'matching_list_dual':
@@ -2070,6 +2141,57 @@ try {
                   </Button>
                   <Button onClick={handleSaveTipJson} className="bg-indigo-600 hover:bg-indigo-700">
                     Save Changes
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Blank Tip Dialog */}
+          <Dialog open={editBlankTipDialogOpen} onOpenChange={setEditBlankTipDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Dropdown Tip</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <textarea
+                  value={editBlankTipJson}
+                  onChange={(e) => setEditBlankTipJson(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                  placeholder="Enter HTML content for the tip..."
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditBlankTipDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveBlankTipJson} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Blank Prompt Dialog */}
+          <Dialog open={editBlankPromptDialogOpen} onOpenChange={setEditBlankPromptDialogOpen}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Edit Dropdown Prompt Template</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="text-sm text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <strong>Note:</strong> This is a reference template. The actual prompt is generated in the code. 
+                  This dialog is for viewing and understanding the prompt structure. To make changes, you'll need to modify the code in the handleRegenerateBlankHelp function.
+                </div>
+                <textarea
+                  value={editBlankPrompt}
+                  onChange={(e) => setEditBlankPrompt(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg bg-slate-50"
+                  readOnly
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditBlankPromptDialogOpen(false)}>
+                    Close
                   </Button>
                 </div>
               </div>

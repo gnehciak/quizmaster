@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, Sparkles, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, X, RefreshCw, Trash2, FileEdit, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -35,7 +35,9 @@ export default function InlineDropdownQuestion({
   onRegenerateExplanation,
   onDeleteExplanation,
   onRegenerateHelp = null,
-  onDeleteHelp = null
+  onDeleteHelp = null,
+  onEditHelp = null,
+  onEditPrompt = null
 }) {
   const handleSelect = (blankId, value) => {
     if (showResults) return;
@@ -133,7 +135,7 @@ export default function InlineDropdownQuestion({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm text-slate-800">Word Definitions</h4>
-                        {isAdmin && (onRegenerateHelp || onDeleteHelp) && (
+                        {isAdmin && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt) && (
                           <div className="flex items-center gap-1">
                             {onRegenerateHelp && (
                               <Button
@@ -142,9 +144,31 @@ export default function InlineDropdownQuestion({
                                 onClick={() => onRegenerateHelp(blankId)}
                                 disabled={isLoadingHelp}
                                 className="h-7 px-2 gap-1"
+                                title="Regenerate"
                               >
                                 <RefreshCw className="w-3 h-3" />
-                                Regenerate
+                              </Button>
+                            )}
+                            {onEditHelp && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEditHelp(blankId)}
+                                className="h-7 px-2 gap-1"
+                                title="Edit Tip"
+                              >
+                                <FileEdit className="w-3 h-3" />
+                              </Button>
+                            )}
+                            {onEditPrompt && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onEditPrompt}
+                                className="h-7 px-2 gap-1"
+                                title="View Prompt"
+                              >
+                                <Code className="w-3 h-3" />
                               </Button>
                             )}
                             {onDeleteHelp && (
@@ -153,6 +177,7 @@ export default function InlineDropdownQuestion({
                                 size="sm"
                                 onClick={() => onDeleteHelp(blankId)}
                                 className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Delete"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
