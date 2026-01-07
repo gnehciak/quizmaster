@@ -102,7 +102,7 @@ export default function TakeQuiz() {
 
   // Track window focus/blur during quiz (disabled for admins)
   useEffect(() => {
-    if (!quizStarted || submitted || showResults || user?.role === 'admin') return;
+    if (!user || !quizStarted || submitted || showResults || user.role === 'admin') return;
 
     const handleBlur = () => {
       const newCount = focusLeaveCount + 1;
@@ -119,7 +119,7 @@ export default function TakeQuiz() {
 
     window.addEventListener('blur', handleBlur);
     return () => window.removeEventListener('blur', handleBlur);
-  }, [quizStarted, submitted, showResults, focusLeaveCount, user]);
+  }, [user, quizStarted, submitted, showResults, focusLeaveCount]);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
