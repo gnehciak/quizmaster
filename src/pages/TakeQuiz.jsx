@@ -708,6 +708,107 @@ export default function TakeQuiz() {
     }
   };
 
+  const handleRegenerateBlankHelp = async (blankId) => {
+    setBlankHelperLoading(prev => ({ ...prev, [blankId]: true }));
+
+    try {
+      const q = currentQuestion;
+      const blank = q.blanks?.find(b => b.id === blankId);
+      
+      if (!blank || !blank.options) {
+        throw new Error('Blank not found or has no options');
+      }
+
+      const prompt = `You are a Year 6 teacher helping a student understand vocabulary words.
+
+For each of these words, provide:
+1. A very brief definition (one short sentence)
+2. An example sentence using the word
+
+Words: ${blank.options.join(', ')}
+
+Format your response as HTML with this structure:
+<div class="space-y-2">
+<div>
+<strong>word1:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
+<div>
+<strong>word2:</strong> brief definition<br/>
+<em>Example: example sentence here</em>
+</div>
+</div>
+
+Keep it simple and clear. Do NOT indicate which word is correct.`;
+
+      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      setBlankHelperContent(prev => ({ ...prev, [blankId]: text }));
+
+      // Save to quiz entity
+      try {
+        const existingTips = quiz?.ai_helper_tips || {};
+        const questionTips = existingTips[currentIndex] || {};
+        const blankTips = questionTips.blanks || {};
+        
+        await base44.entities.Quiz.update(quizId, {
+          ai_helper_tips: {
+            ...existingTips,
+            [currentIndex]: {
+              ...questionTips,
+              blanks: {
+                ...blankTips,
+                [blankId]: text
+              }
+            }
+          }
+        });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      } catch (err) {
+        console.error('Failed to save blank helper data:', err);
+      }
+    } catch (e) {
+      console.error('Error generating blank help:', e);
+      setBlankHelperContent(prev => ({ ...prev, [blankId]: "Unable to generate help at this time." }));
+    } finally {
+      setBlankHelperLoading(prev => ({ ...prev, [blankId]: false }));
+    }
+  };
+
+  const handleDeleteBlankHelp = async (blankId) => {
+    try {
+      const existingTips = quiz?.ai_helper_tips || {};
+      const questionTips = existingTips[currentIndex] || {};
+      const blankTips = questionTips.blanks || {};
+      
+      const { [blankId]: _, ...remainingBlanks } = blankTips;
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: {
+            ...questionTips,
+            blanks: remainingBlanks
+          }
+        }
+      });
+
+      setBlankHelperContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[blankId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+    } catch (err) {
+      console.error('Failed to delete blank helper data:', err);
+    }
+  };
+
   const handleBlankHelp = async (blankId) => {
     const tipId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
@@ -1254,6 +1355,8 @@ try {
             tipsUsed={tipsUsed}
             openedTips={openedTips}
             currentIndex={currentIndex}
+            onRegenerateHelp={handleRegenerateBlankHelp}
+            onDeleteHelp={handleDeleteBlankHelp}
           />
         );
       case 'inline_dropdown_same':
@@ -1270,6 +1373,8 @@ try {
             tipsUsed={tipsUsed}
             openedTips={openedTips}
             currentIndex={currentIndex}
+            onRegenerateHelp={handleRegenerateBlankHelp}
+            onDeleteHelp={handleDeleteBlankHelp}
           />
         );
       case 'matching_list_dual':
