@@ -60,6 +60,16 @@ export default function ManageQuizzes() {
     queryFn: () => base44.entities.Quiz.list('-created_date')
   });
 
+  const { data: allAttempts = [] } = useQuery({
+    queryKey: ['allQuizAttempts'],
+    queryFn: () => base44.entities.QuizAttempt.list()
+  });
+
+  const { data: allCourses = [] } = useQuery({
+    queryKey: ['allCourses'],
+    queryFn: () => base44.entities.Course.list()
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Quiz.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quizzes'] })
@@ -637,17 +647,28 @@ export default function ManageQuizzes() {
             viewMode === 'list' && "space-y-4",
             viewMode === 'compact' && "space-y-2"
           )}>
-            {sortedQuizzes.map((quiz, idx) => (
-              <QuizCard
-                key={quiz.id}
-                quiz={quiz}
-                index={idx}
-                viewMode={viewMode}
-                onDelete={handleDelete}
-                onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)}
-                onExport={handleExportQuiz}
-              />
-            ))}
+            {sortedQuizzes.map((quiz, idx) => {
+              // Filter data for this specific quiz
+              const quizAttempts = allAttempts.filter(a => a.quiz_id === quiz.id);
+              const quizCourses = allCourses.filter(course => 
+                course.quiz_ids?.includes(quiz.id) || 
+                course.content_blocks?.some(block => block.type === 'quiz' && block.quiz_id === quiz.id)
+              );
+
+              return (
+                <QuizCard
+                  key={quiz.id}
+                  quiz={quiz}
+                  index={idx}
+                  viewMode={viewMode}
+                  onDelete={handleDelete}
+                  onEdit={(quiz) => window.location.href = createPageUrl(`CreateQuiz?id=${quiz.id}`)}
+                  onExport={handleExportQuiz}
+                  attempts={quizAttempts}
+                  courses={quizCourses}
+                />
+              );
+            })}
           </div>
         ) : (
           <motion.div

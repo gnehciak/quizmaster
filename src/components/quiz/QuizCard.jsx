@@ -8,11 +8,11 @@ import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Users, GraduationCap, BookOpen } from 'lucide-react';
 
-export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card' }) {
+export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card', attempts = [], courses = [] }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(quiz.title);
   const queryClient = useQueryClient();
@@ -31,21 +31,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     setIsEditingTitle(false);
   };
 
-  const { data: attempts } = useQuery({
-    queryKey: ['quizAttempts', quiz.id],
-    queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quiz.id }),
-  });
-
-  const { data: courses } = useQuery({
-    queryKey: ['quizCourses', quiz.id],
-    queryFn: async () => {
-      const allCourses = await base44.entities.Course.list();
-      return allCourses.filter(course => 
-        course.quiz_ids?.includes(quiz.id) || 
-        course.content_blocks?.some(block => block.type === 'quiz' && block.quiz_id === quiz.id)
-      );
-    },
-  });
+  // Data passed from parent to avoid N+1 queries
 
   const attemptCount = attempts?.length || 0;
   const averageScore = attempts?.length 
