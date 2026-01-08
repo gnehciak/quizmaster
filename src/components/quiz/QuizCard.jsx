@@ -8,7 +8,9 @@ import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Users, GraduationCap, BookOpen } from 'lucide-react';
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card' }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -28,6 +30,21 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     setEditedTitle(quiz.title);
     setIsEditingTitle(false);
   };
+
+  const { data: attempts } = useQuery({
+    queryKey: ['quizAttempts', quiz.id],
+    queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quiz.id }),
+  });
+
+  const { data: courses } = useQuery({
+    queryKey: ['quizCourses', quiz.id],
+    queryFn: () => base44.entities.Course.filter({ quiz_ids: quiz.id }),
+  });
+
+  const attemptCount = attempts?.length || 0;
+  const averageScore = attempts?.length 
+    ? Math.round(attempts.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / attempts.length)
+    : 0;
   
   const getQuestionTypes = () => {
     if (!quiz.questions) return [];
@@ -322,6 +339,48 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
               <span>{quiz.timer_duration} min</span>
             </div>
           )}
+          
+          <div className="flex items-center gap-3 border-l border-slate-200 pl-3 ml-1">
+            <div className="flex items-center gap-1.5" title="Total Attempts">
+              <Users className="w-3.5 h-3.5" />
+              <span>{attemptCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5" title="Average Score">
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>{averageScore}%</span>
+            </div>
+          </div>
+
+          <div className="ml-auto">
+             <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-1.5 cursor-help hover:text-indigo-600 transition-colors">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>{courses?.length || 0}</span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900">Used in Courses</h4>
+                  {courses?.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {courses.map(course => (
+                        <Link 
+                          key={course.id} 
+                          to={createPageUrl(`CourseDetail?id=${course.id}`)}
+                          className="text-xs text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded transition-colors truncate"
+                        >
+                          {course.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 italic">Not used in any courses yet.</p>
+                  )}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6 min-h-[24px]">
