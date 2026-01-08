@@ -325,7 +325,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6 min-h-[24px]">
-          {getQuestionTypes().slice(0, 2).map(type => (
+          {getQuestionTypes().map(type => (
             <Badge 
               key={type} 
               variant="secondary"
@@ -334,11 +334,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
               {typeLabels[type]}
             </Badge>
           ))}
-          {getQuestionTypes().length > 2 && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-6 bg-slate-100 text-slate-600">
-              +{getQuestionTypes().length - 2} more
-            </Badge>
-          )}
         </div>
 
         <div className="grid grid-cols-5 gap-2">
