@@ -345,13 +345,15 @@ export default function ReviewAnswers() {
       const userAnswer = answers[currentIndex]?.[blankId];
       const correctAnswer = blank.correctAnswer;
 
-      let passageContext = '';
+      // Calculate blank number (1-indexed position in blanks array)
+      const blankNumber = (q.blanks?.findIndex(b => b.id === blankId) ?? -1) + 1;
+
+      // Prepare passage text
+      let passageText = '';
       if (q.passages?.length > 0) {
-        passageContext = '\n\nReading Passages:\n' + q.passages.map(p => 
-          `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`
-        ).join('\n\n');
+        passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
       } else if (q.passage) {
-        passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
+        passageText = q.passage?.replace(/<[^>]*>/g, '');
       }
 
       // Use global prompt if exists, otherwise default
@@ -363,27 +365,27 @@ IMPORTANT: Do NOT start with conversational phrases like "That is a great questi
 **CRITICAL RULES:**
 1. **State the Correct Answer:** Start by clearly stating the correct answer.
 2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
-   * If it's the CORRECT option: Why it's right${passageContext ? ', using specific quotes from the passage' : ''}.
-   * If it's a WRONG option: Why it's incorrect${passageContext ? ', using specific quotes or reasoning from the passage' : ''}.
+   * If it's the CORRECT option: Why it's right, using specific quotes from the passage if available.
+   * If it's a WRONG option: Why it's incorrect, using specific quotes or reasoning from the passage if available.
 3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
-${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
-5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+4. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
-Question: Fill in the blank
+Blank Number: {{BLANK_NUMBER}}
 Student's Answer: {{USER_ANSWER}}
 Correct Answer: {{CORRECT_ANSWER}}
-Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
+Options: {{OPTIONS}}
+
+Passage:
+{{PASSAGE}}
 
 Provide HTML formatted explanation:`;
 
       let prompt = globalPrompt?.template || defaultPrompt;
-      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer);
+      prompt = prompt.replace('{{BLANK_NUMBER}}', blankNumber.toString());
+      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer || 'Not answered');
       prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
       prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
-      prompt = prompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
-      prompt = prompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
-      prompt = prompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
-      prompt = prompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
+      prompt = prompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
