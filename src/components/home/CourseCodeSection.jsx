@@ -70,16 +70,16 @@ export default function CourseCodeSection({ user }) {
   };
 
   return (
-    <div className="py-12 bg-gradient-to-r from-indigo-50 to-purple-50">
+    <div className="py-12 bg-gradient-to-r from-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-2xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <KeyRound className="w-6 h-6 text-indigo-600" />
-            <h2 className="text-2xl font-bold text-slate-800">
+            <KeyRound className="w-6 h-6 text-indigo-400" />
+            <h2 className="text-2xl font-bold text-white">
               Already a Student?
             </h2>
           </div>
-          <p className="text-slate-600 mb-6">
+          <p className="text-slate-300 mb-6">
             Enter your course code to join
           </p>
 
@@ -92,7 +92,7 @@ export default function CourseCodeSection({ user }) {
                 setCode(e.target.value);
                 setError('');
               }}
-              className="flex-1 h-12 text-center sm:text-left uppercase"
+              className="flex-1 h-12 text-center sm:text-left uppercase bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
               disabled={enrollMutation.isPending}
             />
             <Button
@@ -115,7 +115,7 @@ export default function CourseCodeSection({ user }) {
           </form>
 
           {error && (
-            <p className="mt-3 text-sm text-red-600 font-medium">{error}</p>
+            <p className="mt-3 text-sm text-red-400 font-medium">{error}</p>
           )}
         </div>
       </div>
