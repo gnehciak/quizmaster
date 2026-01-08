@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2, Code } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,6 +56,8 @@ export default function ReviewAnswers() {
   const [isGeneratingExplanation, setIsGeneratingExplanation] = useState(false);
   const [editExplanationDialogOpen, setEditExplanationDialogOpen] = useState(false);
   const [editExplanationJson, setEditExplanationJson] = useState('');
+  const [editRCExplanationPromptDialogOpen, setEditRCExplanationPromptDialogOpen] = useState(false);
+  const [editRCExplanationPrompt, setEditRCExplanationPrompt] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -76,6 +78,11 @@ export default function ReviewAnswers() {
     queryFn: () => base44.entities.QuizAttempt.filter({ id: attemptId }),
     enabled: !!attemptId,
     select: (data) => data[0]
+  });
+
+  const { data: globalPrompts = [] } = useQuery({
+    queryKey: ['aiPrompts'],
+    queryFn: () => base44.entities.AIPrompt.list()
   });
 
   // Flatten questions
@@ -782,7 +789,9 @@ Provide HTML formatted explanation:`;
 
       const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
 
-      const prompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
+      // Use global prompt if exists, otherwise default
+      const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
       Tone: Encouraging, simple, and direct.
       IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
@@ -826,6 +835,12 @@ Provide HTML formatted explanation:`;
           {"passageId": "${passagesForPrompt[0].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"}${passagesForPrompt.length > 1 ? `,\n          {"passageId": "${passagesForPrompt[1].id}", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags (only if evidence exists here)"}` : ''}
         ]
       }`;
+
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace(/\{\{QUESTION\}\}/g, questionText?.replace(/<[^>]*>/g, ''));
+      prompt = prompt.replace('{{PASSAGES}}', passagesList);
+      prompt = prompt.replace('{{OPTIONS}}', q.isSubQuestion ? q.subQuestion.options?.join(', ') : q.options?.join(', '));
+      prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
 
       console.log('=== RC EXPLANATION PROMPT ===');
       console.log(prompt);
@@ -981,6 +996,80 @@ Provide HTML formatted explanation:`;
         setEditExplanationDialogOpen(false);
       } catch (err) {
         alert('Invalid JSON: ' + err.message);
+      }
+    };
+
+    const handleOpenEditRCExplanationPrompt = () => {
+      const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
+      Tone: Encouraging, simple, and direct.
+      IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+      **CRITICAL RULES:**
+      1. **Highlighting:** - Locate ALL specific sentences or phrases in the text that prove the Correct Answer. 
+         - Wrap EACH distinct piece of evidence in this exact tag: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE HERE</mark>.
+         - Keep any existing formatting such as <strong> tags inside the highlighted sections.
+         - You may highlight multiple separate sections if the proof is spread across the text.
+      2. **Text Integrity:** - You must return the ENTIRE passage text exactly as provided, preserving all original HTML tags, line breaks, and structure. 
+         - Do NOT summarize, truncate, or alter the non-highlighted text.
+      3. **Advice Strategy (Tell & Explain Each Option):** 
+         - **State the Correct Answer:** Start by clearly stating the correct answer (e.g., "The correct answer is Option A").
+         - **Explain Each Option Individually:** Go through EACH option one by one and explain:
+           * If it's the CORRECT option: Why it's right, using specific quotes from the passage.
+           * If it's a WRONG option: Why it's incorrect, using specific quotes or reasoning from the passage.
+         - Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
+         - Quote directly from the passage to support your explanations.
+      4. **JSON Logic:**
+         - If the input Passage(s) is a single string, use the [For single passage] format.
+         - If the input Passage(s) is an array/list, use the [For multiple passages] format.
+         - Return valid raw JSON only.
+
+      **INPUT DATA:**
+      Question: {{QUESTION}}
+      Passage(s): {{PASSAGES}}
+      Options: {{OPTIONS}}
+      Correct Answer: {{CORRECT_ANSWER}}
+
+      **OUTPUT FORMAT (JSON):**
+
+      [For single passage]
+      {
+        "advice": "HTML formatted advice using <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed. Follow the 'Explain Each Option Individually' strategy from rule 3.",
+        "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around the specific evidence"
+      }
+
+      [For multiple passages]
+      {
+        "advice": "HTML formatted advice using <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed. Follow the 'Explain Each Option Individually' strategy from rule 3.",
+        "passages": [
+          {"passageId": "passage_id", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around specific evidence"}
+        ]
+      }`;
+      
+      setEditRCExplanationPrompt(globalPrompt?.template || defaultPrompt);
+      setEditRCExplanationPromptDialogOpen(true);
+    };
+
+    const handleSaveRCExplanationPrompt = async () => {
+      try {
+        const existingPrompt = globalPrompts.find(p => p.key === 'reading_comprehension_explanation');
+        
+        if (existingPrompt) {
+          await base44.entities.AIPrompt.update(existingPrompt.id, {
+            template: editRCExplanationPrompt
+          });
+        } else {
+          await base44.entities.AIPrompt.create({
+            key: 'reading_comprehension_explanation',
+            template: editRCExplanationPrompt,
+            description: 'Prompt template for reading comprehension explanations'
+          });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+        setEditRCExplanationPromptDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save prompt: ' + err.message);
       }
     };
 
@@ -1297,6 +1386,7 @@ Be specific and constructive. Focus on what the student did well and what needs 
           onRegenerateExplanation={handleRegenerateRCExplanation}
           onDeleteExplanation={handleDeleteRCExplanation}
           onEditExplanation={handleOpenEditExplanation}
+          onEditExplanationPrompt={handleOpenEditRCExplanationPrompt}
           openedExplanations={openedExplanations}
         />
       );
@@ -1759,6 +1849,41 @@ Be specific and constructive. Focus on what the student did well and what needs 
               </Button>
               <Button onClick={handleSaveExplanationJson} className="bg-indigo-600 hover:bg-indigo-700">
                 Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit RC Explanation Prompt Dialog */}
+      <Dialog open={editRCExplanationPromptDialogOpen} onOpenChange={setEditRCExplanationPromptDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Reading Comprehension Explanation Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <strong>Instructions:</strong> Available placeholders:
+              <ul className="mt-2 space-y-1">
+                <li><code className="bg-white px-1 rounded">{'{{QUESTION}}'}</code> - The question text</li>
+                <li><code className="bg-white px-1 rounded">{'{{PASSAGES}}'}</code> - The full passage(s) text</li>
+                <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - The answer options</li>
+                <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+              </ul>
+              <p className="mt-2">This prompt is used globally for all reading comprehension explanation generation across all quizzes.</p>
+            </div>
+            <textarea
+              value={editRCExplanationPrompt}
+              onChange={(e) => setEditRCExplanationPrompt(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditRCExplanationPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveRCExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
               </Button>
             </div>
           </div>
