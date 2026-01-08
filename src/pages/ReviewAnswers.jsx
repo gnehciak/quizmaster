@@ -1917,7 +1917,7 @@ Provide HTML formatted explanation:`;
                         {/* Bar Chart Display */}
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
                           <h4 className="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Performance by Skill</h4>
-                          <div className="h-[400px] w-full">
+                          <div className="h-[200px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart
                                 data={performanceAnalysis.readingSkillsBreakdown.map(s => ({
