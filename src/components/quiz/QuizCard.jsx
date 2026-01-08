@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -226,26 +226,26 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full"
     >
       {/* Card Header: Category & Status */}
-      <div className="px-5 pt-5 flex justify-between items-start mb-3">
-        <Badge variant="outline" className="font-normal text-xs text-slate-600 bg-slate-50 border-slate-200 flex items-center gap-1.5 py-1 px-2.5">
+      <div className="px-4 pt-4 flex justify-between items-start mb-2">
+        <Badge variant="outline" className="font-normal text-[10px] text-slate-600 bg-slate-50 border-slate-200 flex items-center gap-1.5 py-0.5 px-2">
           <div className={cn("w-1.5 h-1.5 rounded-full", quiz.status === 'published' ? "bg-emerald-500" : "bg-amber-500")} />
           {quiz.category || 'General'}
         </Badge>
         
         <div className="flex items-center gap-2">
            {quiz.status === 'published' && (
-             <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Published</span>
+             <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">Published</span>
            )}
            {quiz.status !== 'published' && (
-             <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Draft</span>
+             <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">Draft</span>
            )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="px-5 flex-1 flex flex-col">
+      <div className="px-4 flex-1 flex flex-col">
         {/* Title Section */}
-        <div className="mb-3 min-h-[3.5rem]">
+        <div className="mb-2">
           {isEditingTitle ? (
             <div className="flex items-start gap-2 animate-in fade-in zoom-in-95 duration-200">
               <textarea
@@ -258,7 +258,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
                   }
                   if (e.key === 'Escape') handleCancelEdit();
                 }}
-                className="flex-1 text-base font-bold text-slate-900 bg-white border border-indigo-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm resize-none"
+                className="flex-1 text-sm font-bold text-slate-900 bg-white border border-indigo-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm resize-none"
                 rows={2}
                 autoFocus
                 onClick={(e) => e.stopPropagation()}
@@ -266,21 +266,21 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
               <div className="flex flex-col gap-1 shrink-0">
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleSaveTitle(); }}
-                  className="h-7 w-7 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-colors"
+                  className="h-6 w-6 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-colors"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-3 h-3" />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }}
-                  className="h-7 w-7 rounded-md bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                  className="h-6 w-6 rounded-md bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 flex items-center justify-center transition-colors"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             </div>
           ) : (
             <div className="group/title relative">
-              <h3 className="text-lg font-bold text-slate-900 leading-tight line-clamp-2 pr-6">
+              <h3 className="text-base font-bold text-slate-900 leading-tight line-clamp-2 pr-6">
                 {quiz.title}
               </h3>
               <button
@@ -295,16 +295,23 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
         {/* Description */}
         {quiz.description && (
-          <p className="text-slate-500 text-xs line-clamp-2 mb-4 leading-relaxed h-[2.5em]">
-            {stripHtml(quiz.description)}
-          </p>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <p className="text-slate-500 text-xs line-clamp-1 mb-3 cursor-help">
+                {stripHtml(quiz.description)}
+              </p>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+              <p className="text-sm text-slate-700">{stripHtml(quiz.description)}</p>
+            </HoverCardContent>
+          </HoverCard>
         )}
         
-        {!quiz.description && <div className="h-[2.5em] mb-4" />}
+        {!quiz.description && <div className="h-4 mb-3" />}
 
         {/* Question Types - Mini Badges */}
-        <div className="flex flex-wrap gap-1.5 mb-4 mt-auto">
-          {getQuestionTypes().slice(0, 3).map(type => (
+        <div className="flex flex-wrap gap-1.5 mb-3 mt-auto">
+          {getQuestionTypes().map(type => (
             <span 
               key={type} 
               className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
@@ -314,46 +321,49 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
               {typeLabels[type]?.split(' ')[0]}
             </span>
           ))}
-          {getQuestionTypes().length > 3 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 bg-slate-50">
-              +{getQuestionTypes().length - 3}
-            </span>
-          )}
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-px bg-slate-100 border-y border-slate-100 mt-2">
-        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Questions</div>
-          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-            <FileQuestion className="w-3.5 h-3.5 text-indigo-500" />
+      <div className="grid grid-cols-3 gap-px bg-slate-100 border-y border-slate-100 mt-2">
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Questions</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <FileQuestion className="w-3 h-3 text-indigo-500" />
             {questionCount}
           </div>
         </div>
         
-        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Time</div>
-          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Time</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <Clock className="w-3 h-3 text-amber-500" />
             {quiz.timer_enabled && quiz.timer_duration ? `${quiz.timer_duration}m` : '∞'}
           </div>
         </div>
+
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tips</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <Sparkles className="w-3 h-3 text-pink-500" />
+            {quiz.allow_tips ? (quiz.tips_allowed === 999 ? '∞' : quiz.tips_allowed) : 'Off'}
+          </div>
+        </div>
         
-        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Attempts</div>
-          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-            <Users className="w-3.5 h-3.5 text-emerald-500" />
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors col-span-1.5">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Attempts</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <Users className="w-3 h-3 text-emerald-500" />
             {attemptCount}
           </div>
         </div>
 
         <HoverCard>
           <HoverCardTrigger asChild>
-            <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors cursor-help">
-              <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Avg Score</div>
-              <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-                <GraduationCap className="w-3.5 h-3.5 text-purple-500" />
+            <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors cursor-help col-span-1.5">
+              <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Avg Score</div>
+              <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+                <GraduationCap className="w-3 h-3 text-purple-500" />
                 {averageScore}%
               </div>
             </div>
