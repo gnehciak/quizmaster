@@ -1059,11 +1059,13 @@ Provide HTML formatted explanation:`;
   4. Text Structure & Cohesion (Logical flow, sentence placement)
   5. Author’s Purpose & Craft (Tone, purpose, technique)
 
-  For each category, calculate stats and provide diagnostic feedback.
+  For each category, calculate stats based on the points (some questions are worth more than 1 mark).
+  Provide EXTENSIVE, DETAILED, and DIAGNOSTIC feedback.
   Feedback rules:
-  - If well: Name success behaviors.
-  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies.
-  - Tone: Encouraging, diagnostic, upper primary level.
+  - Be very thorough. Explain the concept in depth.
+  - If well: Name success behaviors and explain why they are effective.
+  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies with examples.
+  - Tone: Encouraging, diagnostic, upper primary level but detailed.
 
   FINAL JSON FORMAT:
   {
@@ -1530,11 +1532,13 @@ Provide HTML formatted explanation:`;
   4. Text Structure & Cohesion (Logical flow, sentence placement)
   5. Author’s Purpose & Craft (Tone, purpose, technique)
 
-  For each category, calculate stats and provide diagnostic feedback.
+  For each category, calculate stats based on the points (some questions are worth more than 1 mark).
+  Provide EXTENSIVE, DETAILED, and DIAGNOSTIC feedback.
   Feedback rules:
-  - If well: Name success behaviors.
-  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies.
-  - Tone: Encouraging, diagnostic, upper primary level.
+  - Be very thorough. Explain the concept in depth.
+  - If well: Name success behaviors and explain why they are effective.
+  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies with examples.
+  - Tone: Encouraging, diagnostic, upper primary level but detailed.
 
   FINAL JSON FORMAT:
   {
@@ -1554,7 +1558,7 @@ Provide HTML formatted explanation:`;
         let prompt = globalPrompt?.template || defaultPrompt;
         
         const questionsPerfStr = questionsData.map((q) => 
-          `Q${q.id}. [${q.type}] Score: ${q.points}/${q.maxPoints}
+          `Q${q.id}. [${q.type}] Score: ${q.points}/${q.maxPoints} (Worth ${q.maxPoints} marks)
   Question: "${q.question.substring(0, 100)}..."
   Student Answer: ${q.userAnswer}
   Correct Answer: ${q.correctAnswer}`
@@ -1861,6 +1865,37 @@ Provide HTML formatted explanation:`;
                               {loadingAnalysis ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                               Regenerate
                             </Button>
+                          </div>
+                        </div>
+
+                        {/* Bar Chart Display */}
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                          <h4 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Performance by Skill</h4>
+                          <div className="flex items-end justify-between gap-2 h-40">
+                            {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
+                              const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
+                              return (
+                                <div key={idx} className="flex flex-col items-center gap-2 flex-1 group relative">
+                                  <div className="relative w-full flex justify-center h-full items-end">
+                                    <div 
+                                      className={cn(
+                                        "w-full max-w-[40px] rounded-t-md transition-all duration-500 relative group-hover:opacity-90",
+                                        skill.status === 'strong' ? "bg-emerald-500" :
+                                        skill.status === 'developing' ? "bg-blue-500" : "bg-red-500"
+                                      )}
+                                      style={{ height: `${Math.max(percent, 5)}%` }}
+                                    >
+                                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        {skill.correct}/{skill.total} ({percent}%)
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 font-medium text-center leading-tight line-clamp-2 h-8 flex items-center justify-center w-full">
+                                    {skill.category.replace(' Comprehension', '').replace(' & ', ' &\n')}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
 

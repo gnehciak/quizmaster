@@ -10,10 +10,10 @@ import MyCourses from './pages/MyCourses';
 import Profile from './pages/Profile';
 import QuizAnalytics from './pages/QuizAnalytics';
 import QuizAttempts from './pages/QuizAttempts';
-import ReviewAnswers from './pages/ReviewAnswers';
 import TakeQuiz from './pages/TakeQuiz';
 import UserDetails from './pages/UserDetails';
 import UserManagement from './pages/UserManagement';
+import ReviewAnswers from './pages/ReviewAnswers';
 import __Layout from './Layout.jsx';
 
 
@@ -30,10 +30,10 @@ export const PAGES = {
     "Profile": Profile,
     "QuizAnalytics": QuizAnalytics,
     "QuizAttempts": QuizAttempts,
-    "ReviewAnswers": ReviewAnswers,
     "TakeQuiz": TakeQuiz,
     "UserDetails": UserDetails,
     "UserManagement": UserManagement,
+    "ReviewAnswers": ReviewAnswers,
 }
 
 export const pagesConfig = {
