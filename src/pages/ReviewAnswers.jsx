@@ -1479,36 +1479,71 @@ Provide HTML formatted explanation:`;
       setLoadingAnalysis(true);
 
       try {
-        // Collect all questions and answers
-        const questionsData = questions.map((q, idx) => {
+        // Break down questions into atomic 1-mark items
+        const atomicItems = [];
+        
+        questions.forEach((q, idx) => {
           const answer = answers[idx];
-          let points = 0;
-          let maxPoints = 1;
+          const mainId = idx + 1;
 
           if (q.isSubQuestion) {
-            points = answer === q.subQuestion.correctAnswer ? 1 : 0;
+            // Reading comprehension sub-question
+            const isCorrect = answer === q.subQuestion.correctAnswer;
+            atomicItems.push({
+              id: `${mainId}`,
+              question: (q.subQuestion.question || q.question)?.replace(/<[^>]*>/g, ''),
+              type: q.type,
+              isCorrect,
+              userAnswer: answer,
+              correctAnswer: q.subQuestion.correctAnswer
+            });
           } else if (q.type === 'multiple_choice') {
-            points = answer === q.correctAnswer ? 1 : 0;
-          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-            maxPoints = q.dropZones?.length || 0;
-            points = (q.dropZones || []).reduce((acc, zone) => acc + (answer?.[zone.id] === zone.correctAnswer ? 1 : 0), 0);
-          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-            maxPoints = q.blanks?.length || 0;
-            points = (q.blanks || []).reduce((acc, blank) => acc + (answer?.[blank.id] === blank.correctAnswer ? 1 : 0), 0);
+            const isCorrect = answer === q.correctAnswer;
+            atomicItems.push({
+              id: `${mainId}`,
+              question: q.question?.replace(/<[^>]*>/g, ''),
+              type: q.type,
+              isCorrect,
+              userAnswer: answer,
+              correctAnswer: q.correctAnswer
+            });
+          } else if (['drag_drop_single', 'drag_drop_dual'].includes(q.type)) {
+            (q.dropZones || []).forEach((zone, zIdx) => {
+              const isCorrect = answer?.[zone.id] === zone.correctAnswer;
+              atomicItems.push({
+                id: `${mainId}.${zIdx + 1}`,
+                question: `Drop Zone: "${zone.label}"`,
+                type: 'drag_drop_part',
+                isCorrect,
+                userAnswer: answer?.[zone.id] || '(No Answer)',
+                correctAnswer: zone.correctAnswer
+              });
+            });
+          } else if (['inline_dropdown_separate', 'inline_dropdown_same'].includes(q.type)) {
+            (q.blanks || []).forEach((blank, bIdx) => {
+              const isCorrect = answer?.[blank.id] === blank.correctAnswer;
+              atomicItems.push({
+                id: `${mainId}.${bIdx + 1}`,
+                question: `Blank ${bIdx + 1}`,
+                type: 'dropdown_part',
+                isCorrect,
+                userAnswer: answer?.[blank.id] || '(No Answer)',
+                correctAnswer: blank.correctAnswer
+              });
+            });
           } else if (q.type === 'matching_list_dual') {
-            maxPoints = q.matchingQuestions?.length || 0;
-            points = (q.matchingQuestions || []).reduce((acc, mq) => acc + (answer?.[mq.id] === mq.correctAnswer ? 1 : 0), 0);
+            (q.matchingQuestions || []).forEach((mq, mIdx) => {
+              const isCorrect = answer?.[mq.id] === mq.correctAnswer;
+              atomicItems.push({
+                id: `${mainId}.${mIdx + 1}`,
+                question: `Match: "${mq.question}"`,
+                type: 'matching_part',
+                isCorrect,
+                userAnswer: answer?.[mq.id] || '(No Answer)',
+                correctAnswer: mq.correctAnswer
+              });
+            });
           }
-
-          return {
-            id: idx + 1,
-            question: (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, ''),
-            type: q.type,
-            points,
-            maxPoints,
-            userAnswer: typeof answer === 'object' ? JSON.stringify(answer) : answer,
-            correctAnswer: q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See complex answer')
-          };
         });
 
         const score = attempt?.score || 0;
@@ -1521,23 +1556,23 @@ Provide HTML formatted explanation:`;
   Quiz: ${quiz.title}
   Score: ${score}/${total} (${percentage}%)
 
-  Questions Performance:
+  Questions Performance (Broken down by marks):
   {{QUESTIONS_PERFORMANCE}}
 
   TASK: READING SKILLS BREAKDOWN
-  Categorise EVERY question into ONE of these 5 skills:
+  Categorise EVERY single item/mark into ONE of these 5 skills:
   1. Literal Comprehension (Understanding information stated directly)
   2. Inferential Comprehension (Drawing conclusions, implied meaning)
   3. Vocabulary & Language Precision (Word meaning, nuance, figurative language)
   4. Text Structure & Cohesion (Logical flow, sentence placement)
   5. Author’s Purpose & Craft (Tone, purpose, technique)
 
-  For each category, calculate stats based on the points (some questions are worth more than 1 mark).
+  For each category, calculate stats. Each item listed above counts as 1 mark.
   Provide EXTENSIVE, DETAILED, and DIAGNOSTIC feedback.
   Feedback rules:
   - Be very thorough. Explain the concept in depth.
   - If well: Name success behaviors and explain why they are effective.
-  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies with examples.
+  - If poorly: Explain skill, identify specific items (e.g. Q1.2, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies with examples.
   - Tone: Encouraging, diagnostic, upper primary level but detailed.
 
   FINAL JSON FORMAT:
@@ -1549,7 +1584,7 @@ Provide HTML formatted explanation:`;
         "total": 6,
         "status": "strong" | "developing" | "needs_attention",
         "feedback": "...",
-        "questionIds": [1, 5, 8]
+        "questionIds": ["1", "2.1", "2.2"]
       },
       ... (for all 5 categories)
     ]
@@ -1557,11 +1592,11 @@ Provide HTML formatted explanation:`;
 
         let prompt = globalPrompt?.template || defaultPrompt;
         
-        const questionsPerfStr = questionsData.map((q) => 
-          `Q${q.id}. [${q.type}] Score: ${q.points}/${q.maxPoints} (Worth ${q.maxPoints} marks)
-  Question: "${q.question.substring(0, 100)}..."
-  Student Answer: ${q.userAnswer}
-  Correct Answer: ${q.correctAnswer}`
+        const questionsPerfStr = atomicItems.map((item) => 
+          `ID: ${item.id} [${item.type}] - ${item.isCorrect ? 'CORRECT' : 'INCORRECT'}
+  Item: "${item.question}"
+  Student Answer: ${item.userAnswer}
+  Correct Answer: ${item.correctAnswer}`
         ).join('\n\n');
 
         prompt = prompt.replace('{{QUESTIONS_PERFORMANCE}}', questionsPerfStr);
@@ -1881,9 +1916,10 @@ Provide HTML formatted explanation:`;
                                       className={cn(
                                         "w-full max-w-[40px] rounded-t-md transition-all duration-500 relative group-hover:opacity-90",
                                         skill.status === 'strong' ? "bg-emerald-500" :
-                                        skill.status === 'developing' ? "bg-blue-500" : "bg-red-500"
+                                        skill.status === 'developing' ? "bg-blue-500" : 
+                                        skill.status === 'needs_attention' ? "bg-red-500" : "bg-slate-300"
                                       )}
-                                      style={{ height: `${Math.max(percent, 5)}%` }}
+                                      style={{ height: `${Math.max(percent || 0, 5)}%` }}
                                     >
                                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                                         {skill.correct}/{skill.total} ({percent}%)
@@ -1963,51 +1999,68 @@ Provide HTML formatted explanation:`;
                                           <div>
                                             <h5 className="text-xs font-bold uppercase text-slate-400 mb-2">Questions in this Category</h5>
                                             <div className="grid gap-2">
-                                              {skill.questionIds.map(qId => {
-                                                const qIndex = qId - 1;
-                                                const question = questions[qIndex];
+                                              {skill.questionIds.map(qIdStr => {
+                                                const qIdString = String(qIdStr);
+                                                const [mainPart, subPart] = qIdString.split('.');
+                                                const mainIndex = parseInt(mainPart) - 1;
+                                                const subIndex = subPart ? parseInt(subPart) - 1 : null;
+                                                
+                                                const question = questions[mainIndex];
                                                 if (!question) return null;
                                                 
-                                                // Calculate marks for this specific question
-                                                const answer = answers[qIndex];
-                                                let points = 0;
-                                                let maxPoints = 1;
-
-                                                if (question.isSubQuestion) {
-                                                  points = answer === question.subQuestion.correctAnswer ? 1 : 0;
-                                                } else if (question.type === 'multiple_choice') {
-                                                  points = answer === question.correctAnswer ? 1 : 0;
-                                                } else if (question.type === 'drag_drop_single' || question.type === 'drag_drop_dual') {
-                                                  maxPoints = question.dropZones?.length || 0;
-                                                  points = (question.dropZones || []).reduce((acc, zone) => acc + (answer?.[zone.id] === zone.correctAnswer ? 1 : 0), 0);
-                                                } else if (question.type === 'inline_dropdown_separate' || question.type === 'inline_dropdown_same') {
-                                                  maxPoints = question.blanks?.length || 0;
-                                                  points = (question.blanks || []).reduce((acc, blank) => acc + (answer?.[blank.id] === blank.correctAnswer ? 1 : 0), 0);
-                                                } else if (question.type === 'matching_list_dual') {
-                                                  maxPoints = question.matchingQuestions?.length || 0;
-                                                  points = (question.matchingQuestions || []).reduce((acc, mq) => acc + (answer?.[mq.id] === mq.correctAnswer ? 1 : 0), 0);
+                                                const answer = answers[mainIndex];
+                                                let displayText = '';
+                                                let isCorrect = false;
+                                                
+                                                if (subPart) {
+                                                  // Handle sub-parts
+                                                  if (['drag_drop_single', 'drag_drop_dual'].includes(question.type)) {
+                                                    const zone = question.dropZones?.[subIndex];
+                                                    if (zone) {
+                                                      displayText = `Drop Zone: ${zone.label}`;
+                                                      isCorrect = answer?.[zone.id] === zone.correctAnswer;
+                                                    }
+                                                  } else if (['inline_dropdown_separate', 'inline_dropdown_same'].includes(question.type)) {
+                                                    const blank = question.blanks?.[subIndex];
+                                                    if (blank) {
+                                                      displayText = `Blank ${subIndex + 1}`;
+                                                      isCorrect = answer?.[blank.id] === blank.correctAnswer;
+                                                    }
+                                                  } else if (question.type === 'matching_list_dual') {
+                                                    const mq = question.matchingQuestions?.[subIndex];
+                                                    if (mq) {
+                                                      displayText = `Match: ${mq.question}`;
+                                                      isCorrect = answer?.[mq.id] === mq.correctAnswer;
+                                                    }
+                                                  }
+                                                } else {
+                                                  // Whole question
+                                                  displayText = (question.isSubQuestion ? question.subQuestion.question : question.question)?.replace(/<[^>]*>/g, '');
+                                                  if (question.isSubQuestion) {
+                                                    isCorrect = answer === question.subQuestion.correctAnswer;
+                                                  } else {
+                                                    isCorrect = answer === question.correctAnswer;
+                                                  }
                                                 }
 
                                                 return (
-                                                  <div key={qId} className="flex items-start gap-3 bg-white p-3 rounded border border-slate-200">
+                                                  <div key={qIdStr} className="flex items-start gap-3 bg-white p-3 rounded border border-slate-200">
                                                     <div className={cn(
-                                                      "w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5",
-                                                      points === maxPoints ? "bg-emerald-100 text-emerald-700" :
-                                                      points > 0 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                                                      "w-8 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5",
+                                                      isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
                                                     )}>
-                                                      Q{qId}
+                                                      Q{qIdString}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                       <p className="text-sm text-slate-800 line-clamp-2 mb-1">
-                                                        {(question.isSubQuestion ? question.subQuestion.question : question.question)?.replace(/<[^>]*>/g, '')}
+                                                        {displayText}
                                                       </p>
                                                       <div className="flex items-center gap-2">
                                                         <span className={cn(
                                                           "text-xs font-medium px-1.5 py-0.5 rounded",
-                                                          points === maxPoints ? "bg-emerald-50 text-emerald-700" :
-                                                          points > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
+                                                          isCorrect ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
                                                         )}>
-                                                          {points}/{maxPoints} marks
+                                                          {isCorrect ? "1/1 mark" : "0/1 mark"}
                                                         </span>
                                                       </div>
                                                     </div>
@@ -2017,7 +2070,7 @@ Provide HTML formatted explanation:`;
                                                       className="h-8 w-8 p-0"
                                                       onClick={() => {
                                                         setStatsOpen(false);
-                                                        setCurrentIndex(qIndex);
+                                                        setCurrentIndex(mainIndex);
                                                       }}
                                                     >
                                                       <ChevronRight className="w-4 h-4 text-slate-400" />
