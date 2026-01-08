@@ -1474,14 +1474,7 @@ Provide HTML formatted explanation:`;
   Student Answer: ${q.userAnswer}
   Correct Answer: ${q.correctAnswer}`).join('\n\n')}
 
-  TASK 1: GENERAL SUMMARY
-  Provide a JSON object with:
-  - summary: Brief 2-3 sentence overall assessment.
-  - strongAreas: List of 2-3 strong areas.
-  - weakAreas: List of 2-3 areas for improvement.
-  - recommendations: List of 2-3 specific recommendations.
-
-  TASK 2: READING SKILLS BREAKDOWN
+  TASK: READING SKILLS BREAKDOWN
   Categorise EVERY question into ONE of these 5 skills:
   1. Literal Comprehension (Understanding information stated directly)
   2. Inferential Comprehension (Drawing conclusions, implied meaning)
@@ -1497,10 +1490,6 @@ Provide HTML formatted explanation:`;
 
   FINAL JSON FORMAT:
   {
-    "summary": "...",
-    "strongAreas": [...],
-    "weakAreas": [...],
-    "recommendations": [...],
     "readingSkillsBreakdown": [
       {
         "category": "Literal Comprehension",
@@ -1788,67 +1777,6 @@ Provide HTML formatted explanation:`;
 
                 {performanceAnalysis && (
                   <div className="space-y-6">
-                    {/* Overall Summary */}
-                    <div className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
-                          <Target className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-indigo-900 mb-2">Overall Assessment</h3>
-                          <p className="text-indigo-800 leading-relaxed">{performanceAnalysis.summary}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Strong & Weak Areas */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Strong Areas */}
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
-                          <h3 className="text-lg font-bold text-emerald-900">Strong Areas</h3>
-                        </div>
-                        <ul className="space-y-2">
-                          {performanceAnalysis.strongAreas.map((area, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-emerald-800">
-                              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                              <span>{area}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* Weak Areas */}
-                      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <TrendingDown className="w-5 h-5 text-red-600" />
-                          <h3 className="text-lg font-bold text-red-900">Areas for Improvement</h3>
-                        </div>
-                        <ul className="space-y-2">
-                          {performanceAnalysis.weakAreas.map((area, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-red-800">
-                              <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                              <span>{area}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Recommendations */}
-                    <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl">
-                      <h3 className="text-lg font-bold text-amber-900 mb-3">Recommendations</h3>
-                      <ul className="space-y-2">
-                        {performanceAnalysis.recommendations.map((rec, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-amber-800">
-                            <span className="text-amber-600 font-bold">{idx + 1}.</span>
-                            <span>{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
                     {/* Reading Skills Breakdown */}
                     {performanceAnalysis.readingSkillsBreakdown && (
                       <div className="space-y-4">
