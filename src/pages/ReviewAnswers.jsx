@@ -130,6 +130,7 @@ export default function ReviewAnswers() {
 
   const questions = flattenedQuestions;
   const answers = attempt?.answers || {};
+  const questionTimes = attempt?.question_times || {};
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
@@ -2249,19 +2250,30 @@ Provide HTML formatted explanation:`;
                       isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
                     }
 
+                    const timeSpent = questionTimes[idx] || 0;
+                    const timeDisplay = timeSpent >= 60 
+                      ? `${Math.floor(timeSpent / 60)}:${String(timeSpent % 60).padStart(2, '0')}`
+                      : `${timeSpent}s`;
+
                     return (
-                      <button
-                        key={idx}
-                        onClick={() => setCurrentIndex(idx)}
-                        className={cn(
-                          "w-8 h-8 rounded-md font-semibold text-xs transition-all flex-shrink-0",
-                          isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
-                          !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
-                          !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
+                      <div key={idx} className="flex flex-col items-center gap-0.5">
+                        <button
+                          onClick={() => setCurrentIndex(idx)}
+                          className={cn(
+                            "w-8 h-8 rounded-md font-semibold text-xs transition-all flex-shrink-0",
+                            isCurrent && "bg-indigo-600 text-white ring-2 ring-indigo-300",
+                            !isCurrent && isCorrect && "bg-emerald-500 text-white hover:bg-emerald-600",
+                            !isCurrent && !isCorrect && "bg-red-500 text-white hover:bg-red-600"
+                          )}
+                        >
+                          {idx + 1}
+                        </button>
+                        {timeSpent > 0 && (
+                          <span className="text-[9px] text-slate-500 font-medium">
+                            {timeDisplay}
+                          </span>
                         )}
-                      >
-                        {idx + 1}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

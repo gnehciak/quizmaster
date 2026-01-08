@@ -358,6 +358,7 @@ export default function TakeQuiz() {
           total,
           percentage,
           answers,
+          question_times: finalQuestionTimes,
           time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
         });
 
