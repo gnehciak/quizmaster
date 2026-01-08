@@ -1625,6 +1625,9 @@ try {
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
             onRegenerateHelp={handleRegenerateDropZoneHelp}
+            onDeleteHelp={handleDeleteDragDropHelp}
+            onEditHelp={handleOpenEditDragDropTip}
+            onEditPrompt={handleOpenEditDragDropPrompt}
             openedTips={openedTips}
             currentIndex={currentIndex}
           />
