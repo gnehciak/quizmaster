@@ -48,8 +48,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
   
   const getQuestionTypes = () => {
     if (!quiz.questions) return [];
-    const types = new Set(quiz.questions.map(q => q.type));
-    return Array.from(types);
+    return quiz.questions.map(q => q.type);
   };
 
   const stripHtml = (html) => {
@@ -230,7 +229,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full"
+      className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full overflow-hidden"
     >
       {/* Card Header: Category & Status */}
       <div className="px-4 pt-4 flex justify-between items-start mb-2 gap-2">
@@ -318,9 +317,9 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
         {/* Question Types - Mini Badges */}
         <div className="flex flex-wrap gap-1.5 mb-3 mt-auto">
-          {getQuestionTypes().map(type => (
+          {getQuestionTypes().map((type, i) => (
             <span 
-              key={type} 
+              key={`${type}-${i}`} 
               className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
                 typeColors[type]
               )}
