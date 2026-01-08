@@ -1906,37 +1906,77 @@ Provide HTML formatted explanation:`;
                         {/* Bar Chart Display */}
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
                           <h4 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Performance by Skill</h4>
-                          <div className="flex items-end justify-between gap-3 h-40">
+                          <div className="flex items-start justify-between gap-6 px-4">
                             {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
                               const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
-                              
-                              let colorClass = "bg-red-500";
-                              if (percent === 100) colorClass = "bg-emerald-500";
-                              else if (percent >= 80) colorClass = "bg-amber-400";
-                              else if (percent >= 60) colorClass = "bg-orange-400";
-                              else if (percent >= 40) colorClass = "bg-orange-500";
+                              const maxQuestions = Math.max(...performanceAnalysis.readingSkillsBreakdown.map(s => s.total));
+                              const incorrect = skill.total - skill.correct;
+                              const correctHeight = (skill.correct / maxQuestions) * 100;
+                              const incorrectHeight = (incorrect / maxQuestions) * 100;
 
                               return (
-                                <div key={idx} className="flex flex-col items-center gap-2 flex-1 h-full group relative">
-                                  <div className="relative w-full flex justify-center flex-1 items-end bg-slate-50/50 rounded-t-lg">
+                                <div key={idx} className="flex flex-col items-center gap-3 flex-1 group cursor-pointer">
+                                  <div className="text-xs font-semibold text-slate-600 text-center leading-tight min-h-[32px] flex items-end justify-center">
+                                    {skill.category}
+                                  </div>
+                                  
+                                  <div className="relative w-full flex flex-col items-center">
+                                    {/* Bar Container */}
                                     <div 
-                                      className={cn(
-                                        "w-full max-w-[32px] rounded-t-md transition-all duration-500 relative group-hover:opacity-90",
-                                        colorClass
-                                      )}
-                                      style={{ height: `${Math.max(percent || 0, 5)}%` }}
+                                      className="w-full max-w-[70px] flex flex-col-reverse border-2 border-slate-200 rounded-lg overflow-hidden transition-all hover:shadow-lg hover:border-indigo-300"
+                                      style={{ height: `${maxQuestions * 24}px` }}
                                     >
-                                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-700 bg-white px-2 py-1 rounded shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                        {percent}% ({skill.correct}/{skill.total})
+                                      {/* Correct portion (green) */}
+                                      {skill.correct > 0 && (
+                                        <div 
+                                          className="bg-gradient-to-t from-emerald-500 to-emerald-400 transition-all duration-500 relative flex items-center justify-center"
+                                          style={{ height: `${correctHeight}%` }}
+                                        >
+                                          <span className="text-white font-bold text-xs drop-shadow-md">{skill.correct}</span>
+                                        </div>
+                                      )}
+                                      {/* Incorrect portion (red) */}
+                                      {incorrect > 0 && (
+                                        <div 
+                                          className="bg-gradient-to-t from-red-500 to-red-400 transition-all duration-500 relative flex items-center justify-center"
+                                          style={{ height: `${incorrectHeight}%` }}
+                                        >
+                                          <span className="text-white font-bold text-xs drop-shadow-md">{incorrect}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Hover Card */}
+                                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                      <div className="text-xs font-bold mb-1">{percent}% Correct</div>
+                                      <div className="text-[10px] text-slate-300 flex items-center gap-2">
+                                        <span className="text-emerald-400">✓ {skill.correct}</span>
+                                        <span className="text-slate-400">•</span>
+                                        <span className="text-red-400">✗ {incorrect}</span>
                                       </div>
+                                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
                                     </div>
                                   </div>
-                                  <div className="text-[10px] text-slate-500 font-medium text-center leading-tight line-clamp-2 h-8 flex items-center justify-center w-full">
-                                    {skill.category.replace(' Comprehension', '').replace(' & ', ' &\n')}
+                                  
+                                  {/* Total */}
+                                  <div className="text-[11px] text-slate-500 font-medium">
+                                    {skill.total} Q's
                                   </div>
                                 </div>
                               );
                             })}
+                          </div>
+                          
+                          {/* Legend */}
+                          <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-100">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                              <span className="text-xs text-slate-600">Correct</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded bg-red-500"></div>
+                              <span className="text-xs text-slate-600">Incorrect</span>
+                            </div>
                           </div>
                         </div>
 
