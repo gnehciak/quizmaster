@@ -348,9 +348,11 @@ export default function ReviewAnswers() {
       // Calculate blank number (1-indexed position in blanks array)
       const blankNumber = (q.blanks?.findIndex(b => b.id === blankId) ?? -1) + 1;
 
-      // Prepare passage text
+      // Prepare passage text - for dropdown questions, it's in textWithBlanks
       let passageText = '';
-      if (q.passages?.length > 0) {
+      if (q.textWithBlanks) {
+        passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '___');
+      } else if (q.passages?.length > 0) {
         passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
       } else if (q.passage) {
         passageText = q.passage?.replace(/<[^>]*>/g, '');
