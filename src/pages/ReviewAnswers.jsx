@@ -1928,7 +1928,7 @@ Provide HTML formatted explanation:`;
                                   percent: Math.round((s.correct / Math.max(s.total, 1)) * 100),
                                   fullCategory: s.category
                                 }))}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                               >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                 <XAxis 
@@ -1938,16 +1938,12 @@ Provide HTML formatted explanation:`;
                                   tickLine={false}
                                   axisLine={false}
                                   interval={0}
-                                  angle={-45}
-                                  textAnchor="end"
-                                  height={80}
                                 />
                                 <YAxis 
                                   stroke="#64748B" 
                                   fontSize={12} 
                                   tickLine={false}
                                   axisLine={false}
-                                  label={{ value: 'Number of Questions', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 12 } }}
                                 />
                                 <Tooltip 
                                   cursor={{ fill: '#F1F5F9' }}
@@ -1986,9 +1982,16 @@ Provide HTML formatted explanation:`;
                                     return null;
                                   }}
                                 />
-                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                <Bar dataKey="correct" name="Correct" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                                <Bar dataKey="incorrect" name="Incorrect" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="correct" name="Correct" stackId="a" fill="#10b981" barSize={30}>
+                                  {performanceAnalysis.readingSkillsBreakdown.map((s, idx) => (
+                                    <Cell key={`correct-${idx}`} radius={(s.total - s.correct) === 0 ? [4, 4, 4, 4] : [0, 0, 4, 4]} />
+                                  ))}
+                                </Bar>
+                                <Bar dataKey="incorrect" name="Incorrect" stackId="a" fill="#f87171" barSize={30}>
+                                  {performanceAnalysis.readingSkillsBreakdown.map((s, idx) => (
+                                    <Cell key={`incorrect-${idx}`} radius={s.correct === 0 ? [4, 4, 4, 4] : [4, 4, 0, 0]} />
+                                  ))}
+                                </Bar>
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
