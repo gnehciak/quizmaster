@@ -381,11 +381,11 @@ Passage:
 Provide HTML formatted explanation:`;
 
       let prompt = globalPrompt?.template || defaultPrompt;
-      prompt = prompt.replace('{{BLANK_NUMBER}}', blankNumber.toString());
-      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer || 'Not answered');
-      prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
-      prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
-      prompt = prompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
+      prompt = prompt.replaceAll('{{BLANK_NUMBER}}', blankNumber.toString());
+      prompt = prompt.replaceAll('{{USER_ANSWER}}', userAnswer || 'Not answered');
+      prompt = prompt.replaceAll('{{CORRECT_ANSWER}}', correctAnswer);
+      prompt = prompt.replaceAll('{{OPTIONS}}', blank.options.join(', '));
+      prompt = prompt.replaceAll('{{PASSAGE}}', passageText || 'No passage provided');
 
       console.log('=== DROPDOWN EXPLANATION PROMPT (REGENERATE) ===');
       console.log('Blank Number:', blankNumber);
@@ -538,11 +538,11 @@ Passage:
 Provide HTML formatted explanation:`;
 
       let blankPrompt = blankGlobalPrompt?.template || blankDefaultPrompt;
-      blankPrompt = blankPrompt.replace('{{BLANK_NUMBER}}', blankNumber.toString());
-      blankPrompt = blankPrompt.replace('{{USER_ANSWER}}', userAnswer || 'Not answered');
-      blankPrompt = blankPrompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
-      blankPrompt = blankPrompt.replace('{{OPTIONS}}', blank.options.join(', '));
-      blankPrompt = blankPrompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
+      blankPrompt = blankPrompt.replaceAll('{{BLANK_NUMBER}}', blankNumber.toString());
+      blankPrompt = blankPrompt.replaceAll('{{USER_ANSWER}}', userAnswer || 'Not answered');
+      blankPrompt = blankPrompt.replaceAll('{{CORRECT_ANSWER}}', correctAnswer);
+      blankPrompt = blankPrompt.replaceAll('{{OPTIONS}}', blank.options.join(', '));
+      blankPrompt = blankPrompt.replaceAll('{{PASSAGE}}', passageText || 'No passage provided');
 
       console.log('=== DROPDOWN EXPLANATION PROMPT ===');
       console.log('Blank Number:', blankNumber);
