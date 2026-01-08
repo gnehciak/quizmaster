@@ -370,11 +370,20 @@ ${passageContext ? '4. Quote directly from the passage to support your explanati
 5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Question: Fill in the blank
-Student's Answer: ${userAnswer}
-Correct Answer: ${correctAnswer}
-Options: ${blank.options.join(', ')}${passageContext}
+Student's Answer: {{USER_ANSWER}}
+Correct Answer: {{CORRECT_ANSWER}}
+Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
 
 Provide HTML formatted explanation:`;
+
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer);
+      prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
+      prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
+      prompt = prompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
+      prompt = prompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
+      prompt = prompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
+      prompt = prompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -496,11 +505,20 @@ ${passageContext ? '4. Quote directly from the passage to support your explanati
 5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Question: Fill in the blank
-Student's Answer: ${userAnswer}
-Correct Answer: ${correctAnswer}
-Options: ${blank.options.join(', ')}${passageContext}
+Student's Answer: {{USER_ANSWER}}
+Correct Answer: {{CORRECT_ANSWER}}
+Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
 
 Provide HTML formatted explanation:`;
+
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer);
+      prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
+      prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
+      prompt = prompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
+      prompt = prompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
+      prompt = prompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
+      prompt = prompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
