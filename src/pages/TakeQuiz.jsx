@@ -200,12 +200,12 @@ export default function TakeQuiz() {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  // Initialize timer
+  // Initialize timer (only once when quiz first loads and quiz starts)
   useEffect(() => {
-    if (quiz?.timer_enabled && quiz?.timer_duration) {
+    if (quiz?.timer_enabled && quiz?.timer_duration && quizStarted && timeLeft === 0) {
       setTimeLeft(quiz.timer_duration * 60);
     }
-  }, [quiz]);
+  }, [quiz, quizStarted]);
 
   // Timer countdown
   useEffect(() => {
