@@ -1945,11 +1945,24 @@ Provide HTML formatted explanation:`;
                             const isExpanded = expandedSkills.has(idx);
                             const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
                             
-                            let colorClass = "bg-red-500 text-white";
-                            if (percent === 100) colorClass = "bg-emerald-500 text-white";
-                            else if (percent >= 80) colorClass = "bg-amber-400 text-white";
-                            else if (percent >= 60) colorClass = "bg-orange-400 text-white";
-                            else if (percent >= 40) colorClass = "bg-orange-500 text-white";
+                            let bgGradient = "from-red-500 to-red-600";
+                            let ringColor = "ring-red-200";
+                            if (percent === 100) {
+                              bgGradient = "from-emerald-500 to-emerald-600";
+                              ringColor = "ring-emerald-200";
+                            } else if (percent >= 90) {
+                              bgGradient = "from-lime-400 to-emerald-500";
+                              ringColor = "ring-lime-200";
+                            } else if (percent >= 80) {
+                              bgGradient = "from-amber-400 to-amber-500";
+                              ringColor = "ring-amber-200";
+                            } else if (percent >= 70) {
+                              bgGradient = "from-orange-400 to-orange-500";
+                              ringColor = "ring-orange-200";
+                            } else if (percent >= 50) {
+                              bgGradient = "from-orange-500 to-red-400";
+                              ringColor = "ring-orange-200";
+                            }
 
                             return (
                               <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -1965,8 +1978,9 @@ Provide HTML formatted explanation:`;
                                 >
                                   <div className="flex items-center gap-4 flex-1">
                                     <div className={cn(
-                                      "w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm border-2 border-slate-50",
-                                      colorClass
+                                      "w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md ring-4 bg-gradient-to-br text-white",
+                                      bgGradient,
+                                      ringColor
                                     )}>
                                       {percent}%
                                     </div>
