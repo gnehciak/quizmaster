@@ -1429,54 +1429,89 @@ Provide HTML formatted explanation:`;
   };
 
   const generatePerformanceAnalysis = async () => {
-    setLoadingAnalysis(true);
-    
-    try {
-      // Collect all questions and answers
-      const questionsData = questions.map((q, idx) => {
-        const answer = answers[idx];
-        let isCorrect = false;
+      setLoadingAnalysis(true);
 
-        if (q.isSubQuestion) {
-          isCorrect = answer === q.subQuestion.correctAnswer;
-        } else if (q.type === 'multiple_choice') {
-          isCorrect = answer === q.correctAnswer;
-        } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-          isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
-        } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-          isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
-        } else if (q.type === 'matching_list_dual') {
-          isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
-        }
+      try {
+        // Collect all questions and answers
+        const questionsData = questions.map((q, idx) => {
+          const answer = answers[idx];
+          let isCorrect = false;
 
-        return {
-          question: (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, ''),
-          type: q.type,
-          isCorrect
-        };
-      });
+          if (q.isSubQuestion) {
+            isCorrect = answer === q.subQuestion.correctAnswer;
+          } else if (q.type === 'multiple_choice') {
+            isCorrect = answer === q.correctAnswer;
+          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+            isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
+          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+            isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
+          } else if (q.type === 'matching_list_dual') {
+            isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+          }
 
-      const score = attempt?.score || 0;
-      const total = attempt?.total || questions.length;
-      const percentage = attempt?.percentage || 0;
+          return {
+            id: idx + 1,
+            question: (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, ''),
+            type: q.type,
+            isCorrect,
+            userAnswer: typeof answer === 'object' ? JSON.stringify(answer) : answer,
+            correctAnswer: q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See complex answer')
+          };
+        });
 
-      const prompt = `Analyze this quiz performance and provide constructive feedback.
+        const score = attempt?.score || 0;
+        const total = attempt?.total || questions.length;
+        const percentage = attempt?.percentage || 0;
 
-Quiz: ${quiz.title}
-Score: ${score}/${total} (${percentage}%)
+        const prompt = `Analyze this quiz performance and provide constructive feedback including a specialized "Reading Skills Breakdown".
 
-Questions Performance:
-${questionsData.map((q, i) => `${i + 1}. ${q.isCorrect ? '✓' : '✗'} ${q.question.substring(0, 80)}...`).join('\n')}
+  Quiz: ${quiz.title}
+  Score: ${score}/${total} (${percentage}%)
 
-Provide a JSON response with:
-{
-  "summary": "Brief 2-3 sentence overall assessment of performance",
-  "strongAreas": ["Area 1", "Area 2", "Area 3"],
-  "weakAreas": ["Area 1", "Area 2", "Area 3"],
-  "recommendations": ["Recommendation 1", "Recommendation 2", "Recommendation 3"]
-}
+  Questions Performance:
+  ${questionsData.map((q) => `Q${q.id}. [${q.type}] ${q.isCorrect ? 'CORRECT' : 'INCORRECT'}
+  Question: "${q.question.substring(0, 100)}..."
+  Student Answer: ${q.userAnswer}
+  Correct Answer: ${q.correctAnswer}`).join('\n\n')}
 
-Be specific and constructive. Focus on what the student did well and what needs improvement.`;
+  TASK 1: GENERAL SUMMARY
+  Provide a JSON object with:
+  - summary: Brief 2-3 sentence overall assessment.
+  - strongAreas: List of 2-3 strong areas.
+  - weakAreas: List of 2-3 areas for improvement.
+  - recommendations: List of 2-3 specific recommendations.
+
+  TASK 2: READING SKILLS BREAKDOWN
+  Categorise EVERY question into ONE of these 5 skills:
+  1. Literal Comprehension (Understanding information stated directly)
+  2. Inferential Comprehension (Drawing conclusions, implied meaning)
+  3. Vocabulary & Language Precision (Word meaning, nuance, figurative language)
+  4. Text Structure & Cohesion (Logical flow, sentence placement)
+  5. Author’s Purpose & Craft (Tone, purpose, technique)
+
+  For each category, calculate stats and provide diagnostic feedback.
+  Feedback rules:
+  - If well: Name success behaviors.
+  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies.
+  - Tone: Encouraging, diagnostic, upper primary level.
+
+  FINAL JSON FORMAT:
+  {
+    "summary": "...",
+    "strongAreas": [...],
+    "weakAreas": [...],
+    "recommendations": [...],
+    "readingSkillsBreakdown": [
+      {
+        "category": "Literal Comprehension",
+        "correct": 4,
+        "total": 6,
+        "status": "strong" | "developing" | "needs_attention",
+        "feedback": "..."
+      },
+      ... (for all 5 categories)
+    ]
+  }`;
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -1712,11 +1747,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
                 Stats
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Performance Analysis</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6 mt-4">
+              <div className="space-y-8 mt-4">
                 {/* Score Stats */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
@@ -1813,8 +1848,62 @@ Be specific and constructive. Focus on what the student did well and what needs 
                         ))}
                       </ul>
                     </div>
-                  </div>
-                )}
+
+                    {/* Reading Skills Breakdown */}
+                    {performanceAnalysis.readingSkillsBreakdown && (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-indigo-600" />
+                          Reading Skills Breakdown
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                          {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => (
+                            <div key={idx} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+                              {/* Header */}
+                              <div className="p-3 bg-white border-b border-slate-100">
+                                <h4 className="font-bold text-sm text-slate-800 h-10 flex items-center leading-tight">
+                                  {skill.category}
+                                </h4>
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="text-2xl font-bold text-slate-900">
+                                    {skill.correct}/{skill.total}
+                                  </div>
+                                  {skill.status === 'strong' && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Strong</span>
+                                  )}
+                                  {skill.status === 'developing' && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Dev</span>
+                                  )}
+                                  {skill.status === 'needs_attention' && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Focus</span>
+                                  )}
+                                </div>
+
+                                {/* Visual Bar */}
+                                <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                                  <div 
+                                    className={cn(
+                                      "h-full rounded-full",
+                                      skill.status === 'strong' ? "bg-emerald-500" :
+                                      skill.status === 'developing' ? "bg-blue-500" : "bg-red-500"
+                                    )}
+                                    style={{ width: `${(skill.correct / Math.max(skill.total, 1)) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Feedback */}
+                              <div className="p-3 text-xs text-slate-600 leading-relaxed flex-1 bg-slate-50/50">
+                                <div dangerouslySetInnerHTML={{ __html: skill.feedback?.replace(/\n/g, '<br/>') }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    </div>
+                    )}
               </div>
             </DialogContent>
           </Dialog>
