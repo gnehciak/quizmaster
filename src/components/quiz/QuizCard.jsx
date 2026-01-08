@@ -242,7 +242,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         <div className="flex-1 mb-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             {isEditingTitle ? (
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex items-start gap-2 flex-1 animate-in fade-in zoom-in-95 duration-200">
                 <input
                   type="text"
                   value={editedTitle}
@@ -251,24 +251,24 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
                     if (e.key === 'Enter') handleSaveTitle();
                     if (e.key === 'Escape') handleCancelEdit();
                   }}
-                  className="flex-1 text-lg font-bold text-slate-800 border-2 border-indigo-500 rounded-lg px-2 py-1 focus:outline-none"
+                  className="flex-1 text-lg font-bold text-slate-800 bg-white border border-indigo-200 rounded-md px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                   autoFocus
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <Button 
-                  size="sm" 
-                  onClick={handleSaveTitle}
-                  className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <Check className="w-4 h-4" />
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-1 shrink-0">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleSaveTitle(); }}
+                    className="h-8 w-8 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-colors"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }}
+                    className="h-8 w-8 rounded-md bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <>
