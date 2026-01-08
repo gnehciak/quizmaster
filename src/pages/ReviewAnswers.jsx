@@ -58,6 +58,11 @@ export default function ReviewAnswers() {
   const [editExplanationJson, setEditExplanationJson] = useState('');
   const [editRCExplanationPromptDialogOpen, setEditRCExplanationPromptDialogOpen] = useState(false);
   const [editRCExplanationPrompt, setEditRCExplanationPrompt] = useState('');
+  const [editBlankExplanationPromptDialogOpen, setEditBlankExplanationPromptDialogOpen] = useState(false);
+  const [editBlankExplanationPrompt, setEditBlankExplanationPrompt] = useState('');
+  const [editBlankExplanationDialogOpen, setEditBlankExplanationDialogOpen] = useState(false);
+  const [editBlankExplanationJson, setEditBlankExplanationJson] = useState('');
+  const [editBlankId, setEditBlankId] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -1073,6 +1078,90 @@ Provide HTML formatted explanation:`;
       }
     };
 
+    const handleOpenEditBlankExplanation = (blankId) => {
+      const tipData = quiz?.ai_explanations?.[currentIndex]?.blanks?.[blankId] || '';
+      setEditBlankExplanationJson(tipData);
+      setEditBlankId(blankId);
+      setEditBlankExplanationDialogOpen(true);
+    };
+
+    const handleSaveBlankExplanationJson = async () => {
+      try {
+        const existingExplanations = quiz?.ai_explanations || {};
+        const questionExplanations = existingExplanations[currentIndex] || {};
+        const blankExplanations = questionExplanations.blanks || {};
+        
+        await base44.entities.Quiz.update(quiz.id, {
+          ai_explanations: {
+            ...existingExplanations,
+            [currentIndex]: {
+              ...questionExplanations,
+              blanks: {
+                ...blankExplanations,
+                [editBlankId]: editBlankExplanationJson
+              }
+            }
+          }
+        });
+
+        setBlankExplanationContent(prev => ({ ...prev, [editBlankId]: editBlankExplanationJson }));
+        
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        setEditBlankExplanationDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+      }
+    };
+
+    const handleOpenEditBlankExplanationPrompt = () => {
+      const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer.
+2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
+   * If it's the CORRECT option: Why it's right{{PASSAGE_CONTEXT_IF}}.
+   * If it's a WRONG option: Why it's incorrect{{PASSAGE_CONTEXT_IF}}.
+3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
+{{PASSAGE_CONTEXT_RULE}}
+{{FORMAT_RULE}}. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+
+Question: Fill in the blank
+Student's Answer: {{USER_ANSWER}}
+Correct Answer: {{CORRECT_ANSWER}}
+Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
+
+Provide HTML formatted explanation:`;
+      
+      setEditBlankExplanationPrompt(globalPrompt?.template || defaultPrompt);
+      setEditBlankExplanationPromptDialogOpen(true);
+    };
+
+    const handleSaveBlankExplanationPrompt = async () => {
+      try {
+        const existingPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
+        
+        if (existingPrompt) {
+          await base44.entities.AIPrompt.update(existingPrompt.id, {
+            template: editBlankExplanationPrompt
+          });
+        } else {
+          await base44.entities.AIPrompt.create({
+            key: 'dropdown_blanks_explanation',
+            template: editBlankExplanationPrompt,
+            description: 'Prompt template for dropdown/fill-in-the-blank explanations'
+          });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+        setEditBlankExplanationPromptDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save prompt: ' + err.message);
+      }
+    };
+
   const handleRegenerateMatchingExplanation = async (questionId) => {
     setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: true }));
 
@@ -1472,6 +1561,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             aiHelperLoading={blankExplanationLoading}
             onRegenerateExplanation={handleRegenerateBlankExplanation}
             onDeleteExplanation={handleDeleteBlankExplanation}
+            onEditExplanation={handleOpenEditBlankExplanation}
+            onEditExplanationPrompt={handleOpenEditBlankExplanationPrompt}
           />
         );
       case 'inline_dropdown_same':
@@ -1495,6 +1586,8 @@ Be specific and constructive. Focus on what the student did well and what needs 
             onRequestHelp={handleBlankExplanation}
             onRegenerateExplanation={handleRegenerateBlankExplanation}
             onDeleteExplanation={handleDeleteBlankExplanation}
+            onEditExplanation={handleOpenEditBlankExplanation}
+            onEditExplanationPrompt={handleOpenEditBlankExplanationPrompt}
           />
         );
       case 'matching_list_dual':
@@ -1883,6 +1976,69 @@ Be specific and constructive. Focus on what the student did well and what needs 
                 Cancel
               </Button>
               <Button onClick={handleSaveRCExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Blank Explanation Dialog */}
+      <Dialog open={editBlankExplanationDialogOpen} onOpenChange={setEditBlankExplanationDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Dropdown Explanation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editBlankExplanationJson}
+              onChange={(e) => setEditBlankExplanationJson(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter HTML content for the explanation..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditBlankExplanationDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveBlankExplanationJson} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Blank Explanation Prompt Dialog */}
+      <Dialog open={editBlankExplanationPromptDialogOpen} onOpenChange={setEditBlankExplanationPromptDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Dropdown Explanation Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <strong>Instructions:</strong> Available placeholders:
+              <ul className="mt-2 space-y-1">
+                <li><code className="bg-white px-1 rounded">{'{{USER_ANSWER}}'}</code> - The student's answer</li>
+                <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - All available options</li>
+                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT}}'}</code> - The passage text (if exists)</li>
+                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT_IF}}'}</code> - Conditional text for passage</li>
+                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT_RULE}}'}</code> - Rule about quoting passage</li>
+                <li><code className="bg-white px-1 rounded">{'{{FORMAT_RULE}}'}</code> - Rule number for formatting</li>
+              </ul>
+              <p className="mt-2">This prompt is used globally for all dropdown explanation generation across all quizzes.</p>
+            </div>
+            <textarea
+              value={editBlankExplanationPrompt}
+              onChange={(e) => setEditBlankExplanationPrompt(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditBlankExplanationPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveBlankExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
                 Save Prompt
               </Button>
             </div>

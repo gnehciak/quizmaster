@@ -32,7 +32,15 @@ export default function InlineDropdownSameQuestion({
   onRegenerateHelp = null,
   onDeleteHelp = null,
   onEditHelp = null,
-  onEditPrompt = null
+  onEditPrompt = null,
+  onRequestExplanation = null,
+  onRegenerateExplanation = null,
+  onDeleteExplanation = null,
+  onEditExplanation = null,
+  onEditExplanationPrompt = null,
+  explanationContent = {},
+  explanationLoading = {},
+  openedExplanations = new Set()
 }) {
   const handleAnswer = (blankId, answer) => {
     if (showResults) return;
