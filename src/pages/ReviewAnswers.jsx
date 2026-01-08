@@ -491,18 +491,20 @@ Provide HTML formatted explanation:`;
         passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
       }
 
-      const prompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
+      // Use global prompt if exists, otherwise default
+      const blankGlobalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
+      const blankDefaultPrompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
 Tone: Encouraging, simple, and direct.
 IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
 **CRITICAL RULES:**
 1. **State the Correct Answer:** Start by clearly stating the correct answer.
 2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
-   * If it's the CORRECT option: Why it's right${passageContext ? ', using specific quotes from the passage' : ''}.
-   * If it's a WRONG option: Why it's incorrect${passageContext ? ', using specific quotes or reasoning from the passage' : ''}.
+   * If it's the CORRECT option: Why it's right{{PASSAGE_CONTEXT_IF}}.
+   * If it's a WRONG option: Why it's incorrect{{PASSAGE_CONTEXT_IF}}.
 3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
-${passageContext ? '4. Quote directly from the passage to support your explanations.' : ''}
-5. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+{{PASSAGE_CONTEXT_RULE}}
+{{FORMAT_RULE}}. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
 Question: Fill in the blank
 Student's Answer: {{USER_ANSWER}}
@@ -511,18 +513,18 @@ Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
 
 Provide HTML formatted explanation:`;
 
-      let prompt = globalPrompt?.template || defaultPrompt;
-      prompt = prompt.replace('{{USER_ANSWER}}', userAnswer);
-      prompt = prompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
-      prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
-      prompt = prompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
-      prompt = prompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
-      prompt = prompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
-      prompt = prompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
+      let blankPrompt = blankGlobalPrompt?.template || blankDefaultPrompt;
+      blankPrompt = blankPrompt.replace('{{USER_ANSWER}}', userAnswer);
+      blankPrompt = blankPrompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
+      blankPrompt = blankPrompt.replace('{{OPTIONS}}', blank.options.join(', '));
+      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
+      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
+      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
+      blankPrompt = blankPrompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(blankPrompt);
       const response = await result.response;
       const text = response.text();
 
