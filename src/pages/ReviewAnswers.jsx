@@ -387,6 +387,10 @@ Provide HTML formatted explanation:`;
       prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
       prompt = prompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
 
+      console.log('=== DROPDOWN EXPLANATION PROMPT (REGENERATE) ===');
+      console.log(prompt);
+      console.log('===============================================');
+
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
@@ -534,6 +538,10 @@ Provide HTML formatted explanation:`;
       blankPrompt = blankPrompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
       blankPrompt = blankPrompt.replace('{{OPTIONS}}', blank.options.join(', '));
       blankPrompt = blankPrompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
+
+      console.log('=== DROPDOWN EXPLANATION PROMPT ===');
+      console.log(blankPrompt);
+      console.log('===================================');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
