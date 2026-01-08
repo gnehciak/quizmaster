@@ -28,6 +28,7 @@ export default function ReadingComprehensionQuestion({
   onRegenerateExplanation = null,
   onDeleteExplanation = null,
   onEditExplanation = null,
+  onEditExplanationPrompt = null,
   openedExplanations = new Set()
 }) {
   const passages = question.passages?.length > 0 
@@ -283,7 +284,7 @@ export default function ReadingComprehensionQuestion({
                     className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
                     dangerouslySetInnerHTML={{ __html: aiHelperContent }}
                   />
-                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt))) && (
+                  {isAdmin && ((showResults && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation || onEditExplanationPrompt)) || (!showResults && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt))) && (
                    <div className="absolute top-2 right-2 flex gap-1">
                      {showResults && onRegenerateExplanation && (
                        <Button
@@ -351,6 +352,18 @@ export default function ReadingComprehensionQuestion({
                          onClick={onEditPrompt}
                          className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                          title="Edit prompt template"
+                       >
+                         <Code className="w-4 h-4" />
+                       </Button>
+                     )}
+                     {showResults && onEditExplanationPrompt && (
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         onClick={onEditExplanationPrompt}
+                         className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                         title="Edit explanation prompt template"
                        >
                          <Code className="w-4 h-4" />
                        </Button>
