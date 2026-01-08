@@ -138,12 +138,14 @@ export default function ReviewAnswers() {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
     }
-    if (attempt?.ai_explanations) {
-      setAiExplanations(attempt.ai_explanations);
+    
+    // Check if quiz has explanations, otherwise generate them
+    if (quiz?.ai_explanations && Object.keys(quiz.ai_explanations).length > 0) {
+      setAiExplanations(quiz.ai_explanations);
     } else if (attempt && questions.length > 0) {
       generateAllExplanations();
     }
-  }, [attempt, questions]);
+  }, [attempt, quiz, questions]);
 
   // Load explanation content when question changes
   React.useEffect(() => {
@@ -335,10 +337,13 @@ export default function ReviewAnswers() {
 
     setAiExplanations(newExplanations);
     
-    // Save all explanations at once
+    // Save all explanations at once to Quiz entity
     if (Object.keys(newExplanations).length > 0) {
-      base44.entities.QuizAttempt.update(attemptId, {
-        ai_explanations: newExplanations
+      const existingExplanations = quiz?.ai_explanations || {};
+      base44.entities.Quiz.update(quiz.id, {
+        ai_explanations: { ...existingExplanations, ...newExplanations }
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
       }).catch(e => console.error('Failed to save explanations:', e));
     }
     
