@@ -1,15 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card' }) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(quiz.title);
+  const queryClient = useQueryClient();
   const questionCount = quiz.questions?.length || 0;
+  
+  const handleSaveTitle = async () => {
+    if (editedTitle.trim() && editedTitle !== quiz.title) {
+      await base44.entities.Quiz.update(quiz.id, { title: editedTitle });
+      queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+    }
+    setIsEditingTitle(false);
+  };
+  
+  const handleCancelEdit = () => {
+    setEditedTitle(quiz.title);
+    setIsEditingTitle(false);
+  };
   
   const getQuestionTypes = () => {
     if (!quiz.questions) return [];
@@ -223,9 +241,50 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
         <div className="flex-1 mb-4">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-              {quiz.title}
-            </h3>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveTitle();
+                    if (e.key === 'Escape') handleCancelEdit();
+                  }}
+                  className="flex-1 text-lg font-bold text-slate-800 border-2 border-indigo-500 rounded-lg px-2 py-1 focus:outline-none"
+                  autoFocus
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleSaveTitle}
+                  className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 flex-1">
+                  {quiz.title}
+                </h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditingTitle(true)}
+                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                </Button>
+              </>
+            )}
           </div>
           
           <div className="flex items-center gap-2 mb-3 group/id">
