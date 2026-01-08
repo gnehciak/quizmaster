@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Edit, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Hero from '@/components/home/Hero';
+import CourseCodeSection from '@/components/home/CourseCodeSection';
 import KeyFeatures from '@/components/home/KeyFeatures';
 import BundlesSection from '@/components/home/BundlesSection';
 import CourseSection from '@/components/home/CourseSection';
