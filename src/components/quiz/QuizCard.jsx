@@ -11,6 +11,8 @@ import { base44 } from '@/api/base44Client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Users, GraduationCap, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card' }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -38,7 +40,13 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
   const { data: courses } = useQuery({
     queryKey: ['quizCourses', quiz.id],
-    queryFn: () => base44.entities.Course.filter({ quiz_ids: quiz.id }),
+    queryFn: async () => {
+      const allCourses = await base44.entities.Course.list();
+      return allCourses.filter(course => 
+        course.quiz_ids?.includes(quiz.id) || 
+        course.content_blocks?.some(block => block.type === 'quiz' && block.quiz_id === quiz.id)
+      );
+    },
   });
 
   const attemptCount = attempts?.length || 0;
