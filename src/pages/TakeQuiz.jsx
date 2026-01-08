@@ -263,6 +263,7 @@ export default function TakeQuiz() {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       setQuestionStartTime(Date.now());
+      setCurrentQuestionTime(0);
 
       // Reset AI helper state
       setAiHelperContent('');
