@@ -162,6 +162,8 @@ export default function Home() {
         editMode={editMode}
       />
       
+      <CourseCodeSection user={user} />
+      
       <KeyFeatures 
         content={editMode ? tempContent.keyFeatures : (siteConfig?.content?.keyFeatures)}
         onUpdate={(data) => handleUpdateSection('keyFeatures', data)}
