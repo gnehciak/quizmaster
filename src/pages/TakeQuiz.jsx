@@ -1369,6 +1369,43 @@ try {
     handleDropZoneHelp(zoneId, true);
   };
 
+  const handleDeleteDragDropHelp = async (zoneId) => {
+    try {
+      const existingTips = quiz?.ai_helper_tips || {};
+      const questionTips = existingTips[currentIndex] || {};
+      const dropZoneTips = questionTips.dropZones || {};
+      
+      const { [zoneId]: _, ...remainingZones } = dropZoneTips;
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: {
+            ...questionTips,
+            dropZones: remainingZones
+          }
+        }
+      });
+
+      setDropZoneHelperContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[zoneId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+    } catch (err) {
+      console.error('Failed to delete drop zone helper data:', err);
+    }
+  };
+
+  const handleOpenEditDragDropTip = (zoneId) => {
+    const tipData = quiz?.ai_helper_tips?.[currentIndex]?.dropZones?.[zoneId] || { advice: '', passages: {} };
+    setEditTipJson(JSON.stringify(tipData, null, 2));
+    setEditBlankId(zoneId);
+    setEditTipDialogOpen(true);
+  };
+
   const handleMatchingHelp = async (questionId, forceRegenerate = false) => {
     const tipId = `matching-${currentIndex}-${questionId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
