@@ -491,6 +491,17 @@ Provide HTML formatted explanation:`;
         passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
       }
 
+      // Calculate blank number (1-indexed position in blanks array)
+      const blankNumber = (q.blanks?.findIndex(b => b.id === blankId) ?? -1) + 1;
+
+      // Prepare passage text
+      let passageText = '';
+      if (q.passages?.length > 0) {
+        passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
+      } else if (q.passage) {
+        passageText = q.passage?.replace(/<[^>]*>/g, '');
+      }
+
       // Use global prompt if exists, otherwise default
       const blankGlobalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
       const blankDefaultPrompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
@@ -500,27 +511,27 @@ IMPORTANT: Do NOT start with conversational phrases like "That is a great questi
 **CRITICAL RULES:**
 1. **State the Correct Answer:** Start by clearly stating the correct answer.
 2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
-   * If it's the CORRECT option: Why it's right{{PASSAGE_CONTEXT_IF}}.
-   * If it's a WRONG option: Why it's incorrect{{PASSAGE_CONTEXT_IF}}.
+   * If it's the CORRECT option: Why it's right, using specific quotes from the passage if available.
+   * If it's a WRONG option: Why it's incorrect, using specific quotes or reasoning from the passage if available.
 3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
-{{PASSAGE_CONTEXT_RULE}}
-{{FORMAT_RULE}}. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+4. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
-Question: Fill in the blank
+Blank Number: {{BLANK_NUMBER}}
 Student's Answer: {{USER_ANSWER}}
 Correct Answer: {{CORRECT_ANSWER}}
-Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
+Options: {{OPTIONS}}
+
+Passage:
+{{PASSAGE}}
 
 Provide HTML formatted explanation:`;
 
       let blankPrompt = blankGlobalPrompt?.template || blankDefaultPrompt;
-      blankPrompt = blankPrompt.replace('{{USER_ANSWER}}', userAnswer);
+      blankPrompt = blankPrompt.replace('{{BLANK_NUMBER}}', blankNumber.toString());
+      blankPrompt = blankPrompt.replace('{{USER_ANSWER}}', userAnswer || 'Not answered');
       blankPrompt = blankPrompt.replace('{{CORRECT_ANSWER}}', correctAnswer);
       blankPrompt = blankPrompt.replace('{{OPTIONS}}', blank.options.join(', '));
-      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT}}', passageContext);
-      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT_IF}}', passageContext ? ', using specific quotes from the passage' : '');
-      blankPrompt = blankPrompt.replace('{{PASSAGE_CONTEXT_RULE}}', passageContext ? '4. Quote directly from the passage to support your explanations.' : '');
-      blankPrompt = blankPrompt.replace('{{FORMAT_RULE}}', passageContext ? '5' : '4');
+      blankPrompt = blankPrompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -1144,16 +1155,18 @@ IMPORTANT: Do NOT start with conversational phrases like "That is a great questi
 **CRITICAL RULES:**
 1. **State the Correct Answer:** Start by clearly stating the correct answer.
 2. **Explain Each Option Individually:** Go through EACH option one by one and explain:
-   * If it's the CORRECT option: Why it's right{{PASSAGE_CONTEXT_IF}}.
-   * If it's a WRONG option: Why it's incorrect{{PASSAGE_CONTEXT_IF}}.
+   * If it's the CORRECT option: Why it's right, using specific quotes from the passage if available.
+   * If it's a WRONG option: Why it's incorrect, using specific quotes or reasoning from the passage if available.
 3. Use clear transitions like "Option A is correct because...", "Option B is wrong because...", etc.
-{{PASSAGE_CONTEXT_RULE}}
-{{FORMAT_RULE}}. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
+4. Format your response using HTML tags: Use <p> for paragraphs, <strong> for emphasis, and <br> for line breaks where needed.
 
-Question: Fill in the blank
+Blank Number: {{BLANK_NUMBER}}
 Student's Answer: {{USER_ANSWER}}
 Correct Answer: {{CORRECT_ANSWER}}
-Options: {{OPTIONS}}{{PASSAGE_CONTEXT}}
+Options: {{OPTIONS}}
+
+Passage:
+{{PASSAGE}}
 
 Provide HTML formatted explanation:`;
       
@@ -2040,13 +2053,11 @@ Be specific and constructive. Focus on what the student did well and what needs 
             <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
               <strong>Instructions:</strong> Available placeholders:
               <ul className="mt-2 space-y-1">
+                <li><code className="bg-white px-1 rounded">{'{{BLANK_NUMBER}}'}</code> - Which blank this is (e.g., 1, 2, 3)</li>
                 <li><code className="bg-white px-1 rounded">{'{{USER_ANSWER}}'}</code> - The student's answer</li>
                 <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
-                <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - All available options</li>
-                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT}}'}</code> - The passage text (if exists)</li>
-                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT_IF}}'}</code> - Conditional text for passage</li>
-                <li><code className="bg-white px-1 rounded">{'{{PASSAGE_CONTEXT_RULE}}'}</code> - Rule about quoting passage</li>
-                <li><code className="bg-white px-1 rounded">{'{{FORMAT_RULE}}'}</code> - Rule number for formatting</li>
+                <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - The word options for this blank</li>
+                <li><code className="bg-white px-1 rounded">{'{{PASSAGE}}'}</code> - The original passage text</li>
               </ul>
               <p className="mt-2">This prompt is used globally for all dropdown explanation generation across all quizzes.</p>
             </div>
