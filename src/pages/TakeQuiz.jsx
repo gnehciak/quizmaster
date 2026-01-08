@@ -81,6 +81,8 @@ export default function TakeQuiz() {
   const [editRCPrompt, setEditRCPrompt] = useState('');
   const [editDragDropPromptDialogOpen, setEditDragDropPromptDialogOpen] = useState(false);
   const [editDragDropPrompt, setEditDragDropPrompt] = useState('');
+  const [editMatchingPromptDialogOpen, setEditMatchingPromptDialogOpen] = useState(false);
+  const [editMatchingPrompt, setEditMatchingPrompt] = useState('');
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -1466,28 +1468,33 @@ try {
         }
       }
 
-      const prompt = `You are a Year 6 teacher helping a student with a matching question.
+      // Use global prompt if exists, otherwise default
+      const globalPrompt = globalPrompts.find(p => p.key === 'matching_list_dual');
+      const defaultPrompt = `You are a Year 6 teacher helping a student with a matching question.
 
-      **TASK:**
-      Help the student answer: "${matchingQ.question}"
-      ${passageContext ? 'There is a passage provided. Quote specific sentences from the passage that give clues.' : 'Give hints about what to look for.'}
+**TASK:**
+Help the student answer: "{{QUESTION}}"
+${passageContext ? 'There is a passage provided. Quote specific sentences from the passage that give clues.' : 'Give hints about what to look for.'}
 
-      **CRITICAL RULES:**
-      1. **Quote specific sentences:** Find 2-3 relevant sentences from the passage and quote them.
-      2. **Guiding language:** Use phrases like "One extract says...", "Another part mentions...", "Have a read around these sentences..."
-      3. **No answer reveal:** Do NOT state the correct answer: "${matchingQ.correctAnswer}"
-      4. **Keep it brief:** 2-3 sentences of guidance + the quoted extracts
+**CRITICAL RULES:**
+1. **Quote specific sentences:** Find 2-3 relevant sentences from the passage and quote them.
+2. **Guiding language:** Use phrases like "One extract says...", "Another part mentions...", "Have a read around these sentences..."
+3. **No answer reveal:** Do NOT state the correct answer: "{{CORRECT_ANSWER}}"
+4. **Keep it brief:** 2-3 sentences of guidance + the quoted extracts
 
-      **INPUT DATA:**
-      Question: ${matchingQ.question}
-      Correct Answer (DO NOT REVEAL): ${matchingQ.correctAnswer}
-      ${passageContext}
+**INPUT DATA:**
+Question: {{QUESTION}}
+Correct Answer (DO NOT REVEAL): {{CORRECT_ANSWER}}
+{{PASSAGES}}
 
-      **OUTPUT FORMAT (plain text):**
-      Provide a helpful hint with quoted sentences. Example structure:
-      "One extract says '[quote relevant sentence]'. Another part mentions '[quote another relevant sentence]'. Have a read around these sentences and see which option matches best."`;
+**OUTPUT FORMAT (plain text):**
+Provide a helpful hint with quoted sentences. Example structure:
+"One extract says '[quote relevant sentence]'. Another part mentions '[quote another relevant sentence]'. Have a read around these sentences and see which option matches best."`;
 
-  console.log('Matching Help Prompt:', prompt);
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace(/\{\{QUESTION\}\}/g, matchingQ.question);
+      prompt = prompt.replace(/\{\{CORRECT_ANSWER\}\}/g, matchingQ.correctAnswer);
+      prompt = prompt.replace('{{PASSAGES}}', passageContext);
 
   const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -1548,6 +1555,93 @@ try {
 
   const handleRegenerateMatchingHelp = (questionId) => {
     handleMatchingHelp(questionId, true);
+  };
+
+  const handleDeleteMatchingHelp = async (questionId) => {
+    try {
+      const existingTips = quiz?.ai_helper_tips || {};
+      const questionTips = existingTips[currentIndex] || {};
+      const matchingTips = questionTips.matchingQuestions || {};
+      
+      const { [questionId]: _, ...remainingMatching } = matchingTips;
+      
+      await base44.entities.Quiz.update(quizId, {
+        ai_helper_tips: {
+          ...existingTips,
+          [currentIndex]: {
+            ...questionTips,
+            matchingQuestions: remainingMatching
+          }
+        }
+      });
+
+      setMatchingHelperContent(prev => {
+        const newContent = { ...prev };
+        delete newContent[questionId];
+        return newContent;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+    } catch (err) {
+      console.error('Failed to delete matching helper data:', err);
+    }
+  };
+
+  const handleOpenEditMatchingTip = (questionId) => {
+    const tipData = quiz?.ai_helper_tips?.[currentIndex]?.matchingQuestions?.[questionId] || '';
+    setEditBlankTipJson(tipData);
+    setEditBlankId(questionId);
+    setEditBlankTipDialogOpen(true);
+  };
+
+  const handleOpenEditMatchingPrompt = () => {
+    const globalPrompt = globalPrompts.find(p => p.key === 'matching_list_dual');
+    const defaultPrompt = `You are a Year 6 teacher helping a student with a matching question.
+
+**TASK:**
+Help the student answer: "{{QUESTION}}"
+There is a passage provided. Quote specific sentences from the passage that give clues.
+
+**CRITICAL RULES:**
+1. **Quote specific sentences:** Find 2-3 relevant sentences from the passage and quote them.
+2. **Guiding language:** Use phrases like "One extract says...", "Another part mentions...", "Have a read around these sentences..."
+3. **No answer reveal:** Do NOT state the correct answer: "{{CORRECT_ANSWER}}"
+4. **Keep it brief:** 2-3 sentences of guidance + the quoted extracts
+
+**INPUT DATA:**
+Question: {{QUESTION}}
+Correct Answer (DO NOT REVEAL): {{CORRECT_ANSWER}}
+{{PASSAGES}}
+
+**OUTPUT FORMAT (plain text):**
+Provide a helpful hint with quoted sentences. Example structure:
+"One extract says '[quote relevant sentence]'. Another part mentions '[quote another relevant sentence]'. Have a read around these sentences and see which option matches best."`;
+    
+    setEditMatchingPrompt(globalPrompt?.template || defaultPrompt);
+    setEditMatchingPromptDialogOpen(true);
+  };
+
+  const handleSaveMatchingPrompt = async () => {
+    try {
+      const existingPrompt = globalPrompts.find(p => p.key === 'matching_list_dual');
+      
+      if (existingPrompt) {
+        await base44.entities.AIPrompt.update(existingPrompt.id, {
+          template: editMatchingPrompt
+        });
+      } else {
+        await base44.entities.AIPrompt.create({
+          key: 'matching_list_dual',
+          template: editMatchingPrompt,
+          description: 'Prompt template for matching list dual pane questions'
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+      setEditMatchingPromptDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save prompt: ' + err.message);
+    }
   };
 
   const renderQuestion = () => {
@@ -1685,6 +1779,9 @@ try {
             tipsAllowed={quiz?.tips_allowed || 999}
             tipsUsed={tipsUsed}
             onRegenerateHelp={handleRegenerateMatchingHelp}
+            onDeleteHelp={handleDeleteMatchingHelp}
+            onEditHelp={handleOpenEditMatchingTip}
+            onEditPrompt={handleOpenEditMatchingPrompt}
             openedTips={openedTips}
             currentIndex={currentIndex}
             />
@@ -2494,6 +2591,40 @@ try {
                     Cancel
                   </Button>
                   <Button onClick={handleSaveDragDropPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Prompt
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Matching List Prompt Dialog */}
+          <Dialog open={editMatchingPromptDialogOpen} onOpenChange={setEditMatchingPromptDialogOpen}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Edit Matching List Prompt Template (Global)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <strong>Instructions:</strong> Available placeholders:
+                  <ul className="mt-2 space-y-1">
+                    <li><code className="bg-white px-1 rounded">{'{{QUESTION}}'}</code> - The matching question text</li>
+                    <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                    <li><code className="bg-white px-1 rounded">{'{{PASSAGES}}'}</code> - The passage(s) text</li>
+                  </ul>
+                  <p className="mt-2">This prompt is used globally for all matching list questions across all quizzes.</p>
+                </div>
+                <textarea
+                  value={editMatchingPrompt}
+                  onChange={(e) => setEditMatchingPrompt(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                  placeholder="Enter your custom prompt template..."
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditMatchingPromptDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveMatchingPrompt} className="bg-indigo-600 hover:bg-indigo-700">
                     Save Prompt
                   </Button>
                 </div>
