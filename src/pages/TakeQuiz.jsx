@@ -79,6 +79,8 @@ export default function TakeQuiz() {
   const [editBlankPrompt, setEditBlankPrompt] = useState('');
   const [editRCPromptDialogOpen, setEditRCPromptDialogOpen] = useState(false);
   const [editRCPrompt, setEditRCPrompt] = useState('');
+  const [editDragDropPromptDialogOpen, setEditDragDropPromptDialogOpen] = useState(false);
+  const [editDragDropPrompt, setEditDragDropPrompt] = useState('');
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -1004,6 +1006,54 @@ Correct Answer: {{CORRECT_ANSWER}}
 
       queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
       setEditRCPromptDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save prompt: ' + err.message);
+    }
+  };
+
+  const handleOpenEditDragDropPrompt = () => {
+    const globalPrompt = globalPrompts.find(p => p.key === 'drag_drop_dual');
+    const defaultPrompt = `You are a Year 6 teacher. Based on the passage(s) and the drop zone label, generate a short clue and highlight evidence.
+
+Zone Label: {{ZONE_LABEL}}
+Correct Answer: {{CORRECT_ANSWER}}
+Available Options: {{OPTIONS}}
+{{PASSAGES}}
+
+Provide a JSON response:
+{
+  "clue": "A brief 1-2 sentence hint (do not reveal the answer directly)",
+  "passages": [{"passageId": "...", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around evidence"}]
+}
+
+For single passage, use:
+{
+  "clue": "A brief 1-2 sentence hint (do not reveal the answer directly)",
+  "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags around evidence"
+}`;
+    
+    setEditDragDropPrompt(globalPrompt?.template || defaultPrompt);
+    setEditDragDropPromptDialogOpen(true);
+  };
+
+  const handleSaveDragDropPrompt = async () => {
+    try {
+      const existingPrompt = globalPrompts.find(p => p.key === 'drag_drop_dual');
+      
+      if (existingPrompt) {
+        await base44.entities.AIPrompt.update(existingPrompt.id, {
+          template: editDragDropPrompt
+        });
+      } else {
+        await base44.entities.AIPrompt.create({
+          key: 'drag_drop_dual',
+          template: editDragDropPrompt,
+          description: 'Prompt template for drag and drop dual pane questions'
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+      setEditDragDropPromptDialogOpen(false);
     } catch (err) {
       alert('Failed to save prompt: ' + err.message);
     }
@@ -2369,6 +2419,41 @@ try {
                     Cancel
                   </Button>
                   <Button onClick={handleSaveRCPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                    Save Prompt
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Drag Drop Prompt Dialog */}
+          <Dialog open={editDragDropPromptDialogOpen} onOpenChange={setEditDragDropPromptDialogOpen}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Edit Drag & Drop Prompt Template (Global)</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <strong>Instructions:</strong> Available placeholders:
+                  <ul className="mt-2 space-y-1">
+                    <li><code className="bg-white px-1 rounded">{'{{ZONE_LABEL}}'}</code> - The drop zone label</li>
+                    <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                    <li><code className="bg-white px-1 rounded">{'{{OPTIONS}}'}</code> - Available options</li>
+                    <li><code className="bg-white px-1 rounded">{'{{PASSAGES}}'}</code> - The passage(s) text</li>
+                  </ul>
+                  <p className="mt-2">This prompt is used globally for all drag and drop dual pane questions across all quizzes.</p>
+                </div>
+                <textarea
+                  value={editDragDropPrompt}
+                  onChange={(e) => setEditDragDropPrompt(e.target.value)}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                  placeholder="Enter your custom prompt template..."
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setEditDragDropPromptDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveDragDropPrompt} className="bg-indigo-600 hover:bg-indigo-700">
                     Save Prompt
                   </Button>
                 </div>

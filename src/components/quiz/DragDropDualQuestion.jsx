@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
+import { CheckCircle2, XCircle, GripVertical, Sparkles, Loader2, RefreshCw, X, Trash2, FileEdit, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -22,6 +22,9 @@ export default function DragDropDualQuestion({
   tipsAllowed = 999,
   tipsUsed = 0,
   onRegenerateHelp,
+  onDeleteHelp,
+  onEditHelp,
+  onEditPrompt,
   openedTips = new Set(),
   currentIndex = 0,
   onRequestExplanation,
@@ -296,31 +299,60 @@ export default function DragDropDualQuestion({
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                   <h4 className="font-semibold text-sm text-slate-800">Clue</h4>
-                                  {isAdmin && onRegenerateHelp && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => onRegenerateHelp(zone.id)}
-                                      className="h-7 px-2 gap-1"
-                                    >
-                                      <RefreshCw className="w-3 h-3" />
-                                      Regenerate
-                                    </Button>
+                                  {isAdmin && (onRegenerateHelp || onDeleteHelp || onEditHelp || onEditPrompt) && (
+                                    <div className="flex items-center gap-1">
+                                      {onRegenerateHelp && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onRegenerateHelp(zone.id)}
+                                          disabled={isLoadingHelp}
+                                          className="h-7 px-2 gap-1"
+                                          title="Regenerate"
+                                        >
+                                          <RefreshCw className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {onEditHelp && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onEditHelp(zone.id)}
+                                          className="h-7 px-2 gap-1"
+                                          title="Edit Tip"
+                                        >
+                                          <FileEdit className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {onEditPrompt && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={onEditPrompt}
+                                          className="h-7 px-2 gap-1"
+                                          title="Edit Prompt"
+                                        >
+                                          <Code className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {onDeleteHelp && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onDeleteHelp(zone.id)}
+                                          className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                                 <div 
                                   className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
                                   dangerouslySetInnerHTML={{ __html: helpContent }}
                                 />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full gap-2"
-                                  onClick={() => setActiveHelpZone(zone.id)}
-                                >
-                                  <Sparkles className="w-4 h-4" />
-                                  Show Highlights
-                                </Button>
                               </div>
                             </PopoverContent>
                           )}
