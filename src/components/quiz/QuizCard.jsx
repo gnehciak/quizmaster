@@ -222,223 +222,234 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all duration-300 overflow-hidden"
+      className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full"
     >
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-50 border border-indigo-100">
-              <Lightbulb className="w-3.5 h-3.5 text-indigo-600" />
-            </div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900/70">
-              {quiz.category || 'General'}
-            </span>
-          </div>
-          
-          <Badge 
-            variant={quiz.status === 'published' ? 'default' : 'secondary'}
-            className={cn(
-              "text-[10px] px-2 py-0.5 h-5",
-              quiz.status === 'published' 
-                ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                : 'bg-slate-100 text-slate-600 border-slate-200'
-            )}
-          >
-            {quiz.status || 'draft'}
-          </Badge>
+      {/* Card Header: Category & Status */}
+      <div className="px-5 pt-5 flex justify-between items-start mb-3">
+        <Badge variant="outline" className="font-normal text-xs text-slate-600 bg-slate-50 border-slate-200 flex items-center gap-1.5 py-1 px-2.5">
+          <div className={cn("w-1.5 h-1.5 rounded-full", quiz.status === 'published' ? "bg-emerald-500" : "bg-amber-500")} />
+          {quiz.category || 'General'}
+        </Badge>
+        
+        <div className="flex items-center gap-2">
+           {quiz.status === 'published' && (
+             <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Published</span>
+           )}
+           {quiz.status !== 'published' && (
+             <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Draft</span>
+           )}
         </div>
+      </div>
 
-        <div className="flex-1 mb-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            {isEditingTitle ? (
-              <div className="flex items-start gap-2 flex-1 animate-in fade-in zoom-in-95 duration-200">
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveTitle();
-                    if (e.key === 'Escape') handleCancelEdit();
-                  }}
-                  className="flex-1 text-lg font-bold text-slate-800 bg-white border border-indigo-200 rounded-md px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div className="flex gap-1 shrink-0">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleSaveTitle(); }}
-                    className="h-8 w-8 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-colors"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }}
-                    className="h-8 w-8 rounded-md bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 flex items-center justify-center transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 flex-1">
-                  {quiz.title}
-                </h3>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsEditingTitle(true)}
-                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+      {/* Main Content */}
+      <div className="px-5 flex-1 flex flex-col">
+        {/* Title Section */}
+        <div className="mb-3 min-h-[3.5rem]">
+          {isEditingTitle ? (
+            <div className="flex items-start gap-2 animate-in fade-in zoom-in-95 duration-200">
+              <textarea
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSaveTitle();
+                  }
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+                className="flex-1 text-base font-bold text-slate-900 bg-white border border-indigo-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm resize-none"
+                rows={2}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="flex flex-col gap-1 shrink-0">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleSaveTitle(); }}
+                  className="h-7 w-7 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-colors"
                 >
-                  <FileEdit className="w-3.5 h-3.5" />
-                </Button>
-              </>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 mb-3 group/id">
-            <code className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 font-mono">
-              ID: {quiz.id.substring(0, 8)}...{quiz.id.substring(quiz.id.length - 4)}
-            </code>
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                copyToClipboard(quiz.id);
-              }}
-              className="opacity-0 group-hover/id:opacity-100 transition-opacity p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600"
-              title="Copy ID"
-            >
-              <Copy className="w-3 h-3" />
-            </button>
-          </div>
-
-          {quiz.description && (
-            <p className="text-slate-600 text-sm line-clamp-2 mb-3 min-h-[2.5rem]">
-              {stripHtml(quiz.description)}
-            </p>
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }}
+                  className="h-7 w-7 rounded-md bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="group/title relative">
+              <h3 className="text-lg font-bold text-slate-900 leading-tight line-clamp-2 pr-6">
+                {quiz.title}
+              </h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}
+                className="absolute top-0 right-0 p-1 text-slate-400 hover:text-indigo-600 opacity-0 group-hover/title:opacity-100 transition-all"
+              >
+                <FileEdit className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
-          <div className="flex items-center gap-2">
-            <FileQuestion className="w-4 h-4" />
-            <span>{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
-          </div>
-          
-          {quiz.timer_enabled && quiz.timer_duration && (
-            <div className="flex items-center gap-2 text-indigo-600">
-              <Clock className="w-4 h-4" />
-              <span>{quiz.timer_duration} min</span>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-3 border-l border-slate-200 pl-3 ml-1">
-            <div className="flex items-center gap-1.5" title="Total Attempts">
-              <Users className="w-3.5 h-3.5" />
-              <span>{attemptCount}</span>
-            </div>
-            <div className="flex items-center gap-1.5" title="Average Score">
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>{averageScore}%</span>
-            </div>
-          </div>
+        {/* Description */}
+        {quiz.description && (
+          <p className="text-slate-500 text-xs line-clamp-2 mb-4 leading-relaxed h-[2.5em]">
+            {stripHtml(quiz.description)}
+          </p>
+        )}
+        
+        {!quiz.description && <div className="h-[2.5em] mb-4" />}
 
-          <div className="ml-auto">
-             <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="flex items-center gap-1.5 cursor-help hover:text-indigo-600 transition-colors">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>{courses?.length || 0}</span>
-                </div>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-64">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-900">Used in Courses</h4>
-                  {courses?.length > 0 ? (
-                    <div className="flex flex-col gap-1">
-                      {courses.map(course => (
-                        <Link 
-                          key={course.id} 
-                          to={createPageUrl(`CourseDetail?id=${course.id}`)}
-                          className="text-xs text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded transition-colors truncate"
-                        >
-                          {course.title}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic">Not used in any courses yet.</p>
-                  )}
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-6 min-h-[24px]">
-          {getQuestionTypes().map(type => (
-            <Badge 
+        {/* Question Types - Mini Badges */}
+        <div className="flex flex-wrap gap-1.5 mb-4 mt-auto">
+          {getQuestionTypes().slice(0, 3).map(type => (
+            <span 
               key={type} 
-              variant="secondary"
-              className={cn("text-[10px] px-2 py-0.5 h-6", typeColors[type])}
+              className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
+                typeColors[type].replace('bg-', 'border-').replace('text-', 'text-slate-600 border-slate-200 ')
+              )}
             >
-              {typeLabels[type]}
-            </Badge>
+              {typeLabels[type]?.split(' ')[0]}
+            </span>
           ))}
+          {getQuestionTypes().length > 3 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 bg-slate-50">
+              +{getQuestionTypes().length - 3}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-px bg-slate-100 border-y border-slate-100 mt-2">
+        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Questions</div>
+          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+            <FileQuestion className="w-3.5 h-3.5 text-indigo-500" />
+            {questionCount}
+          </div>
+        </div>
+        
+        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Time</div>
+          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            {quiz.timer_enabled && quiz.timer_duration ? `${quiz.timer_duration}m` : '∞'}
+          </div>
+        </div>
+        
+        <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Attempts</div>
+          <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+            <Users className="w-3.5 h-3.5 text-emerald-500" />
+            {attemptCount}
+          </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-2">
-          <Button 
-            onClick={() => onEdit(quiz)}
-            className="col-span-2 gap-2 bg-slate-900 hover:bg-slate-800 text-white h-9"
-          >
-            <FileEdit className="w-3.5 h-3.5" />
-            Edit
-          </Button>
-
-          <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}`)} className="col-span-1">
-            <Button 
-              variant="outline"
-              className="w-full gap-2 h-9 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200"
-              disabled={questionCount === 0}
-              title="Start Quiz"
-            >
-              <Play className="w-3.5 h-3.5" />
-            </Button>
-          </Link>
-
-          <Link to={createPageUrl(`QuizAttempts?id=${quiz.id}`)} className="col-span-1">
-            <Button 
-              variant="outline" 
-              className="w-full h-9 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-600"
-              title="Analytics"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-            </Button>
-          </Link>
-
-          <div className="col-span-1 relative group/menu">
-            <Button 
-              variant="outline" 
-              className="w-full h-9 hover:bg-slate-50"
-            >
-              <MoreHorizontal className="w-3.5 h-3.5" />
-            </Button>
-            {/* Simple CSS hover dropdown for extra actions */}
-            <div className="absolute right-0 bottom-full mb-1 hidden group-hover/menu:block min-w-[120px] bg-white rounded-lg shadow-xl border border-slate-200 p-1 z-10">
-              <button 
-                onClick={() => onExport?.(quiz)}
-                className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-md flex items-center gap-2"
-              >
-                <Download className="w-3 h-3" /> Export
-              </button>
-              <button 
-                onClick={() => onDelete(quiz.id)}
-                className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
-              >
-                <Trash2 className="w-3 h-3" /> Delete
-              </button>
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <div className="bg-white p-3 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors cursor-help">
+              <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">Avg Score</div>
+              <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+                <GraduationCap className="w-3.5 h-3.5 text-purple-500" />
+                {averageScore}%
+              </div>
             </div>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-64" side="top">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-900">Course Usage</h4>
+                <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">{courses?.length || 0} courses</span>
+              </div>
+              {courses?.length > 0 ? (
+                <div className="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
+                  {courses.map(course => (
+                    <Link 
+                      key={course.id} 
+                      to={createPageUrl(`CourseDetail?id=${course.id}`)}
+                      className="text-xs text-slate-600 hover:text-indigo-600 hover:bg-slate-50 p-1.5 rounded transition-colors truncate flex items-center gap-2"
+                    >
+                      <BookOpen className="w-3 h-3 flex-shrink-0" />
+                      {course.title}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 italic">Not used in any courses yet.</p>
+              )}
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="p-3 bg-white flex items-center gap-2">
+        <Button 
+          onClick={() => onEdit(quiz)}
+          variant="default"
+          size="sm"
+          className="flex-1 bg-slate-900 hover:bg-slate-800 text-white h-8 text-xs font-medium"
+        >
+          Edit Quiz
+        </Button>
+        
+        <Link to={createPageUrl(`QuizAttempts?id=${quiz.id}`)}>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50"
+            title="Analytics"
+          >
+            <BarChart3 className="w-4 h-4" />
+          </Button>
+        </Link>
+        
+        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}`)}>
+          <Button 
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
+            disabled={questionCount === 0}
+            title="Preview / Start"
+          >
+            <Play className="w-4 h-4" />
+          </Button>
+        </Link>
+
+        <div className="relative group/menu">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          
+          <div className="absolute right-0 bottom-full mb-2 hidden group-hover/menu:block min-w-[160px] bg-white rounded-lg shadow-xl border border-slate-200 p-1 z-20 animate-in fade-in zoom-in-95 duration-100">
+            <button 
+              onClick={() => {
+                copyToClipboard(quiz.id);
+                toast.success('ID copied to clipboard');
+              }}
+              className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 rounded-md flex items-center gap-2"
+            >
+              <Copy className="w-3 h-3" /> Copy ID
+            </button>
+            <button 
+              onClick={() => onExport?.(quiz)}
+              className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-md flex items-center gap-2"
+            >
+              <Download className="w-3 h-3" /> Export JSON
+            </button>
+            <div className="h-px bg-slate-100 my-1" />
+            <button 
+              onClick={() => onDelete(quiz.id)}
+              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
+            >
+              <Trash2 className="w-3 h-3" /> Delete Quiz
+            </button>
           </div>
         </div>
       </div>
