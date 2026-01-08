@@ -388,7 +388,12 @@ Provide HTML formatted explanation:`;
       prompt = prompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
 
       console.log('=== DROPDOWN EXPLANATION PROMPT (REGENERATE) ===');
-      console.log(prompt);
+      console.log('Blank Number:', blankNumber);
+      console.log('User Answer:', userAnswer);
+      console.log('Correct Answer:', correctAnswer);
+      console.log('Options:', blank.options);
+      console.log('Passage Text Length:', passageText.length);
+      console.log('Final Prompt:', prompt);
       console.log('===============================================');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
@@ -540,7 +545,12 @@ Provide HTML formatted explanation:`;
       blankPrompt = blankPrompt.replace('{{PASSAGE}}', passageText || 'No passage provided');
 
       console.log('=== DROPDOWN EXPLANATION PROMPT ===');
-      console.log(blankPrompt);
+      console.log('Blank Number:', blankNumber);
+      console.log('User Answer:', userAnswer);
+      console.log('Correct Answer:', correctAnswer);
+      console.log('Options:', blank.options);
+      console.log('Passage Text Length:', passageText.length);
+      console.log('Final Prompt:', blankPrompt);
       console.log('===================================');
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
