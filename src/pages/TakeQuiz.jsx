@@ -238,11 +238,13 @@ export default function TakeQuiz() {
     if (submitted || showResults || !quizStarted) return;
 
     const interval = setInterval(() => {
-      setCurrentQuestionTime(Math.round((Date.now() - questionStartTime) / 1000));
+      const currentSessionTime = Math.round((Date.now() - questionStartTime) / 1000);
+      const previousTime = questionTimes[currentIndex] || 0;
+      setCurrentQuestionTime(previousTime + currentSessionTime);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [questionStartTime, submitted, showResults, quizStarted]);
+  }, [questionStartTime, submitted, showResults, quizStarted, currentIndex, questionTimes]);
 
   const handleAnswer = (answer) => {
     setAnswers(prev => ({
@@ -263,7 +265,6 @@ export default function TakeQuiz() {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       setQuestionStartTime(Date.now());
-      setCurrentQuestionTime(0);
 
       // Reset AI helper state
       setAiHelperContent('');
@@ -309,7 +310,6 @@ export default function TakeQuiz() {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
       setQuestionStartTime(Date.now());
-      setCurrentQuestionTime(0);
 
       // Reset AI helper state
       setAiHelperContent('');
