@@ -63,6 +63,9 @@ export default function ReviewAnswers() {
   const [editBlankExplanationDialogOpen, setEditBlankExplanationDialogOpen] = useState(false);
   const [editBlankExplanationJson, setEditBlankExplanationJson] = useState('');
   const [editBlankId, setEditBlankId] = useState(null);
+  const [editAnalysisPromptDialogOpen, setEditAnalysisPromptDialogOpen] = useState(false);
+  const [editAnalysisPrompt, setEditAnalysisPrompt] = useState('');
+  const [expandedSkills, setExpandedSkills] = useState(new Set());
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -1038,6 +1041,48 @@ Provide HTML formatted explanation:`;
       setEditExplanationDialogOpen(true);
     };
 
+    const handleOpenEditAnalysisPrompt = () => {
+      const globalPrompt = globalPrompts.find(p => p.key === 'reading_skills_analysis_prompt');
+      const defaultPrompt = `Analyze this quiz performance and provide constructive feedback including a specialized "Reading Skills Breakdown".
+
+  Quiz: ${quiz.title}
+  Score: ${score}/${total} (${percentage}%)
+
+  Questions Performance:
+  {{QUESTIONS_PERFORMANCE}}
+
+  TASK: READING SKILLS BREAKDOWN
+  Categorise EVERY question into ONE of these 5 skills:
+  1. Literal Comprehension (Understanding information stated directly)
+  2. Inferential Comprehension (Drawing conclusions, implied meaning)
+  3. Vocabulary & Language Precision (Word meaning, nuance, figurative language)
+  4. Text Structure & Cohesion (Logical flow, sentence placement)
+  5. Author’s Purpose & Craft (Tone, purpose, technique)
+
+  For each category, calculate stats and provide diagnostic feedback.
+  Feedback rules:
+  - If well: Name success behaviors.
+  - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies.
+  - Tone: Encouraging, diagnostic, upper primary level.
+
+  FINAL JSON FORMAT:
+  {
+    "readingSkillsBreakdown": [
+      {
+        "category": "Literal Comprehension",
+        "correct": 4,
+        "total": 6,
+        "status": "strong" | "developing" | "needs_attention",
+        "feedback": "...",
+        "questionIds": [1, 5, 8]
+      },
+      ... (for all 5 categories)
+    ]
+  }`;
+      setEditAnalysisPrompt(globalPrompt?.template || defaultPrompt);
+      setEditAnalysisPromptDialogOpen(true);
+    };
+
     const handleSaveExplanationJson = async () => {
       try {
         const parsed = JSON.parse(editExplanationJson);
@@ -1435,25 +1480,30 @@ Provide HTML formatted explanation:`;
         // Collect all questions and answers
         const questionsData = questions.map((q, idx) => {
           const answer = answers[idx];
-          let isCorrect = false;
+          let points = 0;
+          let maxPoints = 1;
 
           if (q.isSubQuestion) {
-            isCorrect = answer === q.subQuestion.correctAnswer;
+            points = answer === q.subQuestion.correctAnswer ? 1 : 0;
           } else if (q.type === 'multiple_choice') {
-            isCorrect = answer === q.correctAnswer;
+            points = answer === q.correctAnswer ? 1 : 0;
           } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-            isCorrect = (q.dropZones || []).every(zone => answer?.[zone.id] === zone.correctAnswer);
+            maxPoints = q.dropZones?.length || 0;
+            points = (q.dropZones || []).reduce((acc, zone) => acc + (answer?.[zone.id] === zone.correctAnswer ? 1 : 0), 0);
           } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-            isCorrect = (q.blanks || []).every(blank => answer?.[blank.id] === blank.correctAnswer);
+            maxPoints = q.blanks?.length || 0;
+            points = (q.blanks || []).reduce((acc, blank) => acc + (answer?.[blank.id] === blank.correctAnswer ? 1 : 0), 0);
           } else if (q.type === 'matching_list_dual') {
-            isCorrect = (q.matchingQuestions || []).every(mq => answer?.[mq.id] === mq.correctAnswer);
+            maxPoints = q.matchingQuestions?.length || 0;
+            points = (q.matchingQuestions || []).reduce((acc, mq) => acc + (answer?.[mq.id] === mq.correctAnswer ? 1 : 0), 0);
           }
 
           return {
             id: idx + 1,
             question: (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, ''),
             type: q.type,
-            isCorrect,
+            points,
+            maxPoints,
             userAnswer: typeof answer === 'object' ? JSON.stringify(answer) : answer,
             correctAnswer: q.isSubQuestion ? q.subQuestion.correctAnswer : (q.correctAnswer || 'See complex answer')
           };
@@ -1463,16 +1513,14 @@ Provide HTML formatted explanation:`;
         const total = attempt?.total || questions.length;
         const percentage = attempt?.percentage || 0;
 
-        const prompt = `Analyze this quiz performance and provide constructive feedback including a specialized "Reading Skills Breakdown".
+        const globalPrompt = globalPrompts.find(p => p.key === 'reading_skills_analysis_prompt');
+        const defaultPrompt = `Analyze this quiz performance and provide constructive feedback including a specialized "Reading Skills Breakdown".
 
   Quiz: ${quiz.title}
   Score: ${score}/${total} (${percentage}%)
 
   Questions Performance:
-  ${questionsData.map((q) => `Q${q.id}. [${q.type}] ${q.isCorrect ? 'CORRECT' : 'INCORRECT'}
-  Question: "${q.question.substring(0, 100)}..."
-  Student Answer: ${q.userAnswer}
-  Correct Answer: ${q.correctAnswer}`).join('\n\n')}
+  {{QUESTIONS_PERFORMANCE}}
 
   TASK: READING SKILLS BREAKDOWN
   Categorise EVERY question into ONE of these 5 skills:
@@ -1496,11 +1544,23 @@ Provide HTML formatted explanation:`;
         "correct": 4,
         "total": 6,
         "status": "strong" | "developing" | "needs_attention",
-        "feedback": "..."
+        "feedback": "...",
+        "questionIds": [1, 5, 8]
       },
       ... (for all 5 categories)
     ]
   }`;
+
+        let prompt = globalPrompt?.template || defaultPrompt;
+        
+        const questionsPerfStr = questionsData.map((q) => 
+          `Q${q.id}. [${q.type}] Score: ${q.points}/${q.maxPoints}
+  Question: "${q.question.substring(0, 100)}..."
+  Student Answer: ${q.userAnswer}
+  Correct Answer: ${q.correctAnswer}`
+        ).join('\n\n');
+
+        prompt = prompt.replace('{{QUESTIONS_PERFORMANCE}}', questionsPerfStr);
 
       const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
@@ -1780,53 +1840,166 @@ Provide HTML formatted explanation:`;
                     {/* Reading Skills Breakdown */}
                     {performanceAnalysis.readingSkillsBreakdown && (
                       <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                          <BookOpen className="w-5 h-5 text-indigo-600" />
-                          Reading Skills Breakdown
-                        </h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-indigo-600" />
+                            Reading Skills Breakdown
+                          </h3>
+                          <div className="flex gap-2">
+                            {user?.role === 'admin' && (
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditAnalysisPrompt()} title="Edit Prompt">
+                                <Code className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={generatePerformanceAnalysis} 
+                              disabled={loadingAnalysis}
+                              className="gap-2"
+                            >
+                              {loadingAnalysis ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              Regenerate
+                            </Button>
+                          </div>
+                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                          {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => (
-                            <div key={idx} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex flex-col">
-                              {/* Header */}
-                              <div className="p-3 bg-white border-b border-slate-100">
-                                <h4 className="font-bold text-sm text-slate-800 h-10 flex items-center leading-tight">
-                                  {skill.category}
-                                </h4>
-                                <div className="flex items-center justify-between mt-2">
-                                  <div className="text-2xl font-bold text-slate-900">
-                                    {skill.correct}/{skill.total}
+                        <div className="space-y-4">
+                          {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
+                            const isExpanded = expandedSkills.has(idx);
+                            
+                            return (
+                              <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                {/* Header */}
+                                <div 
+                                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                                  onClick={() => setExpandedSkills(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(idx)) next.delete(idx);
+                                    else next.add(idx);
+                                    return next;
+                                  })}
+                                >
+                                  <div className="flex items-center gap-4 flex-1">
+                                    <div className={cn(
+                                      "w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0",
+                                      skill.status === 'strong' ? "bg-emerald-100 text-emerald-700" :
+                                      skill.status === 'developing' ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                                    )}>
+                                      {Math.round((skill.correct / Math.max(skill.total, 1)) * 100)}%
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-slate-900">{skill.category}</h4>
+                                      <p className="text-xs text-slate-500">{skill.correct} out of {skill.total} marks</p>
+                                    </div>
                                   </div>
-                                  {skill.status === 'strong' && (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Strong</span>
-                                  )}
-                                  {skill.status === 'developing' && (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Dev</span>
-                                  )}
-                                  {skill.status === 'needs_attention' && (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Focus</span>
-                                  )}
-                                </div>
-
-                                {/* Visual Bar */}
-                                <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
-                                  <div 
-                                    className={cn(
-                                      "h-full rounded-full",
-                                      skill.status === 'strong' ? "bg-emerald-500" :
-                                      skill.status === 'developing' ? "bg-blue-500" : "bg-red-500"
+                                  
+                                  <div className="flex items-center gap-4">
+                                    {skill.status === 'strong' && (
+                                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full hidden sm:inline-block">Strong</span>
                                     )}
-                                    style={{ width: `${(skill.correct / Math.max(skill.total, 1)) * 100}%` }}
-                                  />
+                                    {skill.status === 'developing' && (
+                                      <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-1 rounded-full hidden sm:inline-block">Developing</span>
+                                    )}
+                                    {skill.status === 'needs_attention' && (
+                                      <span className="text-xs font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-1 rounded-full hidden sm:inline-block">Focus</span>
+                                    )}
+                                    <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isExpanded && "rotate-180")} />
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Feedback */}
-                              <div className="p-3 text-xs text-slate-600 leading-relaxed flex-1 bg-slate-50/50">
-                                <div dangerouslySetInnerHTML={{ __html: skill.feedback?.replace(/\n/g, '<br/>') }} />
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="overflow-hidden bg-slate-50 border-t border-slate-100"
+                                    >
+                                      <div className="p-4 space-y-4">
+                                        {/* Feedback */}
+                                        <div className="bg-white p-4 rounded-lg border border-slate-200">
+                                          <h5 className="text-xs font-bold uppercase text-slate-400 mb-2">Feedback & Strategy</h5>
+                                          <div className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: skill.feedback?.replace(/\n/g, '<br/>') }} />
+                                        </div>
+
+                                        {/* Questions List */}
+                                        {skill.questionIds && skill.questionIds.length > 0 && (
+                                          <div>
+                                            <h5 className="text-xs font-bold uppercase text-slate-400 mb-2">Questions in this Category</h5>
+                                            <div className="grid gap-2">
+                                              {skill.questionIds.map(qId => {
+                                                const qIndex = qId - 1;
+                                                const question = questions[qIndex];
+                                                if (!question) return null;
+                                                
+                                                // Calculate marks for this specific question
+                                                const answer = answers[qIndex];
+                                                let points = 0;
+                                                let maxPoints = 1;
+
+                                                if (question.isSubQuestion) {
+                                                  points = answer === question.subQuestion.correctAnswer ? 1 : 0;
+                                                } else if (question.type === 'multiple_choice') {
+                                                  points = answer === question.correctAnswer ? 1 : 0;
+                                                } else if (question.type === 'drag_drop_single' || question.type === 'drag_drop_dual') {
+                                                  maxPoints = question.dropZones?.length || 0;
+                                                  points = (question.dropZones || []).reduce((acc, zone) => acc + (answer?.[zone.id] === zone.correctAnswer ? 1 : 0), 0);
+                                                } else if (question.type === 'inline_dropdown_separate' || question.type === 'inline_dropdown_same') {
+                                                  maxPoints = question.blanks?.length || 0;
+                                                  points = (question.blanks || []).reduce((acc, blank) => acc + (answer?.[blank.id] === blank.correctAnswer ? 1 : 0), 0);
+                                                } else if (question.type === 'matching_list_dual') {
+                                                  maxPoints = question.matchingQuestions?.length || 0;
+                                                  points = (question.matchingQuestions || []).reduce((acc, mq) => acc + (answer?.[mq.id] === mq.correctAnswer ? 1 : 0), 0);
+                                                }
+
+                                                return (
+                                                  <div key={qId} className="flex items-start gap-3 bg-white p-3 rounded border border-slate-200">
+                                                    <div className={cn(
+                                                      "w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5",
+                                                      points === maxPoints ? "bg-emerald-100 text-emerald-700" :
+                                                      points > 0 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                                                    )}>
+                                                      Q{qId}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <p className="text-sm text-slate-800 line-clamp-2 mb-1">
+                                                        {(question.isSubQuestion ? question.subQuestion.question : question.question)?.replace(/<[^>]*>/g, '')}
+                                                      </p>
+                                                      <div className="flex items-center gap-2">
+                                                        <span className={cn(
+                                                          "text-xs font-medium px-1.5 py-0.5 rounded",
+                                                          points === maxPoints ? "bg-emerald-50 text-emerald-700" :
+                                                          points > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
+                                                        )}>
+                                                          {points}/{maxPoints} marks
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                    <Button 
+                                                      variant="ghost" 
+                                                      size="sm" 
+                                                      className="h-8 w-8 p-0"
+                                                      onClick={() => {
+                                                        setStatsOpen(false);
+                                                        setCurrentIndex(qIndex);
+                                                      }}
+                                                    >
+                                                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                                                    </Button>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -2113,6 +2286,55 @@ Provide HTML formatted explanation:`;
                 Cancel
               </Button>
               <Button onClick={handleSaveBlankExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Analysis Prompt Dialog */}
+      <Dialog open={editAnalysisPromptDialogOpen} onOpenChange={setEditAnalysisPromptDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Analysis Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <strong>Instructions:</strong> Use <code className="bg-white px-1 rounded">{'{{QUESTIONS_PERFORMANCE}}'}</code> as a placeholder for the list of questions and their results.
+              <p className="mt-2">This prompt is used globally for generating the "Reading Skills Breakdown" analysis.</p>
+            </div>
+            <textarea
+              value={editAnalysisPrompt}
+              onChange={(e) => setEditAnalysisPrompt(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditAnalysisPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                const save = async () => {
+                  try {
+                    const existingPrompt = globalPrompts.find(p => p.key === 'reading_skills_analysis_prompt');
+                    if (existingPrompt) {
+                      await base44.entities.AIPrompt.update(existingPrompt.id, { template: editAnalysisPrompt });
+                    } else {
+                      await base44.entities.AIPrompt.create({
+                        key: 'reading_skills_analysis_prompt',
+                        template: editAnalysisPrompt,
+                        description: 'Prompt template for reading skills analysis'
+                      });
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+                    setEditAnalysisPromptDialogOpen(false);
+                  } catch (err) {
+                    alert('Failed to save prompt: ' + err.message);
+                  }
+                };
+                save();
+              }} className="bg-indigo-600 hover:bg-indigo-700">
                 Save Prompt
               </Button>
             </div>
