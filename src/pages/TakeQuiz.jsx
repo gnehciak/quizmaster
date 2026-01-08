@@ -90,6 +90,7 @@ export default function TakeQuiz() {
   const [editMatchingPrompt, setEditMatchingPrompt] = useState('');
   const [showSeconds, setShowSeconds] = useState(false);
   const [currentQuestionTime, setCurrentQuestionTime] = useState(0);
+  const [showQuestionTime, setShowQuestionTime] = useState(false);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
