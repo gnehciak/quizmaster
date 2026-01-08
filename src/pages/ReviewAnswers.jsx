@@ -1890,7 +1890,22 @@ Provide HTML formatted explanation:`;
                                     </div>
                                     <div>
                                       <h4 className="font-bold text-slate-900">{skill.category}</h4>
-                                      <p className="text-xs text-slate-500">{skill.correct} out of {skill.total} marks</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-xs text-slate-500 font-medium">{skill.correct}/{skill.total} marks</p>
+                                        {/* Graphic display of marks for section */}
+                                        <div className="flex gap-0.5">
+                                          {Array.from({ length: Math.min(skill.total, 20) }).map((_, i) => (
+                                            <div 
+                                              key={i} 
+                                              className={cn(
+                                                "w-1.5 h-3 rounded-sm",
+                                                i < skill.correct ? "bg-emerald-500" : "bg-slate-200"
+                                              )}
+                                            />
+                                          ))}
+                                          {skill.total > 20 && <span className="text-[10px] text-slate-400 leading-3">+</span>}
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                   
