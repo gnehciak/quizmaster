@@ -2250,10 +2250,40 @@ Provide HTML formatted explanation:`;
                       isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
                     }
 
+                    // Calculate marks for this question
+                    let questionMarks = 1;
+                    if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                      questionMarks = q.dropZones?.length || 1;
+                    } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                      questionMarks = q.blanks?.length || 1;
+                    } else if (q.type === 'matching_list_dual') {
+                      questionMarks = q.matchingQuestions?.length || 1;
+                    }
+
                     const timeSpent = questionTimes[idx] || 0;
                     const timeDisplay = timeSpent >= 60 
                       ? `${Math.floor(timeSpent / 60)}:${String(timeSpent % 60).padStart(2, '0')}`
                       : `${timeSpent}s`;
+
+                    // Calculate time color based on average
+                    let timeColor = "text-slate-500";
+                    if (quiz?.timer_enabled && quiz?.timer_duration && timeSpent > 0) {
+                      const totalTimeSeconds = quiz.timer_duration * 60;
+                      const totalMarks = total;
+                      const avgTimePerMark = totalTimeSeconds / totalMarks;
+                      const expectedTime = avgTimePerMark * questionMarks;
+                      const timePercentage = (timeSpent / expectedTime) * 100;
+
+                      if (timePercentage > 100) {
+                        timeColor = "text-red-600";
+                      } else if (timePercentage > 80) {
+                        timeColor = "text-amber-600";
+                      } else if (timePercentage >= 60) {
+                        timeColor = "text-emerald-600";
+                      } else {
+                        timeColor = "text-emerald-600";
+                      }
+                    }
 
                     return (
                       <div key={idx} className="flex flex-col items-center gap-0.5">
@@ -2269,7 +2299,7 @@ Provide HTML formatted explanation:`;
                           {idx + 1}
                         </button>
                         {timeSpent > 0 && (
-                          <span className="text-[9px] text-slate-500 font-medium">
+                          <span className={cn("text-[9px] font-medium", timeColor)}>
                             {timeDisplay}
                           </span>
                         )}
