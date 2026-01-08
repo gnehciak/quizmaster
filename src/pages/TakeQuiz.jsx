@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize, FileEdit, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, X, Loader2, Eye, EyeOff, CheckCircle2, Clock, Sparkles, RefreshCw, Pencil, Maximize, Minimize, FileEdit, Trash2, Timer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { List } from 'lucide-react';
 
 export default function TakeQuiz() {
@@ -83,6 +88,8 @@ export default function TakeQuiz() {
   const [editDragDropPrompt, setEditDragDropPrompt] = useState('');
   const [editMatchingPromptDialogOpen, setEditMatchingPromptDialogOpen] = useState(false);
   const [editMatchingPrompt, setEditMatchingPrompt] = useState('');
+  const [showSeconds, setShowSeconds] = useState(false);
+  const [currentQuestionTime, setCurrentQuestionTime] = useState(0);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -224,6 +231,17 @@ export default function TakeQuiz() {
 
     return () => clearInterval(interval);
   }, [quiz?.timer_enabled, submitted, showResults, timeLeft]);
+
+  // Track current question time
+  useEffect(() => {
+    if (submitted || showResults || !quizStarted) return;
+
+    const interval = setInterval(() => {
+      setCurrentQuestionTime(Math.round((Date.now() - questionStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [questionStartTime, submitted, showResults, quizStarted]);
 
   const handleAnswer = (answer) => {
     setAnswers(prev => ({
@@ -2005,32 +2023,61 @@ Provide a helpful hint with quoted sentences. Example structure:
 
           {/* Timer */}
           {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
-            <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-slate-800 tabular-nums">
-                  {formatTimeDisplay(timeLeft)}
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg cursor-pointer hover:border-slate-400 transition-colors">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-slate-800 tabular-nums">
+                      {showSeconds ? formatTimeDisplay(timeLeft, true) : formatTimeDisplay(timeLeft)}
+                    </div>
+                    <div className="text-xs text-slate-500 flex items-center gap-1">
+                      {(showSeconds || timeLeft <= 300) ? (
+                        <>
+                          <span>Mins</span>
+                          <span>Secs</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Hours</span>
+                          <span>Mins</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setTimerVisible(false)}
+                    className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
+                  >
+                    Hide timer
+                  </button>
                 </div>
-                <div className="text-xs text-slate-500 flex items-center gap-1">
-                  {timeLeft <= 300 ? (
-                    <>
-                      <span>Mins</span>
-                      <span>Secs</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Hours</span>
-                      <span>Mins</span>
-                    </>
-                  )}
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64" side="bottom">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="toggle-seconds" className="text-sm font-medium cursor-pointer">
+                      Show Seconds
+                    </Label>
+                    <Switch
+                      id="toggle-seconds"
+                      checked={showSeconds}
+                      onCheckedChange={setShowSeconds}
+                    />
+                  </div>
+                  <div className="pt-2 border-t border-slate-200">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Timer className="w-4 h-4" />
+                      <span className="font-medium">Time on this question:</span>
+                    </div>
+                    <div className="text-lg font-bold text-slate-800 mt-1">
+                      {currentQuestionTime >= 60 
+                        ? `${Math.floor(currentQuestionTime / 60)}:${String(currentQuestionTime % 60).padStart(2, '0')}`
+                        : `${currentQuestionTime}s`}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <button
-                onClick={() => setTimerVisible(false)}
-                className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
-              >
-                Hide timer
-              </button>
-            </div>
+              </HoverCardContent>
+            </HoverCard>
           )}
 
           {quiz.timer_enabled && !timerVisible && !showResults && (
