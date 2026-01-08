@@ -1530,7 +1530,12 @@ Provide HTML formatted explanation:`;
   4. Text Structure & Cohesion (Logical flow, sentence placement)
   5. Author’s Purpose & Craft (Tone, purpose, technique)
 
-  For each category, calculate stats and provide diagnostic feedback.
+  For each category:
+  1. Identify questions belonging to the skill.
+  2. Calculate 'correct' marks: Sum of POINTS earned for these questions.
+  3. Calculate 'total' marks: Sum of MAXIMUM POINTS possible for these questions.
+  4. Provide diagnostic feedback.
+
   Feedback rules:
   - If well: Name success behaviors.
   - If poorly: Explain skill, identify specific questions (e.g. Q1, Q5) that caused difficulty, explain common mistakes, give 2-3 concrete strategies.
@@ -1969,7 +1974,10 @@ Provide HTML formatted explanation:`;
                                                 }
 
                                                 return (
-                                                  <div key={qId} className="flex items-start gap-3 bg-white p-3 rounded border border-slate-200">
+                                                  <div key={qId} className="flex items-start gap-3 bg-white p-3 rounded border border-slate-200 hover:border-indigo-300 transition-colors group cursor-pointer" onClick={() => {
+                                                        setStatsOpen(false);
+                                                        setCurrentIndex(qIndex);
+                                                      }}>
                                                     <div className={cn(
                                                       "w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5",
                                                       points === maxPoints ? "bg-emerald-100 text-emerald-700" :
@@ -1978,7 +1986,7 @@ Provide HTML formatted explanation:`;
                                                       Q{qId}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                      <p className="text-sm text-slate-800 line-clamp-2 mb-1">
+                                                      <p className="text-sm text-slate-800 line-clamp-2 mb-1 group-hover:text-indigo-700 transition-colors">
                                                         {(question.isSubQuestion ? question.subQuestion.question : question.question)?.replace(/<[^>]*>/g, '')}
                                                       </p>
                                                       <div className="flex items-center gap-2">
@@ -1989,18 +1997,45 @@ Provide HTML formatted explanation:`;
                                                         )}>
                                                           {points}/{maxPoints} marks
                                                         </span>
+                                                        
+                                                        {/* Individual marks visualization */}
+                                                        <div className="flex gap-1 flex-wrap">
+                                                          {(() => {
+                                                            const dots = [];
+                                                            if (question.type === 'multiple_choice' || question.isSubQuestion) {
+                                                              dots.push(points === 1);
+                                                            } else if (['drag_drop_single', 'drag_drop_dual'].includes(question.type)) {
+                                                              (question.dropZones || []).forEach(zone => {
+                                                                dots.push(answer?.[zone.id] === zone.correctAnswer);
+                                                              });
+                                                            } else if (['inline_dropdown_separate', 'inline_dropdown_same'].includes(question.type)) {
+                                                              (question.blanks || []).forEach(blank => {
+                                                                dots.push(answer?.[blank.id] === blank.correctAnswer);
+                                                              });
+                                                            } else if (question.type === 'matching_list_dual') {
+                                                              (question.matchingQuestions || []).forEach(mq => {
+                                                                dots.push(answer?.[mq.id] === mq.correctAnswer);
+                                                              });
+                                                            }
+                                                            return dots.map((isRight, i) => (
+                                                              <div 
+                                                                key={i} 
+                                                                className={cn(
+                                                                  "w-2 h-2 rounded-full",
+                                                                  isRight ? "bg-emerald-500" : "bg-red-300"
+                                                                )} 
+                                                              />
+                                                            ));
+                                                          })()}
+                                                        </div>
                                                       </div>
                                                     </div>
                                                     <Button 
                                                       variant="ghost" 
                                                       size="sm" 
                                                       className="h-8 w-8 p-0"
-                                                      onClick={() => {
-                                                        setStatsOpen(false);
-                                                        setCurrentIndex(qIndex);
-                                                      }}
                                                     >
-                                                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                                                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
                                                     </Button>
                                                   </div>
                                                 );
