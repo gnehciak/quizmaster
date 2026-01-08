@@ -11,6 +11,7 @@ import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Users, GraduationCap, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card', attempts = [], courses = [] }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
