@@ -9,6 +9,17 @@ import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -1905,78 +1916,81 @@ Provide HTML formatted explanation:`;
 
                         {/* Bar Chart Display */}
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                          <h4 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Performance by Skill</h4>
-                          <div className="flex items-start justify-between gap-6 px-4">
-                            {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
-                              const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
-                              const maxQuestions = Math.max(...performanceAnalysis.readingSkillsBreakdown.map(s => s.total));
-                              const incorrect = skill.total - skill.correct;
-                              const correctHeight = (skill.correct / maxQuestions) * 100;
-                              const incorrectHeight = (incorrect / maxQuestions) * 100;
-
-                              return (
-                                <div key={idx} className="flex flex-col items-center gap-3 flex-1 group cursor-pointer">
-                                  <div className="text-xs font-semibold text-slate-600 text-center leading-tight min-h-[32px] flex items-end justify-center">
-                                    {skill.category}
-                                  </div>
-                                  
-                                  <div className="relative w-full flex flex-col items-center">
-                                    {/* Bar Container */}
-                                    <div 
-                                      className="w-full max-w-[70px] flex flex-col-reverse border-2 border-slate-200 rounded-lg overflow-hidden transition-all hover:shadow-lg hover:border-indigo-300"
-                                      style={{ height: `${maxQuestions * 24}px` }}
-                                    >
-                                      {/* Correct portion (green) */}
-                                      {skill.correct > 0 && (
-                                        <div 
-                                          className="bg-gradient-to-t from-emerald-500 to-emerald-400 transition-all duration-500 relative flex items-center justify-center"
-                                          style={{ height: `${correctHeight}%` }}
-                                        >
-                                          <span className="text-white font-bold text-xs drop-shadow-md">{skill.correct}</span>
+                          <h4 className="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider">Performance by Skill</h4>
+                          <div className="h-[400px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={performanceAnalysis.readingSkillsBreakdown.map(s => ({
+                                  name: s.category.replace(' Comprehension', ''),
+                                  correct: s.correct,
+                                  incorrect: s.total - s.correct,
+                                  total: s.total,
+                                  percent: Math.round((s.correct / Math.max(s.total, 1)) * 100),
+                                  fullCategory: s.category
+                                }))}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                <XAxis 
+                                  dataKey="name" 
+                                  stroke="#64748B" 
+                                  fontSize={11} 
+                                  tickLine={false}
+                                  axisLine={false}
+                                  interval={0}
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={80}
+                                />
+                                <YAxis 
+                                  stroke="#64748B" 
+                                  fontSize={12} 
+                                  tickLine={false}
+                                  axisLine={false}
+                                  label={{ value: 'Number of Questions', angle: -90, position: 'insideLeft', style: { fill: '#94a3b8', fontSize: 12 } }}
+                                />
+                                <Tooltip 
+                                  cursor={{ fill: '#F1F5F9' }}
+                                  content={({ active, payload, label }) => {
+                                    if (active && payload && payload.length) {
+                                      const data = payload[0].payload;
+                                      return (
+                                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-xl z-50">
+                                          <p className="font-bold text-sm mb-2 text-slate-800">{data.fullCategory}</p>
+                                          <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                              <span className="text-slate-600">Correct:</span>
+                                              <span className="font-semibold text-slate-900">{data.correct}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                                              <span className="text-slate-600">Incorrect:</span>
+                                              <span className="font-semibold text-slate-900">{data.incorrect}</span>
+                                            </div>
+                                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                                              <span className="text-xs font-semibold text-slate-500">Total: {data.total}</span>
+                                              <span className={cn(
+                                                "text-xs font-bold px-2 py-0.5 rounded",
+                                                data.percent >= 80 ? "bg-emerald-100 text-emerald-700" :
+                                                data.percent >= 50 ? "bg-amber-100 text-amber-700" :
+                                                "bg-red-100 text-red-700"
+                                              )}>
+                                                {data.percent}% Success
+                                              </span>
+                                            </div>
+                                          </div>
                                         </div>
-                                      )}
-                                      {/* Incorrect portion (red) */}
-                                      {incorrect > 0 && (
-                                        <div 
-                                          className="bg-gradient-to-t from-red-500 to-red-400 transition-all duration-500 relative flex items-center justify-center"
-                                          style={{ height: `${incorrectHeight}%` }}
-                                        >
-                                          <span className="text-white font-bold text-xs drop-shadow-md">{incorrect}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    
-                                    {/* Hover Card */}
-                                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-2 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
-                                      <div className="text-xs font-bold mb-1">{percent}% Correct</div>
-                                      <div className="text-[10px] text-slate-300 flex items-center gap-2">
-                                        <span className="text-emerald-400">✓ {skill.correct}</span>
-                                        <span className="text-slate-400">•</span>
-                                        <span className="text-red-400">✗ {incorrect}</span>
-                                      </div>
-                                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Total */}
-                                  <div className="text-[11px] text-slate-500 font-medium">
-                                    {skill.total} Q's
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          
-                          {/* Legend */}
-                          <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-100">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                              <span className="text-xs text-slate-600">Correct</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded bg-red-500"></div>
-                              <span className="text-xs text-slate-600">Incorrect</span>
-                            </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                <Bar dataKey="correct" name="Correct" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
+                                <Bar dataKey="incorrect" name="Incorrect" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
                           </div>
                         </div>
 
