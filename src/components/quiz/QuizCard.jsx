@@ -12,6 +12,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Users, GraduationCap, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card', attempts = [], courses = [] }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -226,13 +233,13 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full"
     >
       {/* Card Header: Category & Status */}
-      <div className="px-4 pt-4 flex justify-between items-start mb-2">
-        <Badge variant="outline" className="font-normal text-[10px] text-slate-600 bg-slate-50 border-slate-200 flex items-center gap-1.5 py-0.5 px-2">
-          <div className={cn("w-1.5 h-1.5 rounded-full", quiz.status === 'published' ? "bg-emerald-500" : "bg-amber-500")} />
-          {quiz.category || 'General'}
+      <div className="px-4 pt-4 flex justify-between items-start mb-2 gap-2">
+        <Badge variant="outline" className="font-normal text-[10px] text-slate-600 bg-slate-50 border-slate-200 flex items-center gap-1.5 py-0.5 px-2 max-w-[60%]">
+          <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", quiz.status === 'published' ? "bg-emerald-500" : "bg-amber-500")} />
+          <span className="truncate">{quiz.category || 'General'}</span>
         </Badge>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
            {quiz.status === 'published' && (
              <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">Published</span>
            )}
@@ -315,7 +322,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
             <span 
               key={type} 
               className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
-                typeColors[type].replace('bg-', 'border-').replace('text-', 'text-slate-600 border-slate-200 ')
+                typeColors[type]
               )}
             >
               {typeLabels[type]?.split(' ')[0]}
@@ -350,7 +357,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
           </div>
         </div>
         
-        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors col-span-1.5">
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
           <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Attempts</div>
           <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
             <Users className="w-3 h-3 text-emerald-500" />
@@ -358,21 +365,29 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
           </div>
         </div>
 
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Avg Score</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <GraduationCap className="w-3 h-3 text-purple-500" />
+            {averageScore}%
+          </div>
+        </div>
+
         <HoverCard>
           <HoverCardTrigger asChild>
-            <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors cursor-help col-span-1.5">
-              <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Avg Score</div>
+            <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors cursor-help">
+              <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Courses</div>
               <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
-                <GraduationCap className="w-3 h-3 text-purple-500" />
-                {averageScore}%
+                <BookOpen className="w-3 h-3 text-blue-500" />
+                {courses?.length || 0}
               </div>
             </div>
           </HoverCardTrigger>
-          <HoverCardContent className="w-64" side="top">
+          <HoverCardContent className="w-64" side="top" align="end">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-900">Course Usage</h4>
-                <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">{courses?.length || 0} courses</span>
+                <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">{courses?.length || 0}</span>
               </div>
               {courses?.length > 0 ? (
                 <div className="flex flex-col gap-1 max-h-[150px] overflow-y-auto">
@@ -429,40 +444,38 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
           </Button>
         </Link>
 
-        <div className="relative group/menu">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
-          >
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
-          
-          <div className="absolute right-0 bottom-full mb-2 hidden group-hover/menu:block min-w-[160px] bg-white rounded-lg shadow-xl border border-slate-200 p-1 z-20 animate-in fade-in zoom-in-95 duration-100">
-            <button 
-              onClick={() => {
-                copyToClipboard(quiz.id);
-                toast.success('ID copied to clipboard');
-              }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 rounded-md flex items-center gap-2"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700 data-[state=open]:bg-slate-100"
             >
-              <Copy className="w-3 h-3" /> Copy ID
-            </button>
-            <button 
-              onClick={() => onExport?.(quiz)}
-              className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-md flex items-center gap-2"
-            >
-              <Download className="w-3 h-3" /> Export JSON
-            </button>
-            <div className="h-px bg-slate-100 my-1" />
-            <button 
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuItem onClick={() => {
+              copyToClipboard(quiz.id);
+              toast.success('ID copied to clipboard');
+            }}>
+              <Copy className="w-3.5 h-3.5 mr-2" />
+              Copy ID
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onExport?.(quiz)}>
+              <Download className="w-3.5 h-3.5 mr-2" />
+              Export JSON
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
               onClick={() => onDelete(quiz.id)}
-              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
+              className="text-red-600 focus:text-red-700 focus:bg-red-50"
             >
-              <Trash2 className="w-3 h-3" /> Delete Quiz
-            </button>
-          </div>
-        </div>
+              <Trash2 className="w-3.5 h-3.5 mr-2" />
+              Delete Quiz
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </motion.div>
   );
