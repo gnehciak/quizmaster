@@ -351,7 +351,7 @@ export default function ReviewAnswers() {
       // Prepare passage text - for dropdown questions, it's in textWithBlanks
       let passageText = '';
       if (q.textWithBlanks) {
-        passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '___');
+        passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '');
       } else if (q.passages?.length > 0) {
         passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
       } else if (q.passage) {
@@ -510,7 +510,7 @@ Provide HTML formatted explanation:`;
       // Prepare passage text - for dropdown questions, it's in textWithBlanks
       let passageText = '';
       if (q.textWithBlanks) {
-        passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '').replace(/\{\{[^}]+\}\}/g, '___');
+        passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '');
       } else if (q.passages?.length > 0) {
         passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
       } else if (q.passage) {
