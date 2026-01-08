@@ -1904,39 +1904,35 @@ Provide HTML formatted explanation:`;
                         </div>
 
                         {/* Bar Chart Display */}
-                        <div className="bg-gradient-to-br from-slate-50 via-white to-indigo-50/20 p-8 rounded-2xl border border-slate-200/60 shadow-sm mb-6">
-                          <h4 className="text-base font-bold text-slate-800 mb-6">Performance Overview</h4>
-                          <div className="flex items-end justify-center gap-4 h-56 px-4 pb-2">
-                            {performanceAnalysis.readingSkillsBreakdown && performanceAnalysis.readingSkillsBreakdown.length > 0 && performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                          <h4 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Performance by Skill</h4>
+                          <div className="flex items-end justify-between gap-3 h-40">
+                            {performanceAnalysis.readingSkillsBreakdown.map((skill, idx) => {
                               const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
                               
-                              let bgGradient = "from-red-500 to-red-600";
-                              if (percent === 100) bgGradient = "from-emerald-500 to-emerald-600";
-                              else if (percent >= 90) bgGradient = "from-lime-400 to-emerald-500";
-                              else if (percent >= 80) bgGradient = "from-amber-400 to-amber-500";
-                              else if (percent >= 70) bgGradient = "from-orange-400 to-orange-500";
-                              else if (percent >= 50) bgGradient = "from-orange-500 to-red-400";
+                              let colorClass = "bg-red-500";
+                              if (percent === 100) colorClass = "bg-emerald-500";
+                              else if (percent >= 80) colorClass = "bg-amber-400";
+                              else if (percent >= 60) colorClass = "bg-orange-400";
+                              else if (percent >= 40) colorClass = "bg-orange-500";
 
                               return (
-                                <div key={idx} className="flex flex-col items-center gap-3 flex-1 max-w-[80px]">
-                                  <div className="relative w-full flex justify-center h-48 items-end">
+                                <div key={idx} className="flex flex-col items-center gap-2 flex-1 h-full group relative">
+                                  <div className="relative w-full flex justify-center flex-1 items-end bg-slate-50/50 rounded-t-lg">
                                     <div 
                                       className={cn(
-                                        "w-full rounded-t-xl bg-gradient-to-t shadow-lg transition-all duration-700 hover:scale-105 hover:shadow-xl relative group",
-                                        bgGradient
+                                        "w-full max-w-[32px] rounded-t-md transition-all duration-500 relative group-hover:opacity-90",
+                                        colorClass
                                       )}
-                                      style={{ height: `${Math.max(percent, 5)}%` }}
+                                      style={{ height: `${Math.max(percent || 0, 5)}%` }}
                                     >
-                                      <div className="absolute inset-0 rounded-t-xl bg-white/10" />
-                                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                        <div className="px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl whitespace-nowrap">
-                                          {skill.correct}/{skill.total} marks
-                                        </div>
+                                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-700 bg-white px-2 py-1 rounded shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                                        {percent}% ({skill.correct}/{skill.total})
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="text-[11px] text-slate-600 font-semibold text-center leading-snug px-1">
-                                    {skill.category}
+                                  <div className="text-[10px] text-slate-500 font-medium text-center leading-tight line-clamp-2 h-8 flex items-center justify-center w-full">
+                                    {skill.category.replace(' Comprehension', '').replace(' & ', ' &\n')}
                                   </div>
                                 </div>
                               );
@@ -1949,24 +1945,11 @@ Provide HTML formatted explanation:`;
                             const isExpanded = expandedSkills.has(idx);
                             const percent = Math.round((skill.correct / Math.max(skill.total, 1)) * 100);
                             
-                            let bgGradient = "from-red-500 to-red-600";
-                            let ringColor = "ring-red-200";
-                            if (percent === 100) {
-                              bgGradient = "from-emerald-500 to-emerald-600";
-                              ringColor = "ring-emerald-200";
-                            } else if (percent >= 90) {
-                              bgGradient = "from-lime-400 to-emerald-500";
-                              ringColor = "ring-lime-200";
-                            } else if (percent >= 80) {
-                              bgGradient = "from-amber-400 to-amber-500";
-                              ringColor = "ring-amber-200";
-                            } else if (percent >= 70) {
-                              bgGradient = "from-orange-400 to-orange-500";
-                              ringColor = "ring-orange-200";
-                            } else if (percent >= 50) {
-                              bgGradient = "from-orange-500 to-red-400";
-                              ringColor = "ring-orange-200";
-                            }
+                            let colorClass = "bg-red-500 text-white";
+                            if (percent === 100) colorClass = "bg-emerald-500 text-white";
+                            else if (percent >= 80) colorClass = "bg-amber-400 text-white";
+                            else if (percent >= 60) colorClass = "bg-orange-400 text-white";
+                            else if (percent >= 40) colorClass = "bg-orange-500 text-white";
 
                             return (
                               <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -1982,9 +1965,8 @@ Provide HTML formatted explanation:`;
                                 >
                                   <div className="flex items-center gap-4 flex-1">
                                     <div className={cn(
-                                      "w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-md ring-4 bg-gradient-to-br text-white",
-                                      bgGradient,
-                                      ringColor
+                                      "w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm border-2 border-slate-50",
+                                      colorClass
                                     )}>
                                       {percent}%
                                     </div>
