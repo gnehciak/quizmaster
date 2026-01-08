@@ -354,7 +354,9 @@ export default function ReviewAnswers() {
         passageContext = '\n\nReading Passage:\n' + q.passage?.replace(/<[^>]*>/g, '');
       }
 
-      const prompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
+      // Use global prompt if exists, otherwise default
+      const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
 Tone: Encouraging, simple, and direct.
 IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
 
