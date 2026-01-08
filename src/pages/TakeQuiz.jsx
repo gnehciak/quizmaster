@@ -2026,61 +2026,76 @@ Provide a helpful hint with quoted sentences. Example structure:
 
           {/* Timer */}
           {quiz.timer_enabled && quiz.timer_duration && !showResults && timerVisible && (
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg cursor-pointer hover:border-slate-400 transition-colors">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-800 tabular-nums">
-                      {showSeconds ? formatTimeDisplay(timeLeft, true) : formatTimeDisplay(timeLeft)}
+            <div className="flex items-center gap-3">
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex items-center gap-3 px-4 py-2 border border-slate-300 rounded-lg cursor-pointer hover:border-slate-400 transition-colors">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-slate-800 tabular-nums">
+                        {showSeconds ? formatTimeDisplay(timeLeft, true) : formatTimeDisplay(timeLeft)}
+                      </div>
+                      <div className="text-xs text-slate-500 flex items-center gap-1">
+                        {(showSeconds || timeLeft <= 300) ? (
+                          <>
+                            <span>Mins</span>
+                            <span>Secs</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Hours</span>
+                            <span>Mins</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500 flex items-center gap-1">
-                      {(showSeconds || timeLeft <= 300) ? (
-                        <>
-                          <span>Mins</span>
-                          <span>Secs</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Hours</span>
-                          <span>Mins</span>
-                        </>
-                      )}
+                    <button
+                      onClick={() => setTimerVisible(false)}
+                      className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
+                    >
+                      Hide timer
+                    </button>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-64" side="bottom">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="toggle-seconds" className="text-sm font-medium cursor-pointer">
+                        Show Seconds
+                      </Label>
+                      <Switch
+                        id="toggle-seconds"
+                        checked={showSeconds}
+                        onCheckedChange={setShowSeconds}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                      <Label htmlFor="toggle-question-time" className="text-sm font-medium cursor-pointer">
+                        Show Question Time
+                      </Label>
+                      <Switch
+                        id="toggle-question-time"
+                        checked={showQuestionTime}
+                        onCheckedChange={setShowQuestionTime}
+                      />
                     </div>
                   </div>
-                  <button
-                    onClick={() => setTimerVisible(false)}
-                    className="px-3 py-1 bg-slate-800 text-white text-sm rounded-full hover:bg-slate-700 transition-colors"
-                  >
-                    Hide timer
-                  </button>
+                </HoverCardContent>
+              </HoverCard>
+
+              {showQuestionTime && (
+                <div className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg bg-slate-50">
+                  <Timer className="w-4 h-4 text-slate-600" />
+                  <div className="text-sm text-slate-600">
+                    <span className="font-medium">Question time:</span>
+                  </div>
+                  <div className="text-lg font-bold text-slate-800 tabular-nums">
+                    {currentQuestionTime >= 60 
+                      ? `${Math.floor(currentQuestionTime / 60)}:${String(currentQuestionTime % 60).padStart(2, '0')}`
+                      : `${currentQuestionTime}s`}
+                  </div>
                 </div>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-64" side="bottom">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="toggle-seconds" className="text-sm font-medium cursor-pointer">
-                      Show Seconds
-                    </Label>
-                    <Switch
-                      id="toggle-seconds"
-                      checked={showSeconds}
-                      onCheckedChange={setShowSeconds}
-                    />
-                  </div>
-                  <div className="pt-2 border-t border-slate-200">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Timer className="w-4 h-4" />
-                      <span className="font-medium">Time on this question:</span>
-                    </div>
-                    <div className="text-lg font-bold text-slate-800 mt-1">
-                      {currentQuestionTime >= 60 
-                        ? `${Math.floor(currentQuestionTime / 60)}:${String(currentQuestionTime % 60).padStart(2, '0')}`
-                        : `${currentQuestionTime}s`}
-                    </div>
-                  </div>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+              )}
+            </div>
           )}
 
           {quiz.timer_enabled && !timerVisible && !showResults && (
