@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2, Code, BookOpen, RefreshCw } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2, Code, BookOpen, RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,6 +34,7 @@ import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
+import html2pdf from 'html2pdf.js';
 
 export default function ReviewAnswers() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -77,6 +78,7 @@ export default function ReviewAnswers() {
   const [editAnalysisPromptDialogOpen, setEditAnalysisPromptDialogOpen] = useState(false);
   const [editAnalysisPrompt, setEditAnalysisPrompt] = useState('');
   const [expandedSkills, setExpandedSkills] = useState(new Set());
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -1492,6 +1494,251 @@ Provide HTML formatted explanation:`;
     }
   };
 
+  const handleDownloadResults = async () => {
+    setDownloadingPdf(true);
+    
+    // Build results data
+    const resultsData = questions.map((q, idx) => {
+      const answer = answers[idx];
+      const timeSpent = questionTimes[idx] || 0;
+      let isCorrect = false;
+      let userAnswer = '';
+      let correctAnswer = '';
+      let questionMarks = 1;
+      let earnedMarks = 0;
+
+      if (q.isSubQuestion) {
+        isCorrect = answer === q.subQuestion.correctAnswer;
+        userAnswer = answer || '(No answer)';
+        correctAnswer = q.subQuestion.correctAnswer;
+        earnedMarks = isCorrect ? 1 : 0;
+      } else if (q.type === 'multiple_choice') {
+        isCorrect = answer === q.correctAnswer;
+        userAnswer = answer || '(No answer)';
+        correctAnswer = q.correctAnswer;
+        earnedMarks = isCorrect ? 1 : 0;
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+        const zones = q.dropZones || [];
+        questionMarks = zones.length;
+        earnedMarks = zones.filter(zone => answer?.[zone.id] === zone.correctAnswer).length;
+        isCorrect = earnedMarks === questionMarks;
+        userAnswer = zones.map(z => `${z.label}: ${answer?.[z.id] || '(empty)'}`).join('; ');
+        correctAnswer = zones.map(z => `${z.label}: ${z.correctAnswer}`).join('; ');
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+        const blanks = q.blanks || [];
+        questionMarks = blanks.length;
+        earnedMarks = blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
+        isCorrect = earnedMarks === questionMarks;
+        userAnswer = blanks.map((b, i) => `Blank ${i+1}: ${answer?.[b.id] || '(empty)'}`).join('; ');
+        correctAnswer = blanks.map((b, i) => `Blank ${i+1}: ${b.correctAnswer}`).join('; ');
+      } else if (q.type === 'matching_list_dual') {
+        const matchingQs = q.matchingQuestions || [];
+        questionMarks = matchingQs.length;
+        earnedMarks = matchingQs.filter(mq => answer?.[mq.id] === mq.correctAnswer).length;
+        isCorrect = earnedMarks === questionMarks;
+        userAnswer = matchingQs.map(mq => `${mq.question}: ${answer?.[mq.id] || '(empty)'}`).join('; ');
+        correctAnswer = matchingQs.map(mq => `${mq.question}: ${mq.correctAnswer}`).join('; ');
+      }
+
+      const questionText = (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, '') || 'Question';
+
+      return {
+        number: idx + 1,
+        question: questionText.length > 100 ? questionText.substring(0, 100) + '...' : questionText,
+        isCorrect,
+        earnedMarks,
+        questionMarks,
+        userAnswer,
+        correctAnswer,
+        timeSpent
+      };
+    });
+
+    // Create printable HTML container
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600&display=swap');
+        .pdf-container {
+          font-family: 'Merriweather', Georgia, serif;
+          color: #1e293b;
+          padding: 0;
+          max-width: 100%;
+        }
+        .pdf-header {
+          text-align: center;
+          border-bottom: 2px solid #4f46e5;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .pdf-title {
+          font-size: 28px;
+          font-weight: 700;
+          color: #1e293b;
+          margin: 0 0 8px 0;
+        }
+        .pdf-subtitle {
+          font-size: 14px;
+          color: #64748b;
+          font-family: 'Open Sans', sans-serif;
+        }
+        .pdf-score-box {
+          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+          border: 1px solid #86efac;
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 30px;
+          text-align: center;
+        }
+        .pdf-score-label {
+          font-size: 12px;
+          color: #16a34a;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          font-family: 'Open Sans', sans-serif;
+          margin-bottom: 8px;
+        }
+        .pdf-score-value {
+          font-size: 36px;
+          font-weight: 700;
+          color: #15803d;
+        }
+        .pdf-score-percent {
+          font-size: 18px;
+          color: #22c55e;
+          margin-left: 8px;
+        }
+        .pdf-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: 'Open Sans', sans-serif;
+          font-size: 11px;
+        }
+        .pdf-table th {
+          background: #4f46e5;
+          color: white;
+          padding: 12px 8px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .pdf-table td {
+          padding: 10px 8px;
+          border-bottom: 1px solid #e2e8f0;
+          vertical-align: top;
+        }
+        .pdf-table tr:nth-child(even) {
+          background: #f8fafc;
+        }
+        .pdf-correct {
+          color: #16a34a;
+          font-weight: 600;
+        }
+        .pdf-incorrect {
+          color: #dc2626;
+          font-weight: 600;
+        }
+        .pdf-status-icon {
+          display: inline-block;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          text-align: center;
+          line-height: 18px;
+          font-size: 11px;
+          font-weight: bold;
+        }
+        .pdf-status-correct {
+          background: #dcfce7;
+          color: #16a34a;
+        }
+        .pdf-status-incorrect {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+        .pdf-footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          text-align: center;
+          font-size: 11px;
+          color: #94a3b8;
+          font-family: 'Open Sans', sans-serif;
+        }
+      </style>
+      <div class="pdf-container">
+        <div class="pdf-header">
+          <h1 class="pdf-title">${quiz.title}</h1>
+          <p class="pdf-subtitle">Quiz Results Report • ${new Date(attempt.created_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+        
+        <div class="pdf-score-box">
+          <div class="pdf-score-label">Final Score</div>
+          <div>
+            <span class="pdf-score-value">${score} / ${total}</span>
+            <span class="pdf-score-percent">(${percentage}%)</span>
+          </div>
+        </div>
+        
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th style="width: 5%">#</th>
+              <th style="width: 30%">Question</th>
+              <th style="width: 8%">Status</th>
+              <th style="width: 8%">Marks</th>
+              <th style="width: 20%">Your Answer</th>
+              <th style="width: 20%">Correct Answer</th>
+              <th style="width: 9%">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${resultsData.map(r => `
+              <tr>
+                <td><strong>${r.number}</strong></td>
+                <td>${r.question}</td>
+                <td>
+                  <span class="pdf-status-icon ${r.isCorrect ? 'pdf-status-correct' : 'pdf-status-incorrect'}">
+                    ${r.isCorrect ? '✓' : '✗'}
+                  </span>
+                </td>
+                <td class="${r.earnedMarks === r.questionMarks ? 'pdf-correct' : 'pdf-incorrect'}">${r.earnedMarks}/${r.questionMarks}</td>
+                <td class="${r.isCorrect ? 'pdf-correct' : 'pdf-incorrect'}">${r.userAnswer}</td>
+                <td>${r.correctAnswer}</td>
+                <td>${r.timeSpent >= 60 ? `${Math.floor(r.timeSpent / 60)}:${String(r.timeSpent % 60).padStart(2, '0')}` : `${r.timeSpent}s`}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="pdf-footer">
+          Generated by QuizMaster • ${new Date().toLocaleString()}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(container);
+
+    const opt = {
+      margin: [0.75, 0.75, 0.75, 0.75],
+      filename: `${quiz.title.replace(/[^a-z0-9]/gi, '_')}_Results.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+
+    try {
+      await html2pdf().set(opt).from(container.querySelector('.pdf-container')).save();
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+    } finally {
+      document.body.removeChild(container);
+      setDownloadingPdf(false);
+    }
+  };
+
   const generatePerformanceAnalysis = async () => {
       setLoadingAnalysis(true);
 
@@ -2172,11 +2419,27 @@ Provide HTML formatted explanation:`;
           </Dialog>
         </div>
 
-        {/* Score Badge */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span className="font-semibold text-slate-800">{score}/{total}</span>
-          <span className="text-slate-600">({percentage}%)</span>
+        {/* Score Badge & Download */}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleDownloadResults}
+            disabled={downloadingPdf}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            {downloadingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Download Results
+          </Button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <span className="font-semibold text-slate-800">{score}/{total}</span>
+            <span className="text-slate-600">({percentage}%)</span>
+          </div>
         </div>
       </div>
 
