@@ -30,7 +30,8 @@ import {
   Settings,
   List,
   Trash2,
-  Upload
+  Upload,
+  Copy
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import QuestionPreview from '@/components/quiz/QuestionPreview';
@@ -74,6 +75,7 @@ export default function CreateQuiz() {
   const [previewQuestion, setPreviewQuestion] = useState(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -204,6 +206,26 @@ export default function CreateQuiz() {
 
   const handleDragLeave = () => {
     setIsDragging(false);
+  };
+
+  const handleCopyQuestion = (question) => {
+    const jsonStr = JSON.stringify(question, null, 2);
+    navigator.clipboard.writeText(jsonStr);
+  };
+
+  const handleImportFromText = () => {
+    try {
+      const question = JSON.parse(importJsonText);
+      question.id = `q_${Date.now()}`;
+      setQuiz(prev => ({
+        ...prev,
+        questions: [...(prev.questions || []), question]
+      }));
+      setImportJsonText('');
+      setImportDialogOpen(false);
+    } catch (error) {
+      alert('Invalid JSON');
+    }
   };
 
   const addQuestion = () => {
@@ -458,6 +480,15 @@ export default function CreateQuiz() {
                                         title="Preview Question"
                                       >
                                         <Eye className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCopyQuestion(question)}
+                                        className="text-slate-500 hover:text-indigo-600 w-8 h-8 p-0"
+                                        title="Copy as JSON"
+                                      >
+                                        <Copy className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
@@ -773,11 +804,11 @@ export default function CreateQuiz() {
 
       {/* Import Question Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Import Question</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-6">
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -811,6 +842,31 @@ export default function CreateQuiz() {
                 onClick={() => document.getElementById('import-question-input').click()}
               >
                 Browse Files
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-slate-500">Or paste JSON</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Textarea
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                placeholder='{"id": "q_123", "type": "multiple_choice", ...}'
+                className="font-mono text-xs min-h-[150px]"
+              />
+              <Button
+                onClick={handleImportFromText}
+                disabled={!importJsonText.trim()}
+                className="w-full"
+              >
+                Import from Text
               </Button>
             </div>
           </div>
