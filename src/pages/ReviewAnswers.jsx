@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2, Code, BookOpen, RefreshCw } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, X, Sparkles, Loader2, TrendingUp, TrendingDown, Target, ChevronRight, BarChart3, ChevronUp, ChevronDown, FileEdit, Trash2, Code, BookOpen, RefreshCw, Download } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
 import { cn } from '@/lib/utils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -77,6 +78,7 @@ export default function ReviewAnswers() {
   const [editAnalysisPromptDialogOpen, setEditAnalysisPromptDialogOpen] = useState(false);
   const [editAnalysisPrompt, setEditAnalysisPrompt] = useState('');
   const [expandedSkills, setExpandedSkills] = useState(new Set());
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -1396,6 +1398,28 @@ Provide HTML formatted explanation:`;
     }
   };
 
+  const handleDownloadResults = async () => {
+    setDownloadingPDF(true);
+
+    const element = document.getElementById('pdf-results-container');
+
+    const opt = {
+      margin: 1,
+      filename: `${quiz.title.replace(/[^a-z0-9]/gi, '_')}_Results.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    try {
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+
   const handleMatchingExplanation = async (questionId) => {
     const explanationId = `matching-${currentIndex}-${questionId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
@@ -2172,11 +2196,26 @@ Provide HTML formatted explanation:`;
           </Dialog>
         </div>
 
-        {/* Score Badge */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span className="font-semibold text-slate-800">{score}/{total}</span>
-          <span className="text-slate-600">({percentage}%)</span>
+        {/* Score Badge & Download */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleDownloadResults}
+            disabled={downloadingPDF}
+            variant="outline"
+            className="gap-2"
+          >
+            {downloadingPDF ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Download Results
+          </Button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <span className="font-semibold text-slate-800">{score}/{total}</span>
+            <span className="text-slate-600">({percentage}%)</span>
+          </div>
         </div>
       </div>
 
@@ -2544,6 +2583,113 @@ Provide HTML formatted explanation:`;
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
+
+      {/* Hidden PDF Container */}
+      <div id="pdf-results-container" style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div style={{ fontFamily: 'Merriweather, Georgia, serif', padding: '40px', maxWidth: '800px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px', color: '#1e293b' }}>
+            {quiz.title}
+          </h1>
+          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
+            Quiz Results for {user?.full_name || 'Student'}
+          </p>
+
+          <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', marginBottom: '32px', border: '1px solid #e2e8f0' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '16px', color: '#334155' }}>
+              Score Summary
+            </h2>
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <div>
+                <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>Total Score</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>
+                  {score} / {total}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>Percentage</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>
+                  {percentage}%
+                </div>
+              </div>
+              {attempt?.time_taken && (
+                <div>
+                  <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>Time Taken</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6' }}>
+                    {Math.floor(attempt.time_taken / 60)}:{String(attempt.time_taken % 60).padStart(2, '0')}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '16px', color: '#334155' }}>
+            Question Breakdown
+          </h2>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Q#</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Question</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#475569' }}>Result</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#475569' }}>Time (s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {questions.map((q, idx) => {
+                const answer = answers[idx];
+                let isCorrect = false;
+
+                if (q.isSubQuestion) {
+                  isCorrect = answer === q.subQuestion.correctAnswer;
+                } else if (q.type === 'multiple_choice') {
+                  isCorrect = answer === q.correctAnswer;
+                } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+                  const zones = q.dropZones || [];
+                  isCorrect = zones.length > 0 && zones.every(zone => answer?.[zone.id] === zone.correctAnswer);
+                } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+                  const blanks = q.blanks || [];
+                  isCorrect = blanks.length > 0 && blanks.every(blank => answer?.[blank.id] === blank.correctAnswer);
+                } else if (q.type === 'matching_list_dual') {
+                  const matchingQs = q.matchingQuestions || [];
+                  isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+                }
+
+                const questionText = (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, '') || 'Question';
+                const truncatedText = questionText.length > 80 ? questionText.substring(0, 80) + '...' : questionText;
+                const timeSpent = questionTimes[idx] || 0;
+
+                return (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '12px', color: '#64748b', fontWeight: '500' }}>{idx + 1}</td>
+                    <td style={{ padding: '12px', color: '#334155' }}>{truncatedText}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        backgroundColor: isCorrect ? '#dcfce7' : '#fee2e2',
+                        color: isCorrect ? '#166534' : '#991b1b'
+                      }}>
+                        {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center', color: '#64748b' }}>
+                      {timeSpent > 0 ? timeSpent : '-'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
+            Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+          </div>
+        </div>
+      </div>
+      </div>
+      );
+      }
