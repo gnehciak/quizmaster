@@ -29,7 +29,8 @@ import {
   Download,
   Settings,
   List,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import QuestionPreview from '@/components/quiz/QuestionPreview';
@@ -147,6 +148,41 @@ export default function CreateQuiz() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportQuestion = (question, index) => {
+    const dataStr = JSON.stringify(question, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `question-${index + 1}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportQuestion = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const question = JSON.parse(event.target.result);
+        // Assign a new ID to avoid conflicts
+        question.id = `q_${Date.now()}`;
+        setQuiz(prev => ({
+          ...prev,
+          questions: [...(prev.questions || []), question]
+        }));
+      } catch (error) {
+        alert('Invalid question file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
   };
 
   const addQuestion = () => {
@@ -338,13 +374,32 @@ export default function CreateQuiz() {
                 <h2 className="text-xl font-bold text-slate-800">
                   Questions ({quiz.questions?.length || 0})
                 </h2>
-                <Button
-                  onClick={addQuestion}
-                  className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Question
-                </Button>
+                <div className="flex gap-2">
+                  <label htmlFor="import-question">
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => document.getElementById('import-question').click()}
+                    >
+                      <Upload className="w-4 h-4" />
+                      Import Question
+                    </Button>
+                  </label>
+                  <input
+                    id="import-question"
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportQuestion}
+                    className="hidden"
+                  />
+                  <Button
+                    onClick={addQuestion}
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Question
+                  </Button>
+                </div>
               </div>
 
               {/* Questions List & Editors */}
@@ -391,6 +446,15 @@ export default function CreateQuiz() {
                                         title="Preview Question"
                                       >
                                         <Eye className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleExportQuestion(question, idx)}
+                                        className="text-slate-500 hover:text-indigo-600"
+                                        title="Export Question"
+                                      >
+                                        <Download className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
