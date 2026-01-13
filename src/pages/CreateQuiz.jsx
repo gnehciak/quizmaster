@@ -72,6 +72,8 @@ export default function CreateQuiz() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -163,8 +165,7 @@ export default function CreateQuiz() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportQuestion = (e) => {
-    const file = e.target.files?.[0];
+  const handleImportQuestion = (file) => {
     if (!file) return;
 
     const reader = new FileReader();
@@ -177,12 +178,32 @@ export default function CreateQuiz() {
           ...prev,
           questions: [...(prev.questions || []), question]
         }));
+        setImportDialogOpen(false);
       } catch (error) {
         alert('Invalid question file');
       }
     };
     reader.readAsText(file);
-    e.target.value = ''; // Reset input
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/json') {
+      handleImportQuestion(file);
+    } else {
+      alert('Please drop a valid JSON file');
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   const addQuestion = () => {
@@ -375,23 +396,14 @@ export default function CreateQuiz() {
                   Questions ({quiz.questions?.length || 0})
                 </h2>
                 <div className="flex gap-2">
-                  <label htmlFor="import-question">
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => document.getElementById('import-question').click()}
-                    >
-                      <Upload className="w-4 h-4" />
-                      Import Question
-                    </Button>
-                  </label>
-                  <input
-                    id="import-question"
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportQuestion}
-                    className="hidden"
-                  />
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => setImportDialogOpen(true)}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import Question
+                  </Button>
                   <Button
                     onClick={addQuestion}
                     className="gap-2 bg-indigo-600 hover:bg-indigo-700"
@@ -755,6 +767,52 @@ export default function CreateQuiz() {
                 index={quiz.questions?.findIndex(q => q.id === previewQuestion.id) ?? 0} 
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Question Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Question</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                isDragging 
+                  ? 'border-indigo-500 bg-indigo-50' 
+                  : 'border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-indigo-500' : 'text-slate-400'}`} />
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                {isDragging ? 'Drop your file here' : 'Drag and drop a question file'}
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">
+                or click to browse
+              </p>
+              <input
+                id="import-question-input"
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImportQuestion(file);
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('import-question-input').click()}
+              >
+                Browse Files
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
