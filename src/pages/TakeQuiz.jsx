@@ -193,7 +193,8 @@ export default function TakeQuiz() {
             subQuestionIndex: idx,
             subQuestion: cq,
             isSubQuestion: true,
-            parentId: q.id
+            parentId: q.id,
+            parentQuestionIndex: quiz.questions.indexOf(q)
           });
         });
       } else {
@@ -512,8 +513,11 @@ export default function TakeQuiz() {
 
 
   const getAiHelp = async (forceRegenerate = false) => {
-    // Check if we already have AI help stored for this question (new structure)
-    const storedTip = currentQuestion?.ai_data?.helper_tip;
+    // Check if we already have AI help stored for this question
+    // For RC questions, ai_data is inside the subQuestion (comprehensionQuestion)
+    const storedTip = currentQuestion.isSubQuestion 
+      ? currentQuestion.subQuestion?.ai_data?.helper_tip
+      : currentQuestion?.ai_data?.helper_tip;
     if (!forceRegenerate && storedTip) {
       setAiHelperContent(storedTip.advice);
       setHighlightedPassages(storedTip.passages || {});
@@ -646,7 +650,23 @@ export default function TakeQuiz() {
       const helperData = { advice, passages };
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
+
+        if (currentQuestion.isSubQuestion) {
+          // For RC questions, save inside the comprehensionQuestion
+          const parentIdx = currentQuestion.parentQuestionIndex;
+          const subIdx = currentQuestion.subQuestionIndex;
+          if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]) {
+            updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+              ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+              ai_data: {
+                ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data,
+                helper_tip: helperData
+              }
+            };
+            await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          }
+        } else if (updatedQuestions[currentIndex]) {
           updatedQuestions[currentIndex] = {
             ...updatedQuestions[currentIndex],
             ai_data: {
@@ -660,19 +680,21 @@ export default function TakeQuiz() {
       } catch (err) {
         console.error('Failed to save AI helper data:', err);
       }
-    } catch (e) {
+      } catch (e) {
       setAiHelperContent("Unable to generate help at this time. Please try again.");
-    } finally {
+      } finally {
       setAiHelperLoading(false);
-    }
-  };
+      }
+      };
 
   const handleAiHelperOpen = async () => {
     const tipId = `rc-${currentIndex}`;
     const wasAlreadyOpened = openedTips.has(tipId);
 
-    // Check if tip exists (new structure)
-    const tipData = currentQuestion?.ai_data?.helper_tip;
+    // Check if tip exists - for RC questions, look inside subQuestion
+    const tipData = currentQuestion.isSubQuestion 
+      ? currentQuestion.subQuestion?.ai_data?.helper_tip
+      : currentQuestion?.ai_data?.helper_tip;
     if (tipData) {
       // Load existing tip
       setAiHelperContent(tipData.advice);
@@ -710,7 +732,21 @@ export default function TakeQuiz() {
   const handleDeleteAiHelp = async () => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]?.ai_data) {
+
+      if (currentQuestion.isSubQuestion) {
+        // For RC questions, delete from inside comprehensionQuestion
+        const parentIdx = currentQuestion.parentQuestionIndex;
+        const subIdx = currentQuestion.subQuestionIndex;
+        if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]?.ai_data) {
+          const { helper_tip, ...restAiData } = updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data;
+          updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+            ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
+      } else if (updatedQuestions[currentIndex]?.ai_data) {
         const { helper_tip, ...restAiData } = updatedQuestions[currentIndex].ai_data;
         updatedQuestions[currentIndex] = {
           ...updatedQuestions[currentIndex],
@@ -729,7 +765,9 @@ export default function TakeQuiz() {
   };
 
   const handleOpenEditTip = () => {
-    const tipData = currentQuestion?.ai_data?.helper_tip || { advice: '', passages: {} };
+    const tipData = currentQuestion.isSubQuestion 
+      ? currentQuestion.subQuestion?.ai_data?.helper_tip || { advice: '', passages: {} }
+      : currentQuestion?.ai_data?.helper_tip || { advice: '', passages: {} };
     setEditTipJson(JSON.stringify(tipData, null, 2));
     setEditTipDialogOpen(true);
   };
@@ -738,7 +776,23 @@ export default function TakeQuiz() {
     try {
       const parsed = JSON.parse(editTipJson);
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]) {
+
+      if (currentQuestion.isSubQuestion) {
+        // For RC questions, save inside comprehensionQuestion
+        const parentIdx = currentQuestion.parentQuestionIndex;
+        const subIdx = currentQuestion.subQuestionIndex;
+        if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]) {
+          updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+            ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+            ai_data: {
+              ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data,
+              helper_tip: parsed
+            }
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
+      } else if (updatedQuestions[currentIndex]) {
         updatedQuestions[currentIndex] = {
           ...updatedQuestions[currentIndex],
           ai_data: {
