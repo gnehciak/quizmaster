@@ -378,11 +378,11 @@ ${aiInput}`;
             <div className="space-y-2">
               <Label>Question Type</Label>
               <Select
-                value={question.type || 'multiple_choice'}
+                value={question.type || ''}
                 onValueChange={(value) => updateField('type', value)}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Please select question type" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(typeLabels).map(([value, label]) => (
