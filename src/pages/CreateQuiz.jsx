@@ -31,7 +31,8 @@ import {
   List,
   Trash2,
   Upload,
-  Copy
+  Copy,
+  Code
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import QuestionPreview from '@/components/quiz/QuestionPreview';
@@ -76,6 +77,9 @@ export default function CreateQuiz() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
+  const [editSchemaDialogOpen, setEditSchemaDialogOpen] = useState(false);
+  const [editSchemaJson, setEditSchemaJson] = useState('');
+  const [editSchemaIndex, setEditSchemaIndex] = useState(null);
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
@@ -211,6 +215,22 @@ export default function CreateQuiz() {
   const handleCopyQuestion = (question) => {
     const jsonStr = JSON.stringify(question, null, 2);
     navigator.clipboard.writeText(jsonStr);
+  };
+
+  const handleOpenEditSchema = (question, idx) => {
+    setEditSchemaJson(JSON.stringify(question, null, 2));
+    setEditSchemaIndex(idx);
+    setEditSchemaDialogOpen(true);
+  };
+
+  const handleSaveSchema = () => {
+    try {
+      const parsed = JSON.parse(editSchemaJson);
+      updateQuestion(editSchemaIndex, parsed);
+      setEditSchemaDialogOpen(false);
+    } catch (err) {
+      alert('Invalid JSON: ' + err.message);
+    }
   };
 
   const handleImportFromText = () => {
@@ -498,6 +518,15 @@ export default function CreateQuiz() {
                                         title="Export Question"
                                       >
                                         <Download className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleOpenEditSchema(question, idx)}
+                                        className="text-slate-500 hover:text-indigo-600"
+                                        title="Edit Schema"
+                                      >
+                                        <Code className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
@@ -798,6 +827,30 @@ export default function CreateQuiz() {
                 index={quiz.questions?.findIndex(q => q.id === previewQuestion.id) ?? 0} 
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Schema Dialog */}
+      <Dialog open={editSchemaDialogOpen} onOpenChange={setEditSchemaDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Edit Question Schema (JSON)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={editSchemaJson}
+              onChange={(e) => setEditSchemaJson(e.target.value)}
+              className="font-mono text-xs min-h-[500px]"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditSchemaDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveSchema} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Changes
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
