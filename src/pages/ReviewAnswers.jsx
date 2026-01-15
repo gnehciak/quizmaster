@@ -344,14 +344,28 @@ export default function ReviewAnswers() {
 
     setAiExplanations(newExplanations);
     
-    // Save all explanations at once to Quiz entity
+    // Save all explanations at once to question ai_data fields
     if (Object.keys(newExplanations).length > 0) {
-      const existingExplanations = quiz?.ai_explanations || {};
-      base44.entities.Quiz.update(quiz.id, {
-        ai_explanations: { ...existingExplanations, ...newExplanations }
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
-      }).catch(e => console.error('Failed to save explanations:', e));
+      const updatedQuestions = [...(quiz?.questions || [])];
+      
+      Object.entries(newExplanations).forEach(([idx, explanationText]) => {
+        const index = parseInt(idx);
+        if (updatedQuestions[index]) {
+          updatedQuestions[index] = {
+            ...updatedQuestions[index],
+            ai_data: {
+              ...updatedQuestions[index].ai_data,
+              explanation: { advice: explanationText, passages: {} }
+            }
+          };
+        }
+      });
+      
+      base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        })
+        .catch(e => console.error('Failed to save explanations:', e));
     }
     
     setLoadingExplanations(false);
