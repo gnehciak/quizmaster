@@ -218,7 +218,8 @@ export default function CreateQuiz() {
   };
 
   const handleOpenEditSchema = (question, idx) => {
-    setEditSchemaJson(JSON.stringify(question, null, 2));
+    const cleanQuestion = getCleanQuestionSchema(question);
+    setEditSchemaJson(JSON.stringify(cleanQuestion, null, 2));
     setEditSchemaIndex(idx);
     setEditSchemaDialogOpen(true);
   };
@@ -248,12 +249,91 @@ export default function CreateQuiz() {
     }
   };
 
+  const getCleanQuestionSchema = (question) => {
+    const base = {
+      id: question.id,
+      type: question.type,
+    };
+
+    // Add questionName only if it has a value
+    if (question.questionName) base.questionName = question.questionName;
+
+    switch (question.type) {
+      case 'multiple_choice':
+        return {
+          ...base,
+          question: question.question || '',
+          options: question.options || ['', '', '', ''],
+          correctAnswer: question.correctAnswer || ''
+        };
+      
+      case 'reading_comprehension':
+        const rcQuestion = {
+          ...base,
+          question: question.question || '',
+          comprehensionQuestions: question.comprehensionQuestions || []
+        };
+        if (question.passage) rcQuestion.passage = question.passage;
+        if (question.passages?.length > 0) rcQuestion.passages = question.passages;
+        return rcQuestion;
+      
+      case 'drag_drop_single':
+      case 'drag_drop_dual':
+        const ddQuestion = {
+          ...base,
+          question: question.question || '',
+          options: question.options || [],
+          dropZones: question.dropZones || []
+        };
+        if (question.passage) ddQuestion.passage = question.passage;
+        if (question.passages?.length > 0) ddQuestion.passages = question.passages;
+        if (question.rightPaneQuestion) ddQuestion.rightPaneQuestion = question.rightPaneQuestion;
+        return ddQuestion;
+      
+      case 'inline_dropdown_separate':
+      case 'inline_dropdown_same':
+        const idQuestion = {
+          ...base,
+          question: question.question || '',
+          textWithBlanks: question.textWithBlanks || '',
+          blanks: question.blanks || []
+        };
+        if (question.passage) idQuestion.passage = question.passage;
+        if (question.passages?.length > 0) idQuestion.passages = question.passages;
+        return idQuestion;
+      
+      case 'matching_list_dual':
+        const mlQuestion = {
+          ...base,
+          question: question.question || '',
+          options: question.options || [],
+          matchingQuestions: question.matchingQuestions || []
+        };
+        if (question.passage) mlQuestion.passage = question.passage;
+        if (question.passages?.length > 0) mlQuestion.passages = question.passages;
+        return mlQuestion;
+      
+      case 'long_response_dual':
+        const lrQuestion = {
+          ...base,
+          question: question.question || '',
+        };
+        if (question.passage) lrQuestion.passage = question.passage;
+        if (question.passages?.length > 0) lrQuestion.passages = question.passages;
+        if (question.rightPaneQuestion) lrQuestion.rightPaneQuestion = question.rightPaneQuestion;
+        if (question.marking_criteria) lrQuestion.marking_criteria = question.marking_criteria;
+        return lrQuestion;
+      
+      default:
+        return question;
+    }
+  };
+
   const addQuestion = () => {
     const newQuestion = {
       id: `q_${Date.now()}`,
       type: 'multiple_choice',
       question: '',
-      questionName: '',
       options: ['', '', '', ''],
       correctAnswer: ''
     };
