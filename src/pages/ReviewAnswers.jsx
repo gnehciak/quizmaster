@@ -111,7 +111,7 @@ export default function ReviewAnswers() {
     if (!quiz?.questions) return [];
     
     const flattened = [];
-    quiz.questions.forEach((q) => {
+    quiz.questions.forEach((q, parentIdx) => {
       if (q.type === 'reading_comprehension') {
         (q.comprehensionQuestions || []).forEach((cq, idx) => {
           flattened.push({
@@ -119,7 +119,8 @@ export default function ReviewAnswers() {
             subQuestionIndex: idx,
             subQuestion: cq,
             isSubQuestion: true,
-            parentId: q.id
+            parentId: q.id,
+            parentQuestionIndex: parentIdx
           });
         });
       } else {
@@ -197,7 +198,10 @@ export default function ReviewAnswers() {
   React.useEffect(() => {
     if (!quiz || !currentQuestion || isGeneratingExplanation) return;
 
-    const aiData = currentQuestion?.ai_data;
+    // For RC questions, ai_data is inside the subQuestion (comprehensionQuestion)
+    const aiData = currentQuestion.isSubQuestion 
+      ? currentQuestion.subQuestion?.ai_data
+      : currentQuestion?.ai_data;
 
     // Load reading comprehension explanation
     if (currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) {
@@ -1003,7 +1007,29 @@ Provide HTML formatted explanation:`;
         // Save to question's ai_data field
         try {
           const updatedQuestions = [...(quiz?.questions || [])];
-          if (updatedQuestions[currentIndex]) {
+          
+          if (currentQuestion.isSubQuestion) {
+            // For RC questions, save inside the comprehensionQuestion
+            const parentIdx = currentQuestion.parentQuestionIndex;
+            const subIdx = currentQuestion.subQuestionIndex;
+            if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]) {
+              updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+                ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+                ai_data: {
+                  ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data,
+                  explanation: explanationData
+                }
+              };
+
+              await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+
+              // Immediately update the local cache
+              queryClient.setQueryData(['quiz', quizId], (oldData) => {
+                if (!oldData || !Array.isArray(oldData)) return oldData;
+                return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+              });
+            }
+          } else if (updatedQuestions[currentIndex]) {
             updatedQuestions[currentIndex] = {
               ...updatedQuestions[currentIndex],
               ai_data: {
@@ -1053,7 +1079,27 @@ Provide HTML formatted explanation:`;
     const handleDeleteRCExplanation = async () => {
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]?.ai_data) {
+        
+        if (currentQuestion.isSubQuestion) {
+          // For RC questions, delete from inside comprehensionQuestion
+          const parentIdx = currentQuestion.parentQuestionIndex;
+          const subIdx = currentQuestion.subQuestionIndex;
+          if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]?.ai_data) {
+            const { explanation, ...restAiData } = updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data;
+            updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+              ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+              ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+            };
+
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+
+            // Immediately update the local cache
+            queryClient.setQueryData(['quiz', quizId], (oldData) => {
+              if (!oldData || !Array.isArray(oldData)) return oldData;
+              return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+            });
+          }
+        } else if (updatedQuestions[currentIndex]?.ai_data) {
           const { explanation, ...restAiData } = updatedQuestions[currentIndex].ai_data;
           updatedQuestions[currentIndex] = {
             ...updatedQuestions[currentIndex],
@@ -1086,7 +1132,9 @@ Provide HTML formatted explanation:`;
     };
 
     const handleOpenEditExplanation = () => {
-      const explanationData = currentQuestion?.ai_data?.explanation || { advice: '', passages: {} };
+      const explanationData = currentQuestion.isSubQuestion 
+        ? currentQuestion.subQuestion?.ai_data?.explanation || { advice: '', passages: {} }
+        : currentQuestion?.ai_data?.explanation || { advice: '', passages: {} };
       setEditExplanationJson(JSON.stringify(explanationData, null, 2));
       setEditExplanationDialogOpen(true);
     };
@@ -1139,7 +1187,23 @@ Provide HTML formatted explanation:`;
       try {
         const parsed = JSON.parse(editExplanationJson);
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
+        
+        if (currentQuestion.isSubQuestion) {
+          // For RC questions, save inside comprehensionQuestion
+          const parentIdx = currentQuestion.parentQuestionIndex;
+          const subIdx = currentQuestion.subQuestionIndex;
+          if (updatedQuestions[parentIdx]?.comprehensionQuestions?.[subIdx]) {
+            updatedQuestions[parentIdx].comprehensionQuestions[subIdx] = {
+              ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
+              ai_data: {
+                ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx].ai_data,
+                explanation: parsed
+              }
+            };
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          }
+        } else if (updatedQuestions[currentIndex]) {
           updatedQuestions[currentIndex] = {
             ...updatedQuestions[currentIndex],
             ai_data: {
