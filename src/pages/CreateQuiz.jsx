@@ -332,10 +332,8 @@ export default function CreateQuiz() {
   const addQuestion = () => {
     const newQuestion = {
       id: `q_${Date.now()}`,
-      type: 'multiple_choice',
-      question: '',
-      options: ['', '', '', ''],
-      correctAnswer: ''
+      type: '',
+      question: ''
     };
     
     setQuiz(prev => ({
