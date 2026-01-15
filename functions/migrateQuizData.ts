@@ -57,7 +57,12 @@ Deno.serve(async (req) => {
           aiData.helper_tip = helperTip;
         }
         if (explanation && !isEmpty(explanation)) {
-          aiData.explanation = explanation;
+          // If explanation is a string, convert it to object format
+          if (typeof explanation === 'string') {
+            aiData.explanation = { advice: explanation, passages: {} };
+          } else {
+            aiData.explanation = explanation;
+          }
         }
 
         // Clean the question object
