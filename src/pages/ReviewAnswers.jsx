@@ -142,28 +142,29 @@ export default function ReviewAnswers() {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
     }
     
-    // Check if quiz has explanations, otherwise generate them
-    if (quiz?.ai_explanations && Object.keys(quiz.ai_explanations).length > 0) {
-      setAiExplanations(quiz.ai_explanations);
-    } else if (attempt && questions.length > 0) {
+    // Check if any questions have ai_data.explanation, otherwise generate them
+    const hasExplanations = questions.some(q => q?.ai_data?.explanation);
+    if (!hasExplanations && attempt && questions.length > 0) {
       generateAllExplanations();
     }
   }, [attempt, quiz, questions]);
 
-  // Load explanation content when question changes
+  // Load explanation content when question changes (new ai_data structure)
   React.useEffect(() => {
     if (!quiz || !currentQuestion) return;
 
+    const explanation = currentQuestion?.ai_data?.explanation;
+
     // Load blank explanations
-    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_explanations?.[currentIndex]?.blanks) {
-      setBlankExplanationContent(quiz.ai_explanations[currentIndex].blanks || {});
+    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && explanation?.blanks) {
+      setBlankExplanationContent(explanation.blanks || {});
     } else {
       setBlankExplanationContent({});
     }
 
     // Load drop zone explanations
-    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_explanations?.[currentIndex]?.dropZones) {
-      const dropZones = quiz.ai_explanations[currentIndex].dropZones || {};
+    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && explanation?.dropZones) {
+      const dropZones = explanation.dropZones || {};
       const content = {};
       const passages = {};
       Object.keys(dropZones).forEach(zoneId => {
@@ -185,23 +186,25 @@ export default function ReviewAnswers() {
     }
 
     // Load matching explanations
-    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_explanations?.[currentIndex]?.matchingQuestions) {
-      setMatchingExplanationContent(quiz.ai_explanations[currentIndex].matchingQuestions || {});
+    if (currentQuestion.type === 'matching_list_dual' && explanation?.matchingQuestions) {
+      setMatchingExplanationContent(explanation.matchingQuestions || {});
     } else {
       setMatchingExplanationContent({});
     }
   }, [currentIndex, quiz, currentQuestion]);
 
-  // Load AI explanation content when question changes
+  // Load AI explanation content when question changes (new ai_data structure)
   React.useEffect(() => {
     if (!quiz || !currentQuestion || isGeneratingExplanation) return;
 
+    const aiData = currentQuestion?.ai_data;
+
     // Load reading comprehension explanation
     if (currentQuestion.type === 'reading_comprehension' || currentQuestion.isSubQuestion) {
-      const explanation = quiz.ai_explanations?.[currentIndex];
+      const explanation = aiData?.explanation;
       
       if (explanation) {
-        // Load existing explanation from quiz data
+        // Load existing explanation from question's ai_data
         if (typeof explanation === 'string') {
           setAiHelperContent(explanation);
           setHighlightedPassages({});
@@ -221,15 +224,16 @@ export default function ReviewAnswers() {
     }
 
     // Load blank helper content
-    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && quiz.ai_helper_tips?.[currentIndex]?.blanks) {
-      setBlankHelperContent(quiz.ai_helper_tips[currentIndex].blanks || {});
+    const helperTip = aiData?.helper_tip;
+    if ((currentQuestion.type === 'inline_dropdown_separate' || currentQuestion.type === 'inline_dropdown_same') && helperTip?.blanks) {
+      setBlankHelperContent(helperTip.blanks || {});
     } else {
       setBlankHelperContent({});
     }
 
     // Load drop zone helper content
-    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && quiz.ai_helper_tips?.[currentIndex]?.dropZones) {
-      const dropZones = quiz.ai_helper_tips[currentIndex].dropZones || {};
+    if ((currentQuestion.type === 'drag_drop_single' || currentQuestion.type === 'drag_drop_dual') && helperTip?.dropZones) {
+      const dropZones = helperTip.dropZones || {};
       const content = {};
       const passages = {};
       Object.keys(dropZones).forEach(zoneId => {
@@ -251,8 +255,8 @@ export default function ReviewAnswers() {
     }
 
     // Load matching helper content
-    if (currentQuestion.type === 'matching_list_dual' && quiz.ai_helper_tips?.[currentIndex]?.matchingQuestions) {
-      setMatchingHelperContent(quiz.ai_helper_tips[currentIndex].matchingQuestions || {});
+    if (currentQuestion.type === 'matching_list_dual' && helperTip?.matchingQuestions) {
+      setMatchingHelperContent(helperTip.matchingQuestions || {});
     } else {
       setMatchingHelperContent({});
     }
@@ -428,25 +432,27 @@ Provide HTML formatted explanation:`;
 
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
 
-      // Save to quiz entity
+      // Save to question's ai_data field
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const blankExplanations = questionExplanations.blanks || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              blanks: {
-                ...blankExplanations,
-                [blankId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingBlanks = existingExpl.blanks || {};
+          
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                blanks: { ...existingBlanks, [blankId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save blank explanation:', err);
       }
@@ -460,29 +466,28 @@ Provide HTML formatted explanation:`;
 
   const handleDeleteBlankExplanation = async (blankId) => {
     try {
-      const existingExplanations = quiz?.ai_explanations || {};
-      const questionExplanations = existingExplanations[currentIndex] || {};
-      const blankExplanations = questionExplanations.blanks || {};
-      
-      const { [blankId]: _, ...remainingBlanks } = blankExplanations;
-      
-      await base44.entities.Quiz.update(quiz.id, {
-        ai_explanations: {
-          ...existingExplanations,
-          [currentIndex]: {
-            ...questionExplanations,
-            blanks: remainingBlanks
+      const updatedQuestions = [...(quiz?.questions || [])];
+      if (updatedQuestions[currentIndex]?.ai_data?.explanation?.blanks) {
+        const { [blankId]: _, ...remainingBlanks } = updatedQuestions[currentIndex].ai_data.explanation.blanks;
+        updatedQuestions[currentIndex] = {
+          ...updatedQuestions[currentIndex],
+          ai_data: {
+            ...updatedQuestions[currentIndex].ai_data,
+            explanation: {
+              ...updatedQuestions[currentIndex].ai_data.explanation,
+              blanks: remainingBlanks
+            }
           }
-        }
-      });
+        };
+        await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      }
 
       setBlankExplanationContent(prev => {
         const newContent = { ...prev };
         delete newContent[blankId];
         return newContent;
       });
-
-      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
     } catch (err) {
       console.error('Failed to delete blank explanation:', err);
     }
@@ -492,8 +497,8 @@ Provide HTML formatted explanation:`;
     const explanationId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
     
-    // Check if explanation already exists for this blank
-    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.blanks?.[blankId];
+    // Check if explanation already exists for this blank (new structure)
+    const existingExplanation = currentQuestion?.ai_data?.explanation?.blanks?.[blankId];
     if (existingExplanation && !wasAlreadyOpened) {
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: existingExplanation }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
@@ -588,35 +593,37 @@ Provide HTML formatted explanation:`;
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
-      // Save to quiz entity
+      // Save to question's ai_data field
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const blankExplanations = questionExplanations.blanks || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              blanks: {
-                ...blankExplanations,
-                [blankId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingBlanks = existingExpl.blanks || {};
+
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                blanks: { ...existingBlanks, [blankId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save blank explanation:', err);
       }
-    } catch (e) {
+      } catch (e) {
       console.error('Error generating blank explanation:', e);
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: "Unable to generate explanation at this time." }));
-    } finally {
+      } finally {
       setBlankExplanationLoading(prev => ({ ...prev, [blankId]: false }));
-    }
-  };
+      }
+      };
 
   const handleRegenerateDropZoneExplanation = async (zoneId) => {
     setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: true }));
@@ -677,25 +684,27 @@ Provide HTML formatted explanation:`;
 
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
 
-      // Save to quiz entity
+      // Save to question's ai_data field
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const dropZoneExplanations = questionExplanations.dropZones || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              dropZones: {
-                ...dropZoneExplanations,
-                [zoneId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingDropZones = existingExpl.dropZones || {};
+          
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                dropZones: { ...existingDropZones, [zoneId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save drop zone explanation:', err);
       }
@@ -709,29 +718,28 @@ Provide HTML formatted explanation:`;
 
   const handleDeleteDropZoneExplanation = async (zoneId) => {
     try {
-      const existingExplanations = quiz?.ai_explanations || {};
-      const questionExplanations = existingExplanations[currentIndex] || {};
-      const dropZoneExplanations = questionExplanations.dropZones || {};
-      
-      const { [zoneId]: _, ...remainingZones } = dropZoneExplanations;
-      
-      await base44.entities.Quiz.update(quiz.id, {
-        ai_explanations: {
-          ...existingExplanations,
-          [currentIndex]: {
-            ...questionExplanations,
-            dropZones: remainingZones
+      const updatedQuestions = [...(quiz?.questions || [])];
+      if (updatedQuestions[currentIndex]?.ai_data?.explanation?.dropZones) {
+        const { [zoneId]: _, ...remainingZones } = updatedQuestions[currentIndex].ai_data.explanation.dropZones;
+        updatedQuestions[currentIndex] = {
+          ...updatedQuestions[currentIndex],
+          ai_data: {
+            ...updatedQuestions[currentIndex].ai_data,
+            explanation: {
+              ...updatedQuestions[currentIndex].ai_data.explanation,
+              dropZones: remainingZones
+            }
           }
-        }
-      });
+        };
+        await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      }
 
       setDropZoneExplanationContent(prev => {
         const newContent = { ...prev };
         delete newContent[zoneId];
         return newContent;
       });
-
-      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
     } catch (err) {
       console.error('Failed to delete drop zone explanation:', err);
     }
@@ -741,8 +749,8 @@ Provide HTML formatted explanation:`;
     const explanationId = `dropzone-${currentIndex}-${zoneId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
     
-    // Check if explanation already exists for this zone
-    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.dropZones?.[zoneId];
+    // Check if explanation already exists for this zone (new structure)
+    const existingExplanation = currentQuestion?.ai_data?.explanation?.dropZones?.[zoneId];
     if (existingExplanation && !wasAlreadyOpened) {
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: existingExplanation.advice || existingExplanation }));
       if (existingExplanation.passages) {
@@ -815,35 +823,37 @@ Provide HTML formatted explanation:`;
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
-      // Save to quiz entity
+      // Save to question's ai_data field
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const dropZoneExplanations = questionExplanations.dropZones || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              dropZones: {
-                ...dropZoneExplanations,
-                [zoneId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingDropZones = existingExpl.dropZones || {};
+
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                dropZones: { ...existingDropZones, [zoneId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save drop zone explanation:', err);
       }
-    } catch (e) {
+      } catch (e) {
       console.error('Error generating drop zone explanation:', e);
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: "Unable to generate explanation at this time." }));
-    } finally {
+      } finally {
       setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: false }));
-    }
-  };
+      }
+      };
 
   const generateRCExplanation = async (forceRegenerate = false) => {
     const explanationId = `rc-${currentIndex}`;
@@ -976,23 +986,26 @@ Provide HTML formatted explanation:`;
           passages: cleanedPassages
         };
 
-        // Save to quiz entity immediately
+        // Save to question's ai_data field
         try {
-          const existingExplanations = quiz?.ai_explanations || {};
-          const updatedExplanations = {
-            ...existingExplanations,
-            [currentIndex]: explanationData
-          };
+          const updatedQuestions = [...(quiz?.questions || [])];
+          if (updatedQuestions[currentIndex]) {
+            updatedQuestions[currentIndex] = {
+              ...updatedQuestions[currentIndex],
+              ai_data: {
+                ...updatedQuestions[currentIndex].ai_data,
+                explanation: explanationData
+              }
+            };
 
-          await base44.entities.Quiz.update(quiz.id, {
-            ai_explanations: updatedExplanations
-          });
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
 
-          // Immediately update the local cache
-          queryClient.setQueryData(['quiz', quizId], (oldData) => {
-            if (!oldData || !Array.isArray(oldData)) return oldData;
-            return oldData.map(q => q.id === quiz.id ? { ...q, ai_explanations: updatedExplanations } : q);
-          });
+            // Immediately update the local cache
+            queryClient.setQueryData(['quiz', quizId], (oldData) => {
+              if (!oldData || !Array.isArray(oldData)) return oldData;
+              return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+            });
+          }
 
           // Force reload the explanation from updated cache
           setAiHelperContent(parsed.advice || text);
@@ -1025,18 +1038,22 @@ Provide HTML formatted explanation:`;
 
     const handleDeleteRCExplanation = async () => {
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const { [currentIndex]: _, ...remaining } = existingExplanations;
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]?.ai_data) {
+          const { explanation, ...restAiData } = updatedQuestions[currentIndex].ai_data;
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+          };
 
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: remaining
-        });
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
 
-        // Immediately update the local cache
-        queryClient.setQueryData(['quiz', quizId], (oldData) => {
-          if (!oldData || !Array.isArray(oldData)) return oldData;
-          return oldData.map(q => q.id === quiz.id ? { ...q, ai_explanations: remaining } : q);
-        });
+          // Immediately update the local cache
+          queryClient.setQueryData(['quiz', quizId], (oldData) => {
+            if (!oldData || !Array.isArray(oldData)) return oldData;
+            return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+          });
+        }
 
         // Clear local state
         setAiHelperContent('');
@@ -1055,7 +1072,7 @@ Provide HTML formatted explanation:`;
     };
 
     const handleOpenEditExplanation = () => {
-      const explanationData = quiz?.ai_explanations?.[currentIndex] || { advice: '', passages: {} };
+      const explanationData = currentQuestion?.ai_data?.explanation || { advice: '', passages: {} };
       setEditExplanationJson(JSON.stringify(explanationData, null, 2));
       setEditExplanationDialogOpen(true);
     };
@@ -1107,20 +1124,22 @@ Provide HTML formatted explanation:`;
     const handleSaveExplanationJson = async () => {
       try {
         const parsed = JSON.parse(editExplanationJson);
-        const existingExplanations = quiz?.ai_explanations || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: parsed
-          }
-        });
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...updatedQuestions[currentIndex].ai_data,
+              explanation: parsed
+            }
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
 
         // Update local state
         setAiHelperContent(parsed.advice || '');
         setHighlightedPassages(parsed.passages || {});
-        
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
         setEditExplanationDialogOpen(false);
       } catch (err) {
         alert('Invalid JSON: ' + err.message);
@@ -1202,7 +1221,7 @@ Provide HTML formatted explanation:`;
     };
 
     const handleOpenEditBlankExplanation = (blankId) => {
-      const tipData = quiz?.ai_explanations?.[currentIndex]?.blanks?.[blankId] || '';
+      const tipData = currentQuestion?.ai_data?.explanation?.blanks?.[blankId] || '';
       setEditBlankExplanationJson(tipData);
       setEditBlankId(blankId);
       setEditBlankExplanationDialogOpen(true);
@@ -1210,26 +1229,27 @@ Provide HTML formatted explanation:`;
 
     const handleSaveBlankExplanationJson = async () => {
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const blankExplanations = questionExplanations.blanks || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              blanks: {
-                ...blankExplanations,
-                [editBlankId]: editBlankExplanationJson
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingBlanks = existingExpl.blanks || {};
+          
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                blanks: { ...existingBlanks, [editBlankId]: editBlankExplanationJson }
               }
             }
-          }
-        });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
 
         setBlankExplanationContent(prev => ({ ...prev, [editBlankId]: editBlankExplanationJson }));
-        
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
         setEditBlankExplanationDialogOpen(false);
       } catch (err) {
         alert('Failed to save: ' + err.message);
@@ -1340,23 +1360,25 @@ Provide HTML formatted explanation:`;
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: text }));
 
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const matchingExplanations = questionExplanations.matchingQuestions || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              matchingQuestions: {
-                ...matchingExplanations,
-                [questionId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingMatching = existingExpl.matchingQuestions || {};
+          
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                matchingQuestions: { ...existingMatching, [questionId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save matching explanation:', err);
       }
@@ -1370,29 +1392,28 @@ Provide HTML formatted explanation:`;
 
   const handleDeleteMatchingExplanation = async (questionId) => {
     try {
-      const existingExplanations = quiz?.ai_explanations || {};
-      const questionExplanations = existingExplanations[currentIndex] || {};
-      const matchingExplanations = questionExplanations.matchingQuestions || {};
-      
-      const { [questionId]: _, ...remainingQuestions } = matchingExplanations;
-      
-      await base44.entities.Quiz.update(quiz.id, {
-        ai_explanations: {
-          ...existingExplanations,
-          [currentIndex]: {
-            ...questionExplanations,
-            matchingQuestions: remainingQuestions
+      const updatedQuestions = [...(quiz?.questions || [])];
+      if (updatedQuestions[currentIndex]?.ai_data?.explanation?.matchingQuestions) {
+        const { [questionId]: _, ...remainingMatching } = updatedQuestions[currentIndex].ai_data.explanation.matchingQuestions;
+        updatedQuestions[currentIndex] = {
+          ...updatedQuestions[currentIndex],
+          ai_data: {
+            ...updatedQuestions[currentIndex].ai_data,
+            explanation: {
+              ...updatedQuestions[currentIndex].ai_data.explanation,
+              matchingQuestions: remainingMatching
+            }
           }
-        }
-      });
+        };
+        await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+      }
 
       setMatchingExplanationContent(prev => {
         const newContent = { ...prev };
         delete newContent[questionId];
         return newContent;
       });
-
-      queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
     } catch (err) {
       console.error('Failed to delete matching explanation:', err);
     }
@@ -1402,7 +1423,7 @@ Provide HTML formatted explanation:`;
     const explanationId = `matching-${currentIndex}-${questionId}`;
     const wasAlreadyOpened = openedExplanations.has(explanationId);
     
-    const existingExplanation = quiz?.ai_explanations?.[currentIndex]?.matchingQuestions?.[questionId];
+    const existingExplanation = currentQuestion?.ai_data?.explanation?.matchingQuestions?.[questionId];
     if (existingExplanation && !wasAlreadyOpened) {
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: existingExplanation }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
@@ -1466,33 +1487,35 @@ Provide HTML formatted explanation:`;
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
       try {
-        const existingExplanations = quiz?.ai_explanations || {};
-        const questionExplanations = existingExplanations[currentIndex] || {};
-        const matchingExplanations = questionExplanations.matchingQuestions || {};
-        
-        await base44.entities.Quiz.update(quiz.id, {
-          ai_explanations: {
-            ...existingExplanations,
-            [currentIndex]: {
-              ...questionExplanations,
-              matchingQuestions: {
-                ...matchingExplanations,
-                [questionId]: text
+        const updatedQuestions = [...(quiz?.questions || [])];
+        if (updatedQuestions[currentIndex]) {
+          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
+          const existingExpl = existingAiData.explanation || {};
+          const existingMatching = existingExpl.matchingQuestions || {};
+
+          updatedQuestions[currentIndex] = {
+            ...updatedQuestions[currentIndex],
+            ai_data: {
+              ...existingAiData,
+              explanation: {
+                ...existingExpl,
+                matchingQuestions: { ...existingMatching, [questionId]: text }
               }
             }
-          }
-        });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          };
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+        }
       } catch (err) {
         console.error('Failed to save matching explanation:', err);
       }
-    } catch (e) {
+      } catch (e) {
       console.error('Error generating matching explanation:', e);
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: "Unable to generate explanation at this time." }));
-    } finally {
+      } finally {
       setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: false }));
-    }
-  };
+      }
+      };
 
   const handleDownloadResults = async () => {
     setDownloadingPdf(true);
