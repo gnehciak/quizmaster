@@ -106,13 +106,16 @@ export default function CreateQuiz() {
   useEffect(() => {
     if (existingQuiz) {
       setQuiz(existingQuiz);
-      // Set category search to show the selected category name
-      if (existingQuiz.category_id && categories.length > 0 && !categorySearch) {
-        const cat = categories.find(c => c.id === existingQuiz.category_id);
-        if (cat) setCategorySearch(cat.name);
-      }
     }
-  }, [existingQuiz, categories]);
+  }, [existingQuiz]);
+
+  useEffect(() => {
+    // Set category search to show the selected category name (only once when both are loaded)
+    if (existingQuiz?.category_id && categories.length > 0) {
+      const cat = categories.find(c => c.id === existingQuiz.category_id);
+      if (cat) setCategorySearch(cat.name);
+    }
+  }, [existingQuiz?.category_id, categories]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
