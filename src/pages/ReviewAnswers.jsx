@@ -523,7 +523,12 @@ Provide HTML formatted explanation:`;
             ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
           };
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          
+          // Immediately update the local cache
+          queryClient.setQueryData(['quiz', quizId], (oldData) => {
+            if (!oldData || !Array.isArray(oldData)) return oldData;
+            return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+          });
         }
       }
 
@@ -1049,7 +1054,7 @@ Provide HTML formatted explanation:`;
 
               await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
 
-              // Immediately update the local cache
+              // Immediately update the local cache to avoid race conditions
               queryClient.setQueryData(['quiz', quizId], (oldData) => {
                 if (!oldData || !Array.isArray(oldData)) return oldData;
                 return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
@@ -1066,7 +1071,7 @@ Provide HTML formatted explanation:`;
 
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
 
-            // Immediately update the local cache
+            // Immediately update the local cache to avoid race conditions
             queryClient.setQueryData(['quiz', quizId], (oldData) => {
               if (!oldData || !Array.isArray(oldData)) return oldData;
               return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
@@ -1230,7 +1235,6 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
           }
         } else if (updatedQuestions[currentIndex]) {
           updatedQuestions[currentIndex] = {
@@ -1241,8 +1245,13 @@ Provide HTML formatted explanation:`;
             }
           };
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
         }
+        
+        // Immediately update the local cache
+        queryClient.setQueryData(['quiz', quizId], (oldData) => {
+          if (!oldData || !Array.isArray(oldData)) return oldData;
+          return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
+        });
 
         // Update local state
         setAiHelperContent(parsed.advice || '');
