@@ -162,7 +162,8 @@ export default function ReviewAnswers() {
       const blankExplanations = {};
       currentQuestion.blanks?.forEach(blank => {
         if (blank.ai_data?.explanation) {
-          blankExplanations[blank.id] = blank.ai_data.explanation;
+          const data = blank.ai_data.explanation;
+          blankExplanations[blank.id] = typeof data === 'string' ? data : data.advice || data;
         }
       });
       setBlankExplanationContent(blankExplanations);
@@ -199,7 +200,8 @@ export default function ReviewAnswers() {
       const matchingExplanations = {};
       currentQuestion.matchingQuestions?.forEach(mq => {
         if (mq.ai_data?.explanation) {
-          matchingExplanations[mq.id] = mq.ai_data.explanation;
+          const data = mq.ai_data.explanation;
+          matchingExplanations[mq.id] = typeof data === 'string' ? data : data.advice || data;
         }
       });
       setMatchingExplanationContent(matchingExplanations);
@@ -491,7 +493,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -642,7 +644,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -736,7 +738,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].dropZones[zoneIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -883,7 +885,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].dropZones[zoneIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -1326,7 +1328,8 @@ Provide HTML formatted explanation:`;
 
     const handleOpenEditBlankExplanation = (blankId) => {
       const blank = currentQuestion.blanks?.find(b => b.id === blankId);
-      const tipData = blank?.ai_data?.explanation || '';
+      const rawData = blank?.ai_data?.explanation;
+      const tipData = typeof rawData === 'object' ? rawData.advice || '' : rawData || '';
       setEditBlankExplanationJson(tipData);
       setEditBlankId(blankId);
       setEditBlankExplanationDialogOpen(true);
@@ -1343,7 +1346,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
-                explanation: editBlankExplanationJson
+                explanation: { advice: editBlankExplanationJson }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -1475,7 +1478,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -1609,7 +1612,7 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
               ai_data: {
                 ...updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data,
-                explanation: text
+                explanation: { advice: text }
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
