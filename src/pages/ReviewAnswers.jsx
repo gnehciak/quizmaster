@@ -1051,9 +1051,6 @@ Provide HTML formatted explanation:`;
                   explanation: explanationData
                 }
               };
-
-              await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-              await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             }
           } else {
             const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
@@ -1068,9 +1065,8 @@ Provide HTML formatted explanation:`;
             }
           }
 
-            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
-          }
+          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+          await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
 
           // Force reload the explanation from updated cache
           setAiHelperContent(parsed.advice || text);
