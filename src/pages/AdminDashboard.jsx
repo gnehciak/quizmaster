@@ -1,20 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   BookOpen, 
   Users, 
   Settings,
   Plus,
   Edit,
-  BarChart3
+  BarChart3,
+  Bot,
+  Save
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminDashboard() {
+  const [aiConfigDialogOpen, setAiConfigDialogOpen] = useState(false);
+  const [modelName, setModelName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const queryClient = useQueryClient();
+
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -40,6 +56,42 @@ export default function AdminDashboard() {
     queryKey: ['allAttempts'],
     queryFn: () => base44.entities.QuizAttempt.list('-created_date', 100),
   });
+
+  const { data: aiConfig } = useQuery({
+    queryKey: ['aiConfig'],
+    queryFn: async () => {
+      const configs = await base44.entities.AIAPIConfig.filter({ key: 'default' });
+      return configs[0] || null;
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      if (aiConfig) {
+        return await base44.entities.AIAPIConfig.update(aiConfig.id, data);
+      } else {
+        return await base44.entities.AIAPIConfig.create({ key: 'default', ...data });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiConfig'] });
+      setAiConfigDialogOpen(false);
+      toast.success('AI API configuration saved');
+    },
+    onError: (error) => {
+      toast.error('Failed to save configuration: ' + error.message);
+    }
+  });
+
+  const handleOpenAIConfig = () => {
+    setModelName(aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025');
+    setApiKey(aiConfig?.api_key || '');
+    setAiConfigDialogOpen(true);
+  };
+
+  const handleSaveAIConfig = () => {
+    saveMutation.mutate({ model_name: modelName, api_key: apiKey });
+  };
 
   if (userLoading) {
     return (
@@ -152,7 +204,80 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Configuration */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-indigo-600" />
+                AI API Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="text-sm text-slate-600">
+                  <p><strong>Model:</strong> {aiConfig?.model_name || 'Not configured'}</p>
+                  <p><strong>API Key:</strong> {aiConfig?.api_key ? '••••••••' : 'Not set'}</p>
+                </div>
+                <Button onClick={handleOpenAIConfig} variant="outline" className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  Configure AI API
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* AI Configuration Dialog */}
+      <Dialog open={aiConfigDialogOpen} onOpenChange={setAiConfigDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>AI API Configuration</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="model-name">AI Model Name</Label>
+              <Input
+                id="model-name"
+                value={modelName}
+                onChange={(e) => setModelName(e.target.value)}
+                placeholder="gemini-2.5-flash-preview-09-2025"
+              />
+              <p className="text-xs text-slate-500">
+                Enter the Google AI model name (e.g., gemini-2.5-flash-preview-09-2025)
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API Key</Label>
+              <Input
+                id="api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter your Google AI API key"
+              />
+              <p className="text-xs text-slate-500">
+                Your Google AI API key (get from AI Studio)
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setAiConfigDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveAIConfig} 
+              disabled={saveMutation.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700 gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

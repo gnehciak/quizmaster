@@ -106,6 +106,14 @@ export default function ReviewAnswers() {
     queryFn: () => base44.entities.AIPrompt.list()
   });
 
+  const { data: aiConfig } = useQuery({
+    queryKey: ['aiConfig'],
+    queryFn: async () => {
+      const configs = await base44.entities.AIAPIConfig.filter({ key: 'default' });
+      return configs[0] || null;
+    },
+  });
+
   // Flatten questions
   const flattenedQuestions = React.useMemo(() => {
     if (!quiz?.questions) return [];
@@ -334,8 +342,8 @@ export default function ReviewAnswers() {
       }
     });
 
-    const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+    const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+    const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
     const newExplanations = {};
 
     for (const { q, idx, answer } of incorrectQuestions) {

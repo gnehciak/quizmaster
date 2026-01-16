@@ -138,6 +138,14 @@ export default function TakeQuiz() {
     queryFn: () => base44.entities.AIPrompt.list()
   });
 
+  const { data: aiConfig } = useQuery({
+    queryKey: ['aiConfig'],
+    queryFn: async () => {
+      const configs = await base44.entities.AIAPIConfig.filter({ key: 'default' });
+      return configs[0] || null;
+    },
+  });
+
   const { data: userAttempts = [] } = useQuery({
     queryKey: ['quizAttempts', quizId, user?.email],
     queryFn: () => base44.entities.QuizAttempt.filter({ quiz_id: quizId, user_email: user?.email }),
@@ -606,8 +614,8 @@ export default function TakeQuiz() {
       prompt = prompt.replace('{{OPTIONS}}', optionsContext);
       prompt = prompt.replace('{{CORRECT_ANSWER}}', answerContext);
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -866,8 +874,8 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       prompt = prompt.replace('{{TOTAL_BLANKS}}', totalBlanks.toString());
       prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
