@@ -633,26 +633,22 @@ Provide HTML formatted explanation:`;
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
 
-      // Save to question's ai_data field
+      // Save to blank's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
         if (updatedQuestions[currentIndex]) {
-          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
-          const existingExpl = existingAiData.explanation || {};
-          const existingBlanks = existingExpl.blanks || {};
-
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: {
-              ...existingAiData,
-              explanation: {
-                ...existingExpl,
-                blanks: { ...existingBlanks, [blankId]: text }
+          const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
+          if (blankIdx !== -1) {
+            updatedQuestions[currentIndex].blanks[blankIdx] = {
+              ...updatedQuestions[currentIndex].blanks[blankIdx],
+              ai_data: {
+                ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+                explanation: text
               }
-            }
-          };
-          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            };
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+          }
         }
       } catch (err) {
         console.error('Failed to save blank explanation:', err);
