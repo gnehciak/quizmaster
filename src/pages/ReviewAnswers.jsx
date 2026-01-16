@@ -366,9 +366,17 @@ export default function ReviewAnswers() {
 
         Provide a helpful first-person explanation:`;
 
+        console.log(`=== BULK EXPLANATION PROMPT [Q${idx + 1}] ===`);
+        console.log(prompt);
+        console.log('============================================');
+
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
+
+        console.log(`=== BULK EXPLANATION RESPONSE [Q${idx + 1}] ===`);
+        console.log(text);
+        console.log('=============================================');
         newExplanations[idx] = text;
       } catch (e) {
         newExplanations[idx] = "Unable to generate explanation at this time.";
@@ -479,6 +487,10 @@ Provide HTML formatted explanation:`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== DROPDOWN EXPLANATION RESPONSE (REGENERATE) ===');
+      console.log(text);
+      console.log('==================================================');
 
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
 
@@ -629,6 +641,10 @@ Provide HTML formatted explanation:`;
       const result = await model.generateContent(blankPrompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== DROPDOWN EXPLANATION RESPONSE ===');
+      console.log(text);
+      console.log('=====================================');
 
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
