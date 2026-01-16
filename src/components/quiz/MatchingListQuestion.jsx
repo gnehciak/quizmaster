@@ -425,16 +425,15 @@ export default function MatchingListQuestion({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 gap-1 text-xs"
+                                className="h-7 w-7 p-0"
                                 onClick={() => onGenerateExplanation && onGenerateExplanation(q.id)}
                                 disabled={isLoadingExplanation}
                               >
                                 {isLoadingExplanation ? (
-                                  <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                                  <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                                 ) : (
-                                  <Sparkles className="w-3 h-3 text-indigo-500" />
+                                  <Sparkles className="w-4 h-4 text-indigo-500" />
                                 )}
-                                Explain
                               </Button>
                             )
                           )}
