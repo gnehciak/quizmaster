@@ -941,11 +941,24 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       };
 
       const handleSaveBlankTipJson = async () => {
-      try {
+    try {
       const updatedQuestions = [...(quiz?.questions || [])];
       if (updatedQuestions[currentIndex]) {
+        // Check if this is for a matching question or a blank
+        const matchingIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === editBlankId);
         const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === editBlankId);
-        if (blankIdx !== -1) {
+        
+        if (matchingIdx !== -1) {
+          // It's a matching question
+          updatedQuestions[currentIndex].matchingQuestions[matchingIdx] = {
+            ...updatedQuestions[currentIndex].matchingQuestions[matchingIdx],
+            ai_data: {
+              ...updatedQuestions[currentIndex].matchingQuestions[matchingIdx].ai_data,
+              helper_tip: editBlankTipJson
+            }
+          };
+        } else if (blankIdx !== -1) {
+          // It's a blank
           updatedQuestions[currentIndex].blanks[blankIdx] = {
             ...updatedQuestions[currentIndex].blanks[blankIdx],
             ai_data: {
@@ -953,17 +966,22 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
               helper_tip: editBlankTipJson
             }
           };
-          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
         }
+        
+        await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
       }
 
-      setBlankHelperContent(prev => ({ ...prev, [editBlankId]: editBlankTipJson }));
-      setEditBlankTipDialogOpen(false);
-      } catch (err) {
-      alert('Failed to save: ' + err.message);
+      if (updatedQuestions[currentIndex]?.matchingQuestions?.some(mq => mq.id === editBlankId)) {
+        setMatchingHelperContent(prev => ({ ...prev, [editBlankId]: editBlankTipJson }));
+      } else {
+        setBlankHelperContent(prev => ({ ...prev, [editBlankId]: editBlankTipJson }));
       }
-      };
+      setEditBlankTipDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save: ' + err.message);
+    }
+  };
 
   const handleOpenEditBlankPrompt = () => {
     const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks');
