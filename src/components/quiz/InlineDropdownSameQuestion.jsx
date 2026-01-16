@@ -73,6 +73,7 @@ export default function InlineDropdownSameQuestion({
         const selectedAnswer = selectedAnswers[blankId];
         const isCorrect = showResults && selectedAnswer === blank?.correctAnswer;
         const isWrong = showResults && selectedAnswer && selectedAnswer !== blank?.correctAnswer;
+        const showExplainButton = showResults && !isCorrect;
         
         const tipId = `blank-${currentIndex}-${blankId}`;
         const wasTipOpened = openedTips.has(tipId);
@@ -99,7 +100,7 @@ export default function InlineDropdownSameQuestion({
                   {isCorrect && <CheckCircle2 className="w-4 h-4" />}
                   {isWrong && <XCircle className="w-4 h-4" />}
                 </span>
-                {isWrong && (
+                {showExplainButton && (
                   <>
                     <span className="text-xs text-slate-600">
                       Correct: <span className="font-medium text-emerald-600">{blank.correctAnswer}</span>

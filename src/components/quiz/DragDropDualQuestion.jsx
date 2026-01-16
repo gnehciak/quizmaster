@@ -258,6 +258,7 @@ export default function DragDropDualQuestion({
               const wasExplanationOpened = openedExplanations.has(explanationId);
               const explanation = explanationContent[zone.id];
               const isLoadingExplanation = explanationLoading[zone.id];
+              const showExplainButton = showResults && !isCorrect;
 
               return (
                 <div
@@ -379,8 +380,8 @@ export default function DragDropDualQuestion({
                       {droppedItem}
                     </div>
                   )}
-                  
-                  {showResults && isWrong && (
+
+                  {showExplainButton && (
                     <div className="mt-2 flex items-center gap-2">
                       <div className="text-xs text-slate-600">
                         Correct: <span className="font-medium">{zone.correctAnswer}</span>

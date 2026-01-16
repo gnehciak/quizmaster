@@ -181,6 +181,7 @@ export default function DragDropQuestion({
           const isCorrect = showResults && placedAnswer === zone.correctAnswer;
           const isWrong = showResults && placedAnswer && placedAnswer !== zone.correctAnswer;
           const showCorrectAnswer = showResults && !isCorrect;
+          const showExplainButton = showResults && !isCorrect;
           const tipId = `dropzone-${currentIndex}-${zone.id}`;
           const wasTipOpened = openedTips.has(tipId);
           const helpContent = aiHelperContent[zone.id];
@@ -305,7 +306,7 @@ export default function DragDropQuestion({
                 </div>
               )}
               
-              {showCorrectAnswer && (
+              {showExplainButton && (
                 <div className="mt-2 flex items-center gap-2">
                   <p className="text-xs text-emerald-600 font-medium">
                     Correct: {zone.correctAnswer}

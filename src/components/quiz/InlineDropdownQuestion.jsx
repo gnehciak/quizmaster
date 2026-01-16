@@ -75,7 +75,8 @@ export default function InlineDropdownQuestion({
         
         const selectedValue = selectedAnswers[blankId];
         const isCorrect = showResults && selectedValue === blank.correctAnswer;
-        const isWrong = showResults && selectedValue !== blank.correctAnswer;
+        const isWrong = showResults && selectedValue && selectedValue !== blank.correctAnswer;
+        const showExplainButton = showResults && !isCorrect;
         
         const tipId = `blank-${currentIndex}-${blankId}`;
         const wasTipOpened = openedTips.has(tipId);
@@ -201,8 +202,11 @@ export default function InlineDropdownQuestion({
             {showResults && isCorrect && (
               <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
             )}
-            {showResults && isWrong && (
+            {showExplainButton && (
               <span className="flex items-center gap-2">
+                {isWrong && (
+                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                )}
                 <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                 <span className="text-xs text-slate-600">
                   Correct: <span className="font-medium text-emerald-600">{blank.correctAnswer}</span>

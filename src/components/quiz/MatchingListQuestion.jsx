@@ -228,6 +228,7 @@ export default function MatchingListQuestion({
                 const selectedAnswerItem = selectedAnswers[q.id];
                 const isCorrect = showResults && selectedAnswerItem === q.correctAnswer;
                 const isWrong = showResults && selectedAnswerItem && selectedAnswerItem !== q.correctAnswer;
+                const showExplainButton = showResults && !isCorrect;
                 const tipId = `matching-${currentIndex}-${q.id}`;
                 const wasTipOpened = openedTips.has(tipId);
                 const helpContent = aiHelperContent[q.id];
@@ -365,9 +366,12 @@ export default function MatchingListQuestion({
                       {showResults && isCorrect && (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       )}
-                      {showResults && isWrong && (
+                      {showExplainButton && (
                         <>
-                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                          {isWrong && (
+                            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                          )}
+                          )}
                           {(onRequestExplanation || onGenerateExplanation) && (
                             explanation ? (
                               <Popover>
