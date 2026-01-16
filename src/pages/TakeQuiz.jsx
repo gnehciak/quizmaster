@@ -614,8 +614,8 @@ export default function TakeQuiz() {
       prompt = prompt.replace('{{OPTIONS}}', optionsContext);
       prompt = prompt.replace('{{CORRECT_ANSWER}}', answerContext);
 
-      const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -874,8 +874,8 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       prompt = prompt.replace('{{TOTAL_BLANKS}}', totalBlanks.toString());
       prompt = prompt.replace('{{OPTIONS}}', blank.options.join(', '));
 
-      const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
