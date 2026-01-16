@@ -483,13 +483,14 @@ Provide HTML formatted explanation:`;
       // Save to blank's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const blankIdx = updatedQuestions[questionIdx].blanks?.findIndex(b => b.id === blankId);
           if (blankIdx !== -1) {
-            updatedQuestions[currentIndex].blanks[blankIdx] = {
-              ...updatedQuestions[currentIndex].blanks[blankIdx],
+            updatedQuestions[questionIdx].blanks[blankIdx] = {
+              ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+                ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
                 explanation: text
               }
             };
@@ -633,13 +634,14 @@ Provide HTML formatted explanation:`;
       // Save to blank's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const blankIdx = updatedQuestions[questionIdx].blanks?.findIndex(b => b.id === blankId);
           if (blankIdx !== -1) {
-            updatedQuestions[currentIndex].blanks[blankIdx] = {
-              ...updatedQuestions[currentIndex].blanks[blankIdx],
+            updatedQuestions[questionIdx].blanks[blankIdx] = {
+              ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+                ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
                 explanation: text
               }
             };
@@ -726,13 +728,14 @@ Provide HTML formatted explanation:`;
       // Save to dropZone's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const zoneIdx = updatedQuestions[currentIndex].dropZones?.findIndex(z => z.id === zoneId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const zoneIdx = updatedQuestions[questionIdx].dropZones?.findIndex(z => z.id === zoneId);
           if (zoneIdx !== -1) {
-            updatedQuestions[currentIndex].dropZones[zoneIdx] = {
-              ...updatedQuestions[currentIndex].dropZones[zoneIdx],
+            updatedQuestions[questionIdx].dropZones[zoneIdx] = {
+              ...updatedQuestions[questionIdx].dropZones[zoneIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].dropZones[zoneIdx].ai_data,
+                ...updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data,
                 explanation: text
               }
             };
@@ -872,13 +875,14 @@ Provide HTML formatted explanation:`;
       // Save to dropZone's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const zoneIdx = updatedQuestions[currentIndex].dropZones?.findIndex(z => z.id === zoneId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const zoneIdx = updatedQuestions[questionIdx].dropZones?.findIndex(z => z.id === zoneId);
           if (zoneIdx !== -1) {
-            updatedQuestions[currentIndex].dropZones[zoneIdx] = {
-              ...updatedQuestions[currentIndex].dropZones[zoneIdx],
+            updatedQuestions[questionIdx].dropZones[zoneIdx] = {
+              ...updatedQuestions[questionIdx].dropZones[zoneIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].dropZones[zoneIdx].ai_data,
+                ...updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data,
                 explanation: text
               }
             };
@@ -1477,13 +1481,14 @@ Provide HTML formatted explanation:`;
 
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const mqIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === questionId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const mqIdx = updatedQuestions[questionIdx].matchingQuestions?.findIndex(mq => mq.id === questionId);
           if (mqIdx !== -1) {
-            updatedQuestions[currentIndex].matchingQuestions[mqIdx] = {
-              ...updatedQuestions[currentIndex].matchingQuestions[mqIdx],
+            updatedQuestions[questionIdx].matchingQuestions[mqIdx] = {
+              ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].matchingQuestions[mqIdx].ai_data,
+                ...updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data,
                 explanation: text
               }
             };
@@ -1610,13 +1615,14 @@ Provide HTML formatted explanation:`;
 
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const mqIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === questionId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const mqIdx = updatedQuestions[questionIdx].matchingQuestions?.findIndex(mq => mq.id === questionId);
           if (mqIdx !== -1) {
-            updatedQuestions[currentIndex].matchingQuestions[mqIdx] = {
-              ...updatedQuestions[currentIndex].matchingQuestions[mqIdx],
+            updatedQuestions[questionIdx].matchingQuestions[mqIdx] = {
+              ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].matchingQuestions[mqIdx].ai_data,
+                ...updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data,
                 explanation: text
               }
             };
