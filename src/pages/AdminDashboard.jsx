@@ -15,16 +15,19 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
+  const [redirecting, setRedirecting] = React.useState(false);
+
   const { data: user, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me(),
   });
 
   React.useEffect(() => {
-    if (!userLoading && userError) {
+    if (!userLoading && userError && !redirecting) {
+      setRedirecting(true);
       base44.auth.redirectToLogin(window.location.pathname);
     }
-  }, [userLoading, userError]);
+  }, [userLoading, userError, redirecting]);
 
   const { data: courses = [] } = useQuery({
     queryKey: ['courses'],
