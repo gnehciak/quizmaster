@@ -35,6 +35,7 @@ import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import html2pdf from 'html2pdf.js';
+import { toast } from 'sonner';
 
 export default function ReviewAnswers() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -500,15 +501,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save blank explanation:', err);
+        toast.error('Failed to save explanation');
       }
     } catch (e) {
       console.error('Error generating blank explanation:', e);
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
     } finally {
       setBlankExplanationLoading(prev => ({ ...prev, [blankId]: false }));
     }
@@ -655,15 +659,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save blank explanation:', err);
+        toast.error('Failed to save explanation');
       }
       } catch (e) {
       console.error('Error generating blank explanation:', e);
       setBlankExplanationContent(prev => ({ ...prev, [blankId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
       } finally {
       setBlankExplanationLoading(prev => ({ ...prev, [blankId]: false }));
       }
@@ -745,15 +752,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save drop zone explanation:', err);
+        toast.error('Failed to save explanation');
       }
     } catch (e) {
       console.error('Error generating drop zone explanation:', e);
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
     } finally {
       setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: false }));
     }
@@ -879,15 +889,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save drop zone explanation:', err);
+        toast.error('Failed to save explanation');
       }
       } catch (e) {
       console.error('Error generating drop zone explanation:', e);
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
       } finally {
       setDropZoneExplanationLoading(prev => ({ ...prev, [zoneId]: false }));
       }
@@ -1071,8 +1084,10 @@ Provide HTML formatted explanation:`;
           setAiHelperContent(parsed.advice || text);
           setHighlightedPassages(cleanedPassages);
           setOpenedExplanations(prev => new Set([...prev, explanationId]));
+          toast.success('Explanation generated and saved');
         } catch (err) {
           console.error('Failed to save RC explanation:', err);
+          toast.error('Failed to save explanation');
           // Still show the explanation even if save failed
           setAiHelperContent(parsed.advice || text);
           setHighlightedPassages(cleanedPassages);
@@ -1086,6 +1101,7 @@ Provide HTML formatted explanation:`;
         } catch (e) {
         console.error('Error generating RC explanation:', e);
         setAiHelperContent("Unable to generate explanation at this time.");
+        toast.error('Failed to generate explanation');
         } finally {
         setAiHelperLoading(false);
         setIsGeneratingExplanation(false);
@@ -1470,15 +1486,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save matching explanation:', err);
+        toast.error('Failed to save explanation');
       }
     } catch (e) {
       console.error('Error generating matching explanation:', e);
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
     } finally {
       setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: false }));
     }
@@ -1591,15 +1610,18 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            toast.success('Explanation generated and saved');
           }
         }
       } catch (err) {
         console.error('Failed to save matching explanation:', err);
+        toast.error('Failed to save explanation');
       }
       } catch (e) {
       console.error('Error generating matching explanation:', e);
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: "Unable to generate explanation at this time." }));
+      toast.error('Failed to generate explanation');
       } finally {
       setMatchingExplanationLoading(prev => ({ ...prev, [questionId]: false }));
       }
@@ -1992,9 +2014,12 @@ Provide HTML formatted explanation:`;
         await base44.entities.QuizAttempt.update(attemptId, {
           ai_performance_analysis: analysis
         });
+        await queryClient.invalidateQueries({ queryKey: ['attempt', attemptId] });
+        toast.success('Performance analysis generated and saved');
       }
     } catch (e) {
       console.error('Failed to generate analysis:', e);
+      toast.error('Failed to generate analysis');
     } finally {
       setLoadingAnalysis(false);
     }
