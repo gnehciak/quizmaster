@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ export default function RichTextEditor({
   disableHighlight = false
 }) {
   const [showRaw, setShowRaw] = useState(false);
+  const lastValueRef = useRef(value);
 
   const modules = React.useMemo(() => ({
     toolbar: [
@@ -34,6 +35,19 @@ export default function RichTextEditor({
     ...(disableLinks ? [] : ['link']),
     ...(disableHighlight ? [] : ['background'])
   ];
+
+  const handleChange = useCallback((newValue) => {
+    // Only call onChange if the value actually changed
+    if (newValue !== lastValueRef.current) {
+      lastValueRef.current = newValue;
+      onChange(newValue);
+    }
+  }, [onChange]);
+
+  // Update ref when value prop changes externally
+  React.useEffect(() => {
+    lastValueRef.current = value;
+  }, [value]);
 
   return (
     <div className={cn("relative flex flex-col", className)}>
@@ -72,7 +86,7 @@ export default function RichTextEditor({
       ) : (
         <ReactQuill
           value={value || ''}
-          onChange={onChange}
+          onChange={handleChange}
           placeholder={placeholder}
           modules={modules}
           formats={formats}
