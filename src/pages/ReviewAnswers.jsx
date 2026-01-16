@@ -478,8 +478,8 @@ Provide HTML formatted explanation:`;
       console.log('Final Prompt:', prompt);
       console.log('===============================================');
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -632,8 +632,8 @@ Provide HTML formatted explanation:`;
       console.log('Final Prompt:', blankPrompt);
       console.log('===================================');
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(blankPrompt);
       const response = await result.response;
       const text = response.text();
@@ -723,8 +723,8 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -856,8 +856,8 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -978,8 +978,8 @@ Provide HTML formatted explanation:`;
       console.log(prompt);
       console.log('===========================');
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -1449,8 +1449,8 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -1569,8 +1569,8 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -1976,8 +1976,8 @@ Provide HTML formatted explanation:`;
 
         prompt = prompt.replace('{{QUESTIONS_PERFORMANCE}}', questionsPerfStr);
 
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
