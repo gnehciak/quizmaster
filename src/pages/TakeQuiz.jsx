@@ -909,20 +909,17 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       const handleDeleteBlankHelp = async (blankId) => {
       try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]?.ai_data?.helper_tip?.blanks) {
-        const { [blankId]: _, ...remainingBlanks } = updatedQuestions[currentIndex].ai_data.helper_tip.blanks;
-        updatedQuestions[currentIndex] = {
-          ...updatedQuestions[currentIndex],
-          ai_data: {
-            ...updatedQuestions[currentIndex].ai_data,
-            helper_tip: {
-              ...updatedQuestions[currentIndex].ai_data.helper_tip,
-              blanks: remainingBlanks
-            }
-          }
-        };
-        await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      if (updatedQuestions[currentIndex]) {
+        const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
+        if (blankIdx !== -1 && updatedQuestions[currentIndex].blanks[blankIdx]?.ai_data) {
+          const { helper_tip, ...restAiData } = updatedQuestions[currentIndex].blanks[blankIdx].ai_data;
+          updatedQuestions[currentIndex].blanks[blankIdx] = {
+            ...updatedQuestions[currentIndex].blanks[blankIdx],
+            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
       }
 
       setBlankHelperContent(prev => {
@@ -936,7 +933,8 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       };
 
       const handleOpenEditBlankTip = (blankId) => {
-      const tipData = currentQuestion?.ai_data?.helper_tip?.blanks?.[blankId] || '';
+      const blank = currentQuestion.blanks?.find(b => b.id === blankId);
+      const tipData = blank?.ai_data?.helper_tip || '';
       setEditBlankTipJson(tipData);
       setEditBlankId(blankId);
       setEditBlankTipDialogOpen(true);
@@ -946,22 +944,18 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
       try {
       const updatedQuestions = [...(quiz?.questions || [])];
       if (updatedQuestions[currentIndex]) {
-        const existingAiData = updatedQuestions[currentIndex].ai_data || {};
-        const existingTip = existingAiData.helper_tip || {};
-        const existingBlanks = existingTip.blanks || {};
-
-        updatedQuestions[currentIndex] = {
-          ...updatedQuestions[currentIndex],
-          ai_data: {
-            ...existingAiData,
-            helper_tip: {
-              ...existingTip,
-              blanks: { ...existingBlanks, [editBlankId]: editBlankTipJson }
+        const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === editBlankId);
+        if (blankIdx !== -1) {
+          updatedQuestions[currentIndex].blanks[blankIdx] = {
+            ...updatedQuestions[currentIndex].blanks[blankIdx],
+            ai_data: {
+              ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+              helper_tip: editBlankTipJson
             }
-          }
-        };
-        await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
       }
 
       setBlankHelperContent(prev => ({ ...prev, [editBlankId]: editBlankTipJson }));
@@ -1148,10 +1142,12 @@ For single passage, use:
     const tipId = `blank-${currentIndex}-${blankId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
 
-    // Check if help already exists for this blank (new structure)
-    const existingHelp = currentQuestion?.ai_data?.helper_tip?.blanks?.[blankId];
+    // Check if help already exists for this blank (stored in blank's ai_data)
+    const blank = currentQuestion.blanks?.find(b => b.id === blankId);
+    const existingHelp = blank?.ai_data?.helper_tip;
     if (existingHelp) {
-      setBlankHelperContent(prev => ({ ...prev, [blankId]: existingHelp }));
+      const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice || existingHelp;
+      setBlankHelperContent(prev => ({ ...prev, [blankId]: helpText }));
       if (!wasAlreadyOpened && user?.role !== 'admin') {
         const newTipsUsed = tipsUsed + 1;
         setTipsUsed(newTipsUsed);
@@ -1216,26 +1212,22 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
 
       setBlankHelperContent(prev => ({ ...prev, [blankId]: text }));
 
-      // Save to question's ai_data field
+      // Save to blank's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
         if (updatedQuestions[currentIndex]) {
-          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
-          const existingTip = existingAiData.helper_tip || {};
-          const existingBlanks = existingTip.blanks || {};
-          
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: {
-              ...existingAiData,
-              helper_tip: {
-                ...existingTip,
-                blanks: { ...existingBlanks, [blankId]: text }
+          const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
+          if (blankIdx !== -1) {
+            updatedQuestions[currentIndex].blanks[blankIdx] = {
+              ...updatedQuestions[currentIndex].blanks[blankIdx],
+              ai_data: {
+                ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+                helper_tip: text
               }
-            }
-          };
-          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+            };
+            await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          }
         }
       } catch (err) {
         console.error('Failed to save blank helper data:', err);
@@ -1271,11 +1263,13 @@ const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
     const tipId = `dropzone-${currentIndex}-${zoneId}`;
     const wasAlreadyOpened = openedTips.has(tipId);
 
-    // Check if help already exists for this zone (new structure)
+    // Check if help already exists for this zone (stored in dropZone's ai_data)
     if (!forceRegenerate) {
-      const existingHelp = currentQuestion?.ai_data?.helper_tip?.dropZones?.[zoneId];
+      const zone = currentQuestion.dropZones?.find(z => z.id === zoneId);
+      const existingHelp = zone?.ai_data?.helper_tip;
       if (existingHelp) {
-        setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: existingHelp.advice }));
+        const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice;
+        setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: helpText }));
         if (existingHelp.passages) {
           setDropZoneHighlightedPassages(prev => ({ ...prev, [zoneId]: existingHelp.passages }));
         }
@@ -1403,26 +1397,22 @@ try {
       setDropZoneHelperContent(prev => ({ ...prev, [zoneId]: advice }));
       setDropZoneHighlightedPassages(prev => ({ ...prev, [zoneId]: passages }));
 
-      // Save to question's ai_data field
+      // Save to dropZone's ai_data field
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
         if (updatedQuestions[currentIndex]) {
-          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
-          const existingTip = existingAiData.helper_tip || {};
-          const existingDropZones = existingTip.dropZones || {};
-
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: {
-              ...existingAiData,
-              helper_tip: {
-                ...existingTip,
-                dropZones: { ...existingDropZones, [zoneId]: { advice, passages } }
+          const zoneIdx = updatedQuestions[currentIndex].dropZones?.findIndex(z => z.id === zoneId);
+          if (zoneIdx !== -1) {
+            updatedQuestions[currentIndex].dropZones[zoneIdx] = {
+              ...updatedQuestions[currentIndex].dropZones[zoneIdx],
+              ai_data: {
+                ...updatedQuestions[currentIndex].dropZones[zoneIdx].ai_data,
+                helper_tip: { advice, passages }
               }
-            }
-          };
-          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+            };
+            await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          }
         }
       } catch (err) {
         console.error('Failed to save drop zone helper data:', err);
@@ -1461,20 +1451,17 @@ try {
   const handleDeleteDragDropHelp = async (zoneId) => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]?.ai_data?.helper_tip?.dropZones) {
-        const { [zoneId]: _, ...remainingZones } = updatedQuestions[currentIndex].ai_data.helper_tip.dropZones;
-        updatedQuestions[currentIndex] = {
-          ...updatedQuestions[currentIndex],
-          ai_data: {
-            ...updatedQuestions[currentIndex].ai_data,
-            helper_tip: {
-              ...updatedQuestions[currentIndex].ai_data.helper_tip,
-              dropZones: remainingZones
-            }
-          }
-        };
-        await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      if (updatedQuestions[currentIndex]) {
+        const zoneIdx = updatedQuestions[currentIndex].dropZones?.findIndex(z => z.id === zoneId);
+        if (zoneIdx !== -1 && updatedQuestions[currentIndex].dropZones[zoneIdx]?.ai_data) {
+          const { helper_tip, ...restAiData } = updatedQuestions[currentIndex].dropZones[zoneIdx].ai_data;
+          updatedQuestions[currentIndex].dropZones[zoneIdx] = {
+            ...updatedQuestions[currentIndex].dropZones[zoneIdx],
+            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
       }
 
       setDropZoneHelperContent(prev => {
@@ -1488,7 +1475,8 @@ try {
   };
 
   const handleOpenEditDragDropTip = (zoneId) => {
-    const tipData = currentQuestion?.ai_data?.helper_tip?.dropZones?.[zoneId] || { advice: '', passages: {} };
+    const zone = currentQuestion.dropZones?.find(z => z.id === zoneId);
+    const tipData = zone?.ai_data?.helper_tip || { advice: '', passages: {} };
     setEditTipJson(JSON.stringify(tipData, null, 2));
     setEditBlankId(zoneId);
     setEditTipDialogOpen(true);
@@ -1499,9 +1487,10 @@ try {
     const wasAlreadyOpened = openedTips.has(tipId);
 
     if (!forceRegenerate) {
-      const existingHelp = currentQuestion?.ai_data?.helper_tip?.matchingQuestions?.[questionId];
+      const matchingQ = currentQuestion.matchingQuestions?.find(mq => mq.id === questionId);
+      const existingHelp = matchingQ?.ai_data?.helper_tip;
       if (existingHelp) {
-        const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice;
+        const helpText = typeof existingHelp === 'string' ? existingHelp : existingHelp.advice || existingHelp;
         setMatchingHelperContent(prev => ({ ...prev, [questionId]: helpText }));
         if (!wasAlreadyOpened && user?.role !== 'admin') {
           const newTipsUsed = tipsUsed + 1;
@@ -1595,22 +1584,18 @@ Provide a helpful hint with quoted sentences. Example structure:
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
         if (updatedQuestions[currentIndex]) {
-          const existingAiData = updatedQuestions[currentIndex].ai_data || {};
-          const existingTip = existingAiData.helper_tip || {};
-          const existingMatching = existingTip.matchingQuestions || {};
-
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: {
-              ...existingAiData,
-              helper_tip: {
-                ...existingTip,
-                matchingQuestions: { ...existingMatching, [questionId]: text }
+          const mqIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === questionId);
+          if (mqIdx !== -1) {
+            updatedQuestions[currentIndex].matchingQuestions[mqIdx] = {
+              ...updatedQuestions[currentIndex].matchingQuestions[mqIdx],
+              ai_data: {
+                ...updatedQuestions[currentIndex].matchingQuestions[mqIdx].ai_data,
+                helper_tip: text
               }
-            }
-          };
-          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+            };
+            await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+            queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+          }
         }
       } catch (err) {
         console.error('Failed to save matching helper data:', err);
@@ -1648,20 +1633,17 @@ Provide a helpful hint with quoted sentences. Example structure:
   const handleDeleteMatchingHelp = async (questionId) => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]?.ai_data?.helper_tip?.matchingQuestions) {
-        const { [questionId]: _, ...remainingMatching } = updatedQuestions[currentIndex].ai_data.helper_tip.matchingQuestions;
-        updatedQuestions[currentIndex] = {
-          ...updatedQuestions[currentIndex],
-          ai_data: {
-            ...updatedQuestions[currentIndex].ai_data,
-            helper_tip: {
-              ...updatedQuestions[currentIndex].ai_data.helper_tip,
-              matchingQuestions: remainingMatching
-            }
-          }
-        };
-        await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
-        queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+      if (updatedQuestions[currentIndex]) {
+        const mqIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === questionId);
+        if (mqIdx !== -1 && updatedQuestions[currentIndex].matchingQuestions[mqIdx]?.ai_data) {
+          const { helper_tip, ...restAiData } = updatedQuestions[currentIndex].matchingQuestions[mqIdx].ai_data;
+          updatedQuestions[currentIndex].matchingQuestions[mqIdx] = {
+            ...updatedQuestions[currentIndex].matchingQuestions[mqIdx],
+            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+          };
+          await base44.entities.Quiz.update(quizId, { questions: updatedQuestions });
+          queryClient.invalidateQueries({ queryKey: ['quiz', quizId] });
+        }
       }
 
       setMatchingHelperContent(prev => {
@@ -1675,7 +1657,8 @@ Provide a helpful hint with quoted sentences. Example structure:
   };
 
   const handleOpenEditMatchingTip = (questionId) => {
-    const tipData = currentQuestion?.ai_data?.helper_tip?.matchingQuestions?.[questionId] || '';
+    const matchingQ = currentQuestion.matchingQuestions?.find(mq => mq.id === questionId);
+    const tipData = matchingQ?.ai_data?.helper_tip || '';
     setEditBlankTipJson(tipData);
     setEditBlankId(questionId);
     setEditBlankTipDialogOpen(true);
