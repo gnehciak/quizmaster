@@ -25,6 +25,7 @@ export default function ReadingComprehensionQuestion({
   tipsUsed = 0,
   tipOpened = false,
   onRequestExplanation = null,
+  onGenerateExplanation = null,
   onRegenerateExplanation = null,
   onDeleteExplanation = null,
   onEditExplanation = null,
@@ -275,6 +276,18 @@ export default function ReadingComprehensionQuestion({
                 <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-center">
                   <Loader2 className="w-5 h-5 text-purple-600 animate-spin mr-2" />
                   <span className="text-sm text-slate-600">{showResults ? 'Loading explanation...' : 'Loading help...'}</span>
+                </div>
+              )}
+
+              {showResults && !aiHelperLoading && !aiHelperContent && onGenerateExplanation && (
+                <div className="mt-4">
+                  <Button
+                    onClick={onGenerateExplanation}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Generate AI Explanation
+                  </Button>
                 </div>
               )}
 
