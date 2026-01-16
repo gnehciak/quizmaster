@@ -2097,6 +2097,7 @@ Provide HTML formatted explanation:`;
             currentIndex={currentIndex}
             autoExpandTips={true}
             onRequestExplanation={handleDropZoneExplanation}
+            onGenerateExplanation={handleDropZoneExplanation}
             explanationContent={dropZoneExplanationContent}
             explanationLoading={dropZoneExplanationLoading}
             explanationHighlightedPassages={dropZoneHighlightedExplanations}
@@ -2121,6 +2122,7 @@ Provide HTML formatted explanation:`;
             currentIndex={currentIndex}
             autoExpandTips={true}
             onRequestExplanation={handleDropZoneExplanation}
+            onGenerateExplanation={handleDropZoneExplanation}
             explanationContent={dropZoneExplanationContent}
             explanationLoading={dropZoneExplanationLoading}
             explanationHighlightedPassages={dropZoneHighlightedExplanations}
@@ -2144,12 +2146,11 @@ Provide HTML formatted explanation:`;
             currentIndex={currentIndex}
             autoExpandTips={true}
             onRequestExplanation={handleBlankExplanation}
+            onGenerateExplanation={handleBlankExplanation}
             explanationContent={blankExplanationContent}
             explanationLoading={blankExplanationLoading}
             openedExplanations={openedExplanations}
             onRequestHelp={handleBlankExplanation}
-            aiHelperContent={blankExplanationContent}
-            aiHelperLoading={blankExplanationLoading}
             onRegenerateExplanation={handleRegenerateBlankExplanation}
             onDeleteExplanation={handleDeleteBlankExplanation}
             onEditExplanation={handleOpenEditBlankExplanation}
@@ -2171,6 +2172,7 @@ Provide HTML formatted explanation:`;
             currentIndex={currentIndex}
             autoExpandTips={true}
             onRequestExplanation={handleBlankExplanation}
+            onGenerateExplanation={handleBlankExplanation}
             explanationContent={blankExplanationContent}
             explanationLoading={blankExplanationLoading}
             openedExplanations={openedExplanations}
@@ -2196,6 +2198,7 @@ Provide HTML formatted explanation:`;
             currentIndex={currentIndex}
             autoExpandTips={true}
             onRequestExplanation={handleMatchingExplanation}
+            onGenerateExplanation={handleMatchingExplanation}
             explanationContent={matchingExplanationContent}
             explanationLoading={matchingExplanationLoading}
             openedExplanations={openedExplanations}

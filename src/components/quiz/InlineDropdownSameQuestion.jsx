@@ -34,6 +34,7 @@ export default function InlineDropdownSameQuestion({
   onEditHelp = null,
   onEditPrompt = null,
   onRequestExplanation = null,
+  onGenerateExplanation = null,
   onRegenerateExplanation = null,
   onDeleteExplanation = null,
   onEditExplanation = null,
@@ -78,20 +79,123 @@ export default function InlineDropdownSameQuestion({
         const helpContent = aiHelperContent[blankId];
         const isLoadingHelp = aiHelperLoading[blankId];
         const isTipDisabled = !onRequestHelp || (!isAdmin && !wasTipOpened && tipsAllowed !== 999 && tipsUsed >= tipsAllowed);
-        
+
+        const explanationId = `blank-${currentIndex}-${blankId}`;
+        const wasExplanationOpened = openedExplanations.has(explanationId);
+        const explanation = explanationContent[blankId];
+        const isLoadingExplanation = explanationLoading[blankId];
+
         return (
           <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
             {showResults ? (
-              <span className={cn(
-                "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-medium",
-                isCorrect && "border-emerald-500 bg-emerald-50 text-emerald-700",
-                isWrong && "border-red-400 bg-red-50 text-red-600",
-                !selectedAnswer && "border-slate-300 bg-slate-50 text-slate-500"
-              )}>
-                {selectedAnswer || '—'}
-                {isCorrect && <CheckCircle2 className="w-4 h-4" />}
-                {isWrong && <XCircle className="w-4 h-4" />}
-              </span>
+              <>
+                <span className={cn(
+                  "inline-flex items-center gap-2 px-3 py-1 rounded-lg border-2 font-medium",
+                  isCorrect && "border-emerald-500 bg-emerald-50 text-emerald-700",
+                  isWrong && "border-red-400 bg-red-50 text-red-600",
+                  !selectedAnswer && "border-slate-300 bg-slate-50 text-slate-500"
+                )}>
+                  {selectedAnswer || '—'}
+                  {isCorrect && <CheckCircle2 className="w-4 h-4" />}
+                  {isWrong && <XCircle className="w-4 h-4" />}
+                </span>
+                {isWrong && (
+                  <>
+                    <span className="text-xs text-slate-600">
+                      Correct: <span className="font-medium text-emerald-600">{blank.correctAnswer}</span>
+                    </span>
+                    {(onRequestExplanation || onGenerateExplanation) && (
+                      explanation ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                            >
+                              <Sparkles className="w-3 h-3 text-indigo-500" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-96 max-h-96 overflow-y-auto">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
+                                {isAdmin && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation || onEditExplanationPrompt) && (
+                                  <div className="flex items-center gap-1">
+                                    {onRegenerateExplanation && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onRegenerateExplanation(blankId)}
+                                        className="h-7 px-2 gap-1"
+                                        title="Regenerate"
+                                      >
+                                        <RefreshCw className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                    {onEditExplanation && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onEditExplanation(blankId)}
+                                        className="h-7 px-2 gap-1"
+                                        title="Edit Explanation"
+                                      >
+                                        <FileEdit className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                    {onEditExplanationPrompt && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={onEditExplanationPrompt}
+                                        className="h-7 px-2 gap-1"
+                                        title="Edit Prompt"
+                                      >
+                                        <Code className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                    {onDeleteExplanation && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onDeleteExplanation(blankId)}
+                                        className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div 
+                                className="text-sm text-slate-700 space-y-2 prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: explanation }}
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 gap-1 text-xs"
+                          onClick={() => onGenerateExplanation && onGenerateExplanation(blankId)}
+                          disabled={isLoadingExplanation}
+                        >
+                          {isLoadingExplanation ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                          ) : (
+                            <Sparkles className="w-3 h-3 text-indigo-500" />
+                          )}
+                          Explain
+                        </Button>
+                      )
+                    )}
+                  </>
+                )}
+              </>
             ) : (
               <>
                 <Select

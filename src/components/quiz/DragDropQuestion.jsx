@@ -25,6 +25,7 @@ export default function DragDropQuestion({
   openedTips = new Set(),
   currentIndex = 0,
   onRequestExplanation,
+  onGenerateExplanation = null,
   explanationContent = {},
   explanationLoading = {},
   explanationHighlightedPassages = {},
@@ -309,23 +310,18 @@ export default function DragDropQuestion({
                   <p className="text-xs text-emerald-600 font-medium">
                     Correct: {zone.correctAnswer}
                   </p>
-                  {onRequestExplanation && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => !explanation && onRequestExplanation(zone.id)}
-                        >
-                          {isLoadingExplanation ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
-                          ) : (
+                  {(onRequestExplanation || onGenerateExplanation) && (
+                    explanation ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
                             <Sparkles className="w-3 h-3 text-indigo-500" />
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      {explanation && (
+                          </Button>
+                        </PopoverTrigger>
                         <PopoverContent className="w-96 max-h-96 overflow-y-auto">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -362,8 +358,23 @@ export default function DragDropQuestion({
                             />
                           </div>
                         </PopoverContent>
-                      )}
-                    </Popover>
+                      </Popover>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 gap-1 text-xs"
+                        onClick={() => onGenerateExplanation && onGenerateExplanation(zone.id)}
+                        disabled={isLoadingExplanation}
+                      >
+                        {isLoadingExplanation ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-indigo-500" />
+                        )}
+                        Explain
+                      </Button>
+                    )
                   )}
                 </div>
               )}

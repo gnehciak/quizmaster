@@ -29,6 +29,7 @@ export default function InlineDropdownQuestion({
   openedTips = new Set(),
   currentIndex = 0,
   onRequestExplanation,
+  onGenerateExplanation = null,
   explanationContent = {},
   explanationLoading = {},
   openedExplanations = new Set(),
