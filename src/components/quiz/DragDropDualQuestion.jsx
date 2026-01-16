@@ -395,14 +395,14 @@ export default function DragDropDualQuestion({
                                 size="sm"
                                 className="h-6 w-6 p-0"
                               >
-                                <Sparkles className="w-3 h-3 text-indigo-500" />
+                                <Sparkles className="w-4 h-4 text-indigo-500" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-96 max-h-96 overflow-y-auto">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                   <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
-                                  {isAdmin && (
+                                  {isAdmin && (onRegenerateExplanation || onDeleteExplanation) && (
                                     <div className="flex items-center gap-1">
                                       {onRegenerateExplanation && (
                                         <Button
@@ -412,7 +412,6 @@ export default function DragDropDualQuestion({
                                           className="h-7 px-2 gap-1"
                                         >
                                           <RefreshCw className="w-3 h-3" />
-                                          Regenerate
                                         </Button>
                                       )}
                                       {onDeleteExplanation && (
@@ -439,16 +438,15 @@ export default function DragDropDualQuestion({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 px-2 gap-1 text-xs"
+                            className="h-6 w-6 p-0"
                             onClick={() => onGenerateExplanation && onGenerateExplanation(zone.id)}
                             disabled={isLoadingExplanation}
                           >
                             {isLoadingExplanation ? (
-                              <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                              <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                             ) : (
-                              <Sparkles className="w-3 h-3 text-indigo-500" />
+                              <Sparkles className="w-4 h-4 text-indigo-500" />
                             )}
-                            Explain
                           </Button>
                         )
                       )}

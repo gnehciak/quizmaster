@@ -114,7 +114,7 @@ export default function InlineDropdownSameQuestion({
                               size="sm"
                               className="h-6 w-6 p-0"
                             >
-                              <Sparkles className="w-3 h-3 text-indigo-500" />
+                              <Sparkles className="w-4 h-4 text-indigo-500" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-96 max-h-96 overflow-y-auto">
@@ -181,16 +181,15 @@ export default function InlineDropdownSameQuestion({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 gap-1 text-xs"
+                          className="h-6 w-6 p-0"
                           onClick={() => onGenerateExplanation && onGenerateExplanation(blankId)}
                           disabled={isLoadingExplanation}
                         >
                           {isLoadingExplanation ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                            <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                           ) : (
-                            <Sparkles className="w-3 h-3 text-indigo-500" />
+                            <Sparkles className="w-4 h-4 text-indigo-500" />
                           )}
-                          Explain
                         </Button>
                       )
                     )}
