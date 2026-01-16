@@ -494,7 +494,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
@@ -657,7 +657,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
@@ -750,7 +750,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
@@ -895,7 +895,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
@@ -1061,12 +1061,7 @@ Provide HTML formatted explanation:`;
               };
 
               await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-
-              // Immediately update the local cache to avoid race conditions
-              queryClient.setQueryData(['quiz', quizId], (oldData) => {
-                if (!oldData || !Array.isArray(oldData)) return oldData;
-                return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
-              });
+              await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             }
           } else if (updatedQuestions[currentIndex]) {
             updatedQuestions[currentIndex] = {
@@ -1078,12 +1073,7 @@ Provide HTML formatted explanation:`;
             };
 
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-
-            // Immediately update the local cache to avoid race conditions
-            queryClient.setQueryData(['quiz', quizId], (oldData) => {
-              if (!oldData || !Array.isArray(oldData)) return oldData;
-              return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
-            });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
           }
 
           // Force reload the explanation from updated cache
@@ -1496,7 +1486,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
@@ -1628,7 +1618,7 @@ Provide HTML formatted explanation:`;
               }
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-            await queryClient.invalidateQueries({ queryKey: ['quiz', quiz.id] });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             toast.success('Explanation generated and saved');
           }
         }
