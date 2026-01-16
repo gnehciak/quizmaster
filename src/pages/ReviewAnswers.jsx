@@ -735,11 +735,19 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
+      console.log('=== DROP ZONE EXPLANATION PROMPT (REGENERATE) ===');
+      console.log(prompt);
+      console.log('=================================================');
+
       const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
       const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== DROP ZONE EXPLANATION RESPONSE (REGENERATE) ===');
+      console.log(text);
+      console.log('==================================================');
 
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
 
@@ -881,11 +889,19 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
+      console.log('=== DROP ZONE EXPLANATION PROMPT ===');
+      console.log(prompt);
+      console.log('====================================');
+
       const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
       const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== DROP ZONE EXPLANATION RESPONSE ===');
+      console.log(text);
+      console.log('======================================');
 
       setDropZoneExplanationContent(prev => ({ ...prev, [zoneId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
@@ -1476,11 +1492,19 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
+      console.log('=== MATCHING EXPLANATION PROMPT (REGENERATE) ===');
+      console.log(prompt);
+      console.log('================================================');
+
       const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
       const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== MATCHING EXPLANATION RESPONSE (REGENERATE) ===');
+      console.log(text);
+      console.log('=================================================');
 
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: text }));
 
@@ -1609,11 +1633,19 @@ Correct Answer: ${correctAnswer}${passageContext}
 
 Provide HTML formatted explanation:`;
 
+      console.log('=== MATCHING EXPLANATION PROMPT ===');
+      console.log(prompt);
+      console.log('=================================');
+
       const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
       const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== MATCHING EXPLANATION RESPONSE ===');
+      console.log(text);
+      console.log('==================================');
 
       setMatchingExplanationContent(prev => ({ ...prev, [questionId]: text }));
       setOpenedExplanations(prev => new Set([...prev, explanationId]));
