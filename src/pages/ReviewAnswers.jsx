@@ -1114,14 +1114,6 @@ Provide HTML formatted explanation:`;
               ...updatedQuestions[parentIdx].comprehensionQuestions[subIdx],
               ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
             };
-
-            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-
-            // Immediately update the local cache
-            queryClient.setQueryData(['quiz', quizId], (oldData) => {
-              if (!oldData || !Array.isArray(oldData)) return oldData;
-              return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
-            });
           }
         } else {
           const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
@@ -1141,7 +1133,6 @@ Provide HTML formatted explanation:`;
             if (!oldData || !Array.isArray(oldData)) return oldData;
             return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
           });
-        }
 
         // Clear local state
         setAiHelperContent('');
