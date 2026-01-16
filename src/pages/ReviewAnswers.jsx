@@ -151,13 +151,7 @@ export default function ReviewAnswers() {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
     }
-    
-    // Check if any questions have ai_data.explanation, otherwise generate them
-    const hasExplanations = questions.some(q => q?.ai_data?.explanation);
-    if (!hasExplanations && attempt && questions.length > 0) {
-      generateAllExplanations();
-    }
-  }, [attempt, quiz, questions]);
+  }, [attempt]);
 
   // Load explanation content when question changes (new ai_data structure)
   React.useEffect(() => {
@@ -237,10 +231,9 @@ export default function ReviewAnswers() {
           setHighlightedPassages(explanation.passages || {});
         }
       } else {
-        // Auto-generate if doesn't exist
+        // Clear state if no explanation exists - user can manually generate
         setAiHelperContent('');
         setHighlightedPassages({});
-        generateRCExplanation(false);
       }
     } else {
       setAiHelperContent('');
@@ -2054,6 +2047,7 @@ Provide HTML formatted explanation:`;
           tipOpened={true}
           autoExpandTip={true}
           autoExpandExplanation={true}
+          onGenerateExplanation={handleRCExplanation}
           onRegenerateExplanation={handleRegenerateRCExplanation}
           onDeleteExplanation={handleDeleteRCExplanation}
           onEditExplanation={handleOpenEditExplanation}
