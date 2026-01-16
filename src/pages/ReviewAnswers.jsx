@@ -658,7 +658,7 @@ Provide HTML formatted explanation:`;
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
             await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
-            toast.success('Explanation generated and saved');
+            toast.success('Explanation saved');
           }
         }
       } catch (err) {
