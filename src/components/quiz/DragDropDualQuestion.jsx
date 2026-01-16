@@ -402,7 +402,7 @@ export default function DragDropDualQuestion({
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                   <h4 className="font-semibold text-sm text-slate-800">Explanation</h4>
-                                  {isAdmin && (onRegenerateExplanation || onDeleteExplanation) && (
+                                  {isAdmin && (onRegenerateExplanation || onDeleteExplanation || onEditExplanation || onEditExplanationPrompt) && (
                                     <div className="flex items-center gap-1">
                                       {onRegenerateExplanation && (
                                         <Button
@@ -410,8 +410,31 @@ export default function DragDropDualQuestion({
                                           size="sm"
                                           onClick={() => onRegenerateExplanation(zone.id)}
                                           className="h-7 px-2 gap-1"
+                                          title="Regenerate"
                                         >
                                           <RefreshCw className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {onEditExplanation && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => onEditExplanation(zone.id)}
+                                          className="h-7 px-2 gap-1"
+                                          title="Edit Explanation"
+                                        >
+                                          <FileEdit className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {onEditExplanationPrompt && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={onEditExplanationPrompt}
+                                          className="h-7 px-2 gap-1"
+                                          title="Edit Prompt"
+                                        >
+                                          <Code className="w-3 h-3" />
                                         </Button>
                                       )}
                                       {onDeleteExplanation && (
@@ -420,6 +443,7 @@ export default function DragDropDualQuestion({
                                           size="sm"
                                           onClick={() => onDeleteExplanation(zone.id)}
                                           className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                          title="Delete"
                                         >
                                           <Trash2 className="w-3 h-3" />
                                         </Button>

@@ -80,6 +80,18 @@ export default function ReviewAnswers() {
   const [editAnalysisPrompt, setEditAnalysisPrompt] = useState('');
   const [expandedSkills, setExpandedSkills] = useState(new Set());
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  
+  const [editDropZoneExplanationDialogOpen, setEditDropZoneExplanationDialogOpen] = useState(false);
+  const [editDropZoneExplanationJson, setEditDropZoneExplanationJson] = useState('');
+  const [editDropZoneId, setEditDropZoneId] = useState(null);
+  const [editDropZoneExplanationPromptDialogOpen, setEditDropZoneExplanationPromptDialogOpen] = useState(false);
+  const [editDropZoneExplanationPrompt, setEditDropZoneExplanationPrompt] = useState('');
+
+  const [editMatchingExplanationDialogOpen, setEditMatchingExplanationDialogOpen] = useState(false);
+  const [editMatchingExplanationJson, setEditMatchingExplanationJson] = useState('');
+  const [editMatchingQuestionId, setEditMatchingQuestionId] = useState(null);
+  const [editMatchingExplanationPromptDialogOpen, setEditMatchingExplanationPromptDialogOpen] = useState(false);
+  const [editMatchingExplanationPrompt, setEditMatchingExplanationPrompt] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -1440,6 +1452,151 @@ Provide HTML formatted explanation:`;
 
         queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
         setEditBlankExplanationPromptDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save prompt: ' + err.message);
+      }
+    };
+
+    // Drop Zone Handlers
+    const handleOpenEditDropZoneExplanation = (zoneId) => {
+      const zone = currentQuestion.dropZones?.find(z => z.id === zoneId);
+      const rawData = zone?.ai_data?.explanation;
+      const tipData = typeof rawData === 'object' ? rawData.advice || '' : rawData || '';
+      setEditDropZoneExplanationJson(tipData);
+      setEditDropZoneId(zoneId);
+      setEditDropZoneExplanationDialogOpen(true);
+    };
+
+    const handleSaveDropZoneExplanationJson = async () => {
+      try {
+        const updatedQuestions = [...(quiz?.questions || [])];
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const zoneIdx = updatedQuestions[questionIdx].dropZones?.findIndex(z => z.id === editDropZoneId);
+          if (zoneIdx !== -1) {
+            updatedQuestions[questionIdx].dropZones[zoneIdx] = {
+              ...updatedQuestions[questionIdx].dropZones[zoneIdx],
+              ai_data: {
+                ...updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data,
+                explanation: { advice: editDropZoneExplanationJson }
+              }
+            };
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quizId] });
+            toast.success('Explanation saved');
+          }
+        }
+        setDropZoneExplanationContent(prev => ({ ...prev, [editDropZoneId]: editDropZoneExplanationJson }));
+        setEditDropZoneExplanationDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+      }
+    };
+
+    const handleOpenEditDropZoneExplanationPrompt = () => {
+      const globalPrompt = globalPrompts.find(p => p.key === 'drag_drop_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand why their drag-and-drop answer is incorrect.
+Tone: Encouraging, simple, and direct.
+IMPORTANT: Do NOT start with conversational phrases like "That is a great question!" or similar. Get straight to the explanation.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct answer for the gap.
+2. **Explain Why Student's Answer is Wrong:** Explain why it is incorrect, using specific quotes from the passage.
+3. **Explain Why Correct Answer is Right:** Explain why it is the right choice, using specific quotes.
+4. Format your response using HTML tags.
+
+Provide HTML formatted explanation:`;
+      
+      setEditDropZoneExplanationPrompt(globalPrompt?.template || defaultPrompt);
+      setEditDropZoneExplanationPromptDialogOpen(true);
+    };
+
+    const handleSaveDropZoneExplanationPrompt = async () => {
+      try {
+        const existingPrompt = globalPrompts.find(p => p.key === 'drag_drop_explanation');
+        if (existingPrompt) {
+          await base44.entities.AIPrompt.update(existingPrompt.id, { template: editDropZoneExplanationPrompt });
+        } else {
+          await base44.entities.AIPrompt.create({
+            key: 'drag_drop_explanation',
+            template: editDropZoneExplanationPrompt,
+            description: 'Prompt template for drag and drop explanations'
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+        setEditDropZoneExplanationPromptDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save prompt: ' + err.message);
+      }
+    };
+
+    // Matching Handlers
+    const handleOpenEditMatchingExplanation = (questionId) => {
+      const mq = currentQuestion.matchingQuestions?.find(m => m.id === questionId);
+      const rawData = mq?.ai_data?.explanation;
+      const tipData = typeof rawData === 'object' ? rawData.advice || '' : rawData || '';
+      setEditMatchingExplanationJson(tipData);
+      setEditMatchingQuestionId(questionId);
+      setEditMatchingExplanationDialogOpen(true);
+    };
+
+    const handleSaveMatchingExplanationJson = async () => {
+      try {
+        const updatedQuestions = [...(quiz?.questions || [])];
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const mqIdx = updatedQuestions[questionIdx].matchingQuestions?.findIndex(m => m.id === editMatchingQuestionId);
+          if (mqIdx !== -1) {
+            updatedQuestions[questionIdx].matchingQuestions[mqIdx] = {
+              ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
+              ai_data: {
+                ...updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data,
+                explanation: { advice: editMatchingExplanationJson }
+              }
+            };
+            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
+            await queryClient.refetchQueries({ queryKey: ['quiz', quizId] });
+            toast.success('Explanation saved');
+          }
+        }
+        setMatchingExplanationContent(prev => ({ ...prev, [editMatchingQuestionId]: editMatchingExplanationJson }));
+        setEditMatchingExplanationDialogOpen(false);
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+      }
+    };
+
+    const handleOpenEditMatchingExplanationPrompt = () => {
+      const globalPrompt = globalPrompts.find(p => p.key === 'matching_explanation');
+      const defaultPrompt = `You are a Year 6 teacher helping a student understand why their matching answer is incorrect.
+Tone: Encouraging, simple, and direct.
+
+**CRITICAL RULES:**
+1. **State the Correct Answer:** Start by clearly stating the correct match.
+2. **Explain Why Student's Answer is Wrong:** Explain why it is incorrect.
+3. **Explain Why Correct Answer is Right:** Explain why it is the correct match.
+4. Format your response using HTML tags.
+
+Provide HTML formatted explanation:`;
+      
+      setEditMatchingExplanationPrompt(globalPrompt?.template || defaultPrompt);
+      setEditMatchingExplanationPromptDialogOpen(true);
+    };
+
+    const handleSaveMatchingExplanationPrompt = async () => {
+      try {
+        const existingPrompt = globalPrompts.find(p => p.key === 'matching_explanation');
+        if (existingPrompt) {
+          await base44.entities.AIPrompt.update(existingPrompt.id, { template: editMatchingExplanationPrompt });
+        } else {
+          await base44.entities.AIPrompt.create({
+            key: 'matching_explanation',
+            template: editMatchingExplanationPrompt,
+            description: 'Prompt template for matching question explanations'
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+        setEditMatchingExplanationPromptDialogOpen(false);
       } catch (err) {
         alert('Failed to save prompt: ' + err.message);
       }
@@ -2946,6 +3103,106 @@ Provide HTML formatted explanation:`;
                 Cancel
               </Button>
               <Button onClick={handleSaveBlankExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Drop Zone Explanation Dialog */}
+      <Dialog open={editDropZoneExplanationDialogOpen} onOpenChange={setEditDropZoneExplanationDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Drag Drop Explanation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editDropZoneExplanationJson}
+              onChange={(e) => setEditDropZoneExplanationJson(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter HTML content for the explanation..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditDropZoneExplanationDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveDropZoneExplanationJson} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Drop Zone Prompt Dialog */}
+      <Dialog open={editDropZoneExplanationPromptDialogOpen} onOpenChange={setEditDropZoneExplanationPromptDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Drag Drop Explanation Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editDropZoneExplanationPrompt}
+              onChange={(e) => setEditDropZoneExplanationPrompt(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditDropZoneExplanationPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveDropZoneExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Matching Explanation Dialog */}
+      <Dialog open={editMatchingExplanationDialogOpen} onOpenChange={setEditMatchingExplanationDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Matching Explanation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editMatchingExplanationJson}
+              onChange={(e) => setEditMatchingExplanationJson(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter HTML content for the explanation..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditMatchingExplanationDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveMatchingExplanationJson} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Matching Prompt Dialog */}
+      <Dialog open={editMatchingExplanationPromptDialogOpen} onOpenChange={setEditMatchingExplanationPromptDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Matching Explanation Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={editMatchingExplanationPrompt}
+              onChange={(e) => setEditMatchingExplanationPrompt(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditMatchingExplanationPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveMatchingExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
                 Save Prompt
               </Button>
             </div>
