@@ -3145,29 +3145,39 @@ Provide HTML formatted explanation:`;
       </Dialog>
 
       {/* Edit Drop Zone Prompt Dialog */}
-      <Dialog open={editDropZoneExplanationPromptDialogOpen} onOpenChange={setEditDropZoneExplanationPromptDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Edit Drag Drop Explanation Prompt (Global)</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <textarea
-              value={editDropZoneExplanationPrompt}
-              onChange={(e) => setEditDropZoneExplanationPrompt(e.target.value)}
-              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
-              placeholder="Enter your custom prompt template..."
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setEditDropZoneExplanationPromptDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveDropZoneExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
-                Save Prompt
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+           <Dialog open={editDropZoneExplanationPromptDialogOpen} onOpenChange={setEditDropZoneExplanationPromptDialogOpen}>
+             <DialogContent className="max-w-3xl">
+               <DialogHeader>
+                 <DialogTitle>Edit Drag Drop Explanation Prompt (Global)</DialogTitle>
+               </DialogHeader>
+               <div className="space-y-4">
+                 <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                   <strong>Instructions:</strong> Available placeholders:
+                   <ul className="mt-2 space-y-1">
+                     <li><code className="bg-white px-1 rounded">{'{{ZONE_LABEL}}'}</code> - The label of the drop zone</li>
+                     <li><code className="bg-white px-1 rounded">{'{{USER_ANSWER}}'}</code> - The student's answer</li>
+                     <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                     <li><code className="bg-white px-1 rounded">{'{{PASSAGE}}'}</code> - The passage text</li>
+                   </ul>
+                   <p className="mt-2">This prompt is used globally for all drag and drop explanation generation across all quizzes.</p>
+                 </div>
+                 <textarea
+                   value={editDropZoneExplanationPrompt}
+                   onChange={(e) => setEditDropZoneExplanationPrompt(e.target.value)}
+                   className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                   placeholder="Enter your custom prompt template..."
+                 />
+                 <div className="flex gap-2 justify-end">
+                   <Button variant="outline" onClick={() => setEditDropZoneExplanationPromptDialogOpen(false)}>
+                     Cancel
+                   </Button>
+                   <Button onClick={handleSaveDropZoneExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                     Save Prompt
+                   </Button>
+                 </div>
+               </div>
+             </DialogContent>
+           </Dialog>
 
       {/* Edit Matching Explanation Dialog */}
       <Dialog open={editMatchingExplanationDialogOpen} onOpenChange={setEditMatchingExplanationDialogOpen}>
@@ -3195,29 +3205,39 @@ Provide HTML formatted explanation:`;
       </Dialog>
 
       {/* Edit Matching Prompt Dialog */}
-      <Dialog open={editMatchingExplanationPromptDialogOpen} onOpenChange={setEditMatchingExplanationPromptDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Edit Matching Explanation Prompt (Global)</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <textarea
-              value={editMatchingExplanationPrompt}
-              onChange={(e) => setEditMatchingExplanationPrompt(e.target.value)}
-              className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
-              placeholder="Enter your custom prompt template..."
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setEditMatchingExplanationPromptDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveMatchingExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
-                Save Prompt
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+           <Dialog open={editMatchingExplanationPromptDialogOpen} onOpenChange={setEditMatchingExplanationPromptDialogOpen}>
+             <DialogContent className="max-w-3xl">
+               <DialogHeader>
+                 <DialogTitle>Edit Matching Explanation Prompt (Global)</DialogTitle>
+               </DialogHeader>
+               <div className="space-y-4">
+                 <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                   <strong>Instructions:</strong> Available placeholders:
+                   <ul className="mt-2 space-y-1">
+                     <li><code className="bg-white px-1 rounded">{'{{QUESTION}}'}</code> - The matching question text</li>
+                     <li><code className="bg-white px-1 rounded">{'{{USER_ANSWER}}'}</code> - The student's answer</li>
+                     <li><code className="bg-white px-1 rounded">{'{{CORRECT_ANSWER}}'}</code> - The correct answer</li>
+                     <li><code className="bg-white px-1 rounded">{'{{PASSAGE}}'}</code> - The passage text</li>
+                   </ul>
+                   <p className="mt-2">This prompt is used globally for all matching question explanation generation across all quizzes.</p>
+                 </div>
+                 <textarea
+                   value={editMatchingExplanationPrompt}
+                   onChange={(e) => setEditMatchingExplanationPrompt(e.target.value)}
+                   className="w-full min-h-[400px] p-4 font-mono text-sm border border-slate-300 rounded-lg"
+                   placeholder="Enter your custom prompt template..."
+                 />
+                 <div className="flex gap-2 justify-end">
+                   <Button variant="outline" onClick={() => setEditMatchingExplanationPromptDialogOpen(false)}>
+                     Cancel
+                   </Button>
+                   <Button onClick={handleSaveMatchingExplanationPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                     Save Prompt
+                   </Button>
+                 </div>
+               </div>
+             </DialogContent>
+           </Dialog>
 
       {/* Edit Analysis Prompt Dialog */}
       <Dialog open={editAnalysisPromptDialogOpen} onOpenChange={setEditAnalysisPromptDialogOpen}>
