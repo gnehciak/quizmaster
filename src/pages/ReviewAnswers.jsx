@@ -342,8 +342,8 @@ export default function ReviewAnswers() {
       }
     });
 
-    const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
-    const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
+    const genAI = new GoogleGenerativeAI(aiConfig?.api_key || 'AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
+    const model = genAI.getGenerativeModel({ model: aiConfig?.model_name || 'gemini-2.5-flash-preview-09-2025' });
     const newExplanations = {};
 
     for (const { q, idx, answer } of incorrectQuestions) {
