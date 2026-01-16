@@ -1219,7 +1219,6 @@ Provide HTML formatted explanation:`;
                 explanation: parsed
               }
             };
-            await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
           }
         } else {
           const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
@@ -1233,8 +1232,8 @@ Provide HTML formatted explanation:`;
             };
           }
         }
-          await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
-        }
+        
+        await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
         
         // Immediately update the local cache
         queryClient.setQueryData(['quiz', quizId], (oldData) => {
