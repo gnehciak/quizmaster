@@ -371,7 +371,6 @@ export default function MatchingListQuestion({
                           {isWrong && (
                             <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                           )}
-                          )}
                           {(onRequestExplanation || onGenerateExplanation) && (
                             explanation ? (
                               <Popover>
