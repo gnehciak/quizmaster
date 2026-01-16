@@ -544,21 +544,7 @@ Provide HTML formatted explanation:`;
 
   const handleBlankExplanation = async (blankId) => {
     const explanationId = `blank-${currentIndex}-${blankId}`;
-    const wasAlreadyOpened = openedExplanations.has(explanationId);
     
-    // Check if explanation already exists for this blank (stored in blank's ai_data)
-    const blank = currentQuestion.blanks?.find(b => b.id === blankId);
-    const existingExplanation = blank?.ai_data?.explanation;
-    if (existingExplanation && !wasAlreadyOpened) {
-      setBlankExplanationContent(prev => ({ ...prev, [blankId]: existingExplanation }));
-      setOpenedExplanations(prev => new Set([...prev, explanationId]));
-      return;
-    }
-
-    if (wasAlreadyOpened && existingExplanation) {
-      return; // Already loaded and opened
-    }
-
     setBlankExplanationLoading(prev => ({ ...prev, [blankId]: true }));
 
     try {
