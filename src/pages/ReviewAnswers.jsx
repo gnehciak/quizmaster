@@ -2307,6 +2307,9 @@ Provide HTML formatted explanation:`;
             openedExplanations={openedExplanations}
             onRegenerateExplanation={handleRegenerateDropZoneExplanation}
             onDeleteExplanation={handleDeleteDropZoneExplanation}
+            onGenerateAllExplanations={generateAllExplanations}
+            onEditExplanation={handleOpenEditDropZoneExplanation}
+            onEditExplanationPrompt={handleOpenEditDropZoneExplanationPrompt}
           />
         );
       case 'drag_drop_dual':
@@ -2332,6 +2335,9 @@ Provide HTML formatted explanation:`;
             openedExplanations={openedExplanations}
             onRegenerateExplanation={handleRegenerateDropZoneExplanation}
             onDeleteExplanation={handleDeleteDropZoneExplanation}
+            onGenerateAllExplanations={generateAllExplanations}
+            onEditExplanation={handleOpenEditDropZoneExplanation}
+            onEditExplanationPrompt={handleOpenEditDropZoneExplanationPrompt}
           />
         );
       case 'inline_dropdown_separate':
@@ -2407,6 +2413,9 @@ Provide HTML formatted explanation:`;
             openedExplanations={openedExplanations}
             onRegenerateExplanation={handleRegenerateMatchingExplanation}
             onDeleteExplanation={handleDeleteMatchingExplanation}
+            onGenerateAllExplanations={generateAllExplanations}
+            onEditExplanation={handleOpenEditMatchingExplanation}
+            onEditExplanationPrompt={handleOpenEditMatchingExplanationPrompt}
           />
         );
       default:
