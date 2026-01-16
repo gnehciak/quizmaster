@@ -41,7 +41,10 @@ export default function MatchingListQuestion({
   explanationLoading = {},
   openedExplanations = new Set(),
   onRegenerateExplanation,
-  onDeleteExplanation
+  onDeleteExplanation,
+  onGenerateAllExplanations = null,
+  onEditExplanation = null,
+  onEditExplanationPrompt = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -177,6 +180,19 @@ export default function MatchingListQuestion({
           )}
 
           <div className="space-y-3">
+            <div className="flex justify-end mb-2">
+              {isAdmin && !singleQuestion && onGenerateAllExplanations && (
+                <Button
+                  onClick={onGenerateAllExplanations}
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 h-8"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Generate All Explanations
+                </Button>
+              )}
+            </div>
             {singleQuestion && subQuestion ? (
               <div
                 className={cn(

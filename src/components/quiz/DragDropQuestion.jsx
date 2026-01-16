@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X, Trash2 } from 'lucide-react';
+import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X, Trash2, FileEdit, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -31,7 +31,10 @@ export default function DragDropQuestion({
   explanationHighlightedPassages = {},
   openedExplanations = new Set(),
   onRegenerateExplanation,
-  onDeleteExplanation
+  onDeleteExplanation,
+  onGenerateAllExplanations = null,
+  onEditExplanation = null,
+  onEditExplanationPrompt = null
 }) {
   const [draggedItem, setDraggedItem] = useState(null);
   
@@ -175,6 +178,20 @@ export default function DragDropQuestion({
       </div>
 
       {/* Drop Zones */}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium text-slate-600">Drop Zones:</h3>
+        {isAdmin && onGenerateAllExplanations && (
+          <Button
+            onClick={onGenerateAllExplanations}
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 h-8"
+          >
+            <Sparkles className="w-3 h-3" />
+            Generate All Explanations
+          </Button>
+        )}
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {question.dropZones?.map((zone) => {
           const placedAnswer = selectedAnswers[zone.id];

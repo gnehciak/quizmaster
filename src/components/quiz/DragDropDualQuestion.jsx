@@ -34,7 +34,10 @@ export default function DragDropDualQuestion({
   explanationHighlightedPassages = {},
   openedExplanations = new Set(),
   onRegenerateExplanation,
-  onDeleteExplanation
+  onDeleteExplanation,
+  onGenerateAllExplanations = null,
+  onEditExplanation = null,
+  onEditExplanationPrompt = null
 }) {
   const passages = question.passages?.length > 0 
     ? question.passages 
@@ -243,7 +246,20 @@ export default function DragDropDualQuestion({
 
           {/* Drop Zones */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-slate-600">Drop here:</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-medium text-slate-600">Drop here:</h3>
+              {isAdmin && onGenerateAllExplanations && (
+                <Button
+                  onClick={onGenerateAllExplanations}
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 h-8"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Generate All Explanations
+                </Button>
+              )}
+            </div>
             {question.dropZones?.map((zone) => {
               const droppedItem = selectedAnswers[zone.id];
               const isCorrect = showResults && droppedItem === zone.correctAnswer;
