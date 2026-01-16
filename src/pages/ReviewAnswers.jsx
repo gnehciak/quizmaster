@@ -514,12 +514,13 @@ Provide HTML formatted explanation:`;
   const handleDeleteBlankExplanation = async (blankId) => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]) {
-        const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === blankId);
-        if (blankIdx !== -1 && updatedQuestions[currentIndex].blanks[blankIdx]?.ai_data) {
-          const { explanation, ...restAiData } = updatedQuestions[currentIndex].blanks[blankIdx].ai_data;
-          updatedQuestions[currentIndex].blanks[blankIdx] = {
-            ...updatedQuestions[currentIndex].blanks[blankIdx],
+      const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+      if (questionIdx !== -1) {
+        const blankIdx = updatedQuestions[questionIdx].blanks?.findIndex(b => b.id === blankId);
+        if (blankIdx !== -1 && updatedQuestions[questionIdx].blanks[blankIdx]?.ai_data) {
+          const { explanation, ...restAiData } = updatedQuestions[questionIdx].blanks[blankIdx].ai_data;
+          updatedQuestions[questionIdx].blanks[blankIdx] = {
+            ...updatedQuestions[questionIdx].blanks[blankIdx],
             ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
           };
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -756,12 +757,13 @@ Provide HTML formatted explanation:`;
   const handleDeleteDropZoneExplanation = async (zoneId) => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]) {
-        const zoneIdx = updatedQuestions[currentIndex].dropZones?.findIndex(z => z.id === zoneId);
-        if (zoneIdx !== -1 && updatedQuestions[currentIndex].dropZones[zoneIdx]?.ai_data) {
-          const { explanation, ...restAiData } = updatedQuestions[currentIndex].dropZones[zoneIdx].ai_data;
-          updatedQuestions[currentIndex].dropZones[zoneIdx] = {
-            ...updatedQuestions[currentIndex].dropZones[zoneIdx],
+      const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+      if (questionIdx !== -1) {
+        const zoneIdx = updatedQuestions[questionIdx].dropZones?.findIndex(z => z.id === zoneId);
+        if (zoneIdx !== -1 && updatedQuestions[questionIdx].dropZones[zoneIdx]?.ai_data) {
+          const { explanation, ...restAiData } = updatedQuestions[questionIdx].dropZones[zoneIdx].ai_data;
+          updatedQuestions[questionIdx].dropZones[zoneIdx] = {
+            ...updatedQuestions[questionIdx].dropZones[zoneIdx],
             ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
           };
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
@@ -1049,14 +1051,18 @@ Provide HTML formatted explanation:`;
               await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
               await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
             }
-          } else if (updatedQuestions[currentIndex]) {
-            updatedQuestions[currentIndex] = {
-              ...updatedQuestions[currentIndex],
-              ai_data: {
-                ...updatedQuestions[currentIndex].ai_data,
-                explanation: explanationData
-              }
-            };
+          } else {
+            const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+            if (questionIdx !== -1) {
+              updatedQuestions[questionIdx] = {
+                ...updatedQuestions[questionIdx],
+                ai_data: {
+                  ...updatedQuestions[questionIdx].ai_data,
+                  explanation: explanationData
+                }
+              };
+            }
+          }
 
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
             await queryClient.refetchQueries({ queryKey: ['quiz', quiz.id] });
@@ -1117,12 +1123,16 @@ Provide HTML formatted explanation:`;
               return oldData.map(q => q.id === quiz.id ? { ...q, questions: updatedQuestions } : q);
             });
           }
-        } else if (updatedQuestions[currentIndex]?.ai_data) {
-          const { explanation, ...restAiData } = updatedQuestions[currentIndex].ai_data;
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
-          };
+        } else {
+          const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+          if (questionIdx !== -1 && updatedQuestions[questionIdx]?.ai_data) {
+            const { explanation, ...restAiData } = updatedQuestions[questionIdx].ai_data;
+            updatedQuestions[questionIdx] = {
+              ...updatedQuestions[questionIdx],
+              ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
+            };
+          }
+        }
 
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
 
@@ -1220,14 +1230,18 @@ Provide HTML formatted explanation:`;
             };
             await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
           }
-        } else if (updatedQuestions[currentIndex]) {
-          updatedQuestions[currentIndex] = {
-            ...updatedQuestions[currentIndex],
-            ai_data: {
-              ...updatedQuestions[currentIndex].ai_data,
-              explanation: parsed
-            }
-          };
+        } else {
+          const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+          if (questionIdx !== -1) {
+            updatedQuestions[questionIdx] = {
+              ...updatedQuestions[questionIdx],
+              ai_data: {
+                ...updatedQuestions[questionIdx].ai_data,
+                explanation: parsed
+              }
+            };
+          }
+        }
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
         }
         
@@ -1331,13 +1345,14 @@ Provide HTML formatted explanation:`;
     const handleSaveBlankExplanationJson = async () => {
       try {
         const updatedQuestions = [...(quiz?.questions || [])];
-        if (updatedQuestions[currentIndex]) {
-          const blankIdx = updatedQuestions[currentIndex].blanks?.findIndex(b => b.id === editBlankId);
+        const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+        if (questionIdx !== -1) {
+          const blankIdx = updatedQuestions[questionIdx].blanks?.findIndex(b => b.id === editBlankId);
           if (blankIdx !== -1) {
-            updatedQuestions[currentIndex].blanks[blankIdx] = {
-              ...updatedQuestions[currentIndex].blanks[blankIdx],
+            updatedQuestions[questionIdx].blanks[blankIdx] = {
+              ...updatedQuestions[questionIdx].blanks[blankIdx],
               ai_data: {
-                ...updatedQuestions[currentIndex].blanks[blankIdx].ai_data,
+                ...updatedQuestions[questionIdx].blanks[blankIdx].ai_data,
                 explanation: editBlankExplanationJson
               }
             };
@@ -1493,12 +1508,13 @@ Provide HTML formatted explanation:`;
   const handleDeleteMatchingExplanation = async (questionId) => {
     try {
       const updatedQuestions = [...(quiz?.questions || [])];
-      if (updatedQuestions[currentIndex]) {
-        const mqIdx = updatedQuestions[currentIndex].matchingQuestions?.findIndex(mq => mq.id === questionId);
-        if (mqIdx !== -1 && updatedQuestions[currentIndex].matchingQuestions[mqIdx]?.ai_data) {
-          const { explanation, ...restAiData } = updatedQuestions[currentIndex].matchingQuestions[mqIdx].ai_data;
-          updatedQuestions[currentIndex].matchingQuestions[mqIdx] = {
-            ...updatedQuestions[currentIndex].matchingQuestions[mqIdx],
+      const questionIdx = updatedQuestions.findIndex(q => q.id === currentQuestion.id);
+      if (questionIdx !== -1) {
+        const mqIdx = updatedQuestions[questionIdx].matchingQuestions?.findIndex(mq => mq.id === questionId);
+        if (mqIdx !== -1 && updatedQuestions[questionIdx].matchingQuestions[mqIdx]?.ai_data) {
+          const { explanation, ...restAiData } = updatedQuestions[questionIdx].matchingQuestions[mqIdx].ai_data;
+          updatedQuestions[questionIdx].matchingQuestions[mqIdx] = {
+            ...updatedQuestions[questionIdx].matchingQuestions[mqIdx],
             ai_data: Object.keys(restAiData).length > 0 ? restAiData : undefined
           };
           await base44.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
