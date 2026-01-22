@@ -239,16 +239,42 @@ export default function CreateQuiz() {
 
   const handleImportFromText = () => {
     try {
-      const question = JSON.parse(importJsonText);
-      question.id = `q_${Date.now()}`;
+      const trimmedText = importJsonText.trim();
+      let questions = [];
+
+      // Check if it's an array format [{}]
+      if (trimmedText.startsWith('[') && trimmedText.endsWith(']')) {
+        questions = JSON.parse(trimmedText);
+      } else {
+        // Try to parse comma-separated objects {},{},{}
+        const objectStrings = trimmedText.split('},{');
+        const fixedStrings = objectStrings.map((str, idx) => {
+          if (idx === 0) return str + '}';
+          if (idx === objectStrings.length - 1) return '{' + str;
+          return '{' + str + '}';
+        });
+        questions = fixedStrings.map(str => JSON.parse(str));
+      }
+
+      // Ensure it's an array
+      if (!Array.isArray(questions)) {
+        questions = [questions];
+      }
+
+      // Add IDs and import
+      const newQuestions = questions.map((q, i) => ({
+        ...q,
+        id: q.id || `q_${Date.now() + i}`
+      }));
+
       setQuiz(prev => ({
         ...prev,
-        questions: [...(prev.questions || []), question]
+        questions: [...(prev.questions || []), ...newQuestions]
       }));
       setImportJsonText('');
       setImportDialogOpen(false);
     } catch (error) {
-      alert('Invalid JSON');
+      alert('Invalid JSON format. Use {} or {},{} or [{}]');
     }
   };
 

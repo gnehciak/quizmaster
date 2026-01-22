@@ -1,4 +1,5 @@
 import AdminDashboard from './pages/AdminDashboard';
+import CourseAnalytics from './pages/CourseAnalytics';
 import CourseDetail from './pages/CourseDetail';
 import CreateQuiz from './pages/CreateQuiz';
 import Home from './pages/Home';
@@ -14,12 +15,12 @@ import ReviewAnswers from './pages/ReviewAnswers';
 import TakeQuiz from './pages/TakeQuiz';
 import UserDetails from './pages/UserDetails';
 import UserManagement from './pages/UserManagement';
-import CourseAnalytics from './pages/CourseAnalytics';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdminDashboard": AdminDashboard,
+    "CourseAnalytics": CourseAnalytics,
     "CourseDetail": CourseDetail,
     "CreateQuiz": CreateQuiz,
     "Home": Home,
@@ -35,7 +36,6 @@ export const PAGES = {
     "TakeQuiz": TakeQuiz,
     "UserDetails": UserDetails,
     "UserManagement": UserManagement,
-    "CourseAnalytics": CourseAnalytics,
 }
 
 export const pagesConfig = {
