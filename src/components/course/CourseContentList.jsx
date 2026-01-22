@@ -193,11 +193,11 @@ export default function CourseContentList({
           <AnimatePresence>
             {isExpanded && block.children && block.children.length > 0 && (
               <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3"
+                className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3 overflow-hidden"
               >
               {editMode && isAdmin ? (
                 <Droppable droppableId={`topic-${block.id}`} type={`topic-${block.id}`}>
