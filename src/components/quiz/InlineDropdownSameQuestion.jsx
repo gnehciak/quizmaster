@@ -190,20 +190,26 @@ export default function InlineDropdownSameQuestion({
             ) : (
               <>
                 <Select
-                  value={selectedAnswer || ''}
-                  onValueChange={(value) => handleAnswer(blankId, value)}
-                >
-                  <SelectTrigger className="w-[200px] h-9 inline-flex">
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {question.options?.filter(o => o).map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                   value={selectedAnswer || ''}
+                   onValueChange={(value) => handleAnswer(blankId, value)}
+                 >
+                   <SelectTrigger 
+                     className={cn(
+                       "w-auto min-w-[120px] h-8 inline-flex text-sm",
+                       "border-2 rounded-lg",
+                       "border-slate-300 hover:border-indigo-400"
+                     )}
+                   >
+                     <SelectValue placeholder="Select..." />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {question.options?.filter(o => o).map((option) => (
+                       <SelectItem key={option} value={option}>
+                         {option}
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
                 
                 {!showResults && onRequestHelp && (
                   <Popover>
@@ -314,7 +320,7 @@ export default function InlineDropdownSameQuestion({
         />
         
         <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
-          <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
+          <div className="text-lg leading-loose text-slate-700 prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
             {renderTextWithDropdowns()}
           </div>
         </div>
