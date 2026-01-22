@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   GripVertical, 
@@ -189,8 +190,15 @@ export default function CourseContentList({
             </div>
           </div>
           
-          {isExpanded && block.children && block.children.length > 0 && (
-            <div className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3">
+          <AnimatePresence>
+            {isExpanded && block.children && block.children.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3"
+              >
               {editMode && isAdmin ? (
                 <Droppable droppableId={`topic-${block.id}`} type={`topic-${block.id}`}>
                   {(provided) => (
@@ -252,24 +260,34 @@ export default function CourseContentList({
                   )}
                 </Droppable>
               ) : (
-                block.children.map(child => {
-                  if (!isBlockVisible(child)) return null;
-                  const childLocked = isBlockLocked(child);
-                  return (
-                    <div key={child.id} className="relative">
-                      {childLocked && !isAdmin && (
-                        <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
-                          <Lock className="w-3 h-3" />
-                          {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
-                        </div>
-                      )}
-                      <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
-                    </div>
-                  );
-                })
+                <div className="space-y-3">
+                  {block.children.map((child, idx) => {
+                    if (!isBlockVisible(child)) return null;
+                    const childLocked = isBlockLocked(child);
+                    return (
+                      <motion.div 
+                        key={child.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2, delay: idx * 0.05, ease: "easeInOut" }}
+                        className="relative"
+                      >
+                        {childLocked && !isAdmin && (
+                          <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
+                            <Lock className="w-3 h-3" />
+                            {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
+                          </div>
+                        )}
+                        <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
+                      </motion.div>
+                    );
+                  })}
+                </div>
               )}
-            </div>
-          )}
+              </motion.div>
+              )}
+              </AnimatePresence>
         </div>
       );
     }
