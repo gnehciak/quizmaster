@@ -433,7 +433,7 @@ export default function TakeQuiz() {
         zones.forEach(zone => {
           if (answer?.[zone.id] === zone.correctAnswer) correct++;
         });
-      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same' || q.type === 'inline_dropdown_typed') {
         const blanks = q.blanks || [];
         blanks.forEach(blank => {
           if (answer?.[blank.id] === blank.correctAnswer) correct++;
@@ -458,7 +458,7 @@ export default function TakeQuiz() {
         total++;
       } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
         total += (q.dropZones?.length || 0);
-      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same' || q.type === 'inline_dropdown_typed') {
         total += (q.blanks?.length || 0);
       } else if (q.type === 'matching_list_dual') {
         total += (q.matchingQuestions?.length || 0);
