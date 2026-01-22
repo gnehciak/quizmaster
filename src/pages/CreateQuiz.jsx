@@ -1050,6 +1050,37 @@ export default function CreateQuiz() {
         </DialogContent>
       </Dialog>
 
+      {/* Floating Question Menu */}
+      {showQuestionMenu && quiz.questions && quiz.questions.length > 0 && (
+        <div className="fixed left-6 top-24 z-40 max-w-xs">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-lg p-3">
+            <div className="text-xs font-semibold text-slate-700 mb-2 px-2">Jump to Question</div>
+            <div className="max-h-96 overflow-y-auto space-y-1">
+              {quiz.questions?.map((q, idx) => (
+                <button
+                  key={q.id}
+                  onClick={() => {
+                    const el = document.getElementById(`question-editor-${idx}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      if (collapsedQuestions.has(idx)) {
+                        toggleCollapseQuestion(idx);
+                      }
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 transition-colors text-xs"
+                >
+                  <span className="font-medium text-slate-700">Q{idx + 1}</span>
+                  <span className="text-slate-500 ml-2 truncate inline-block max-w-xs">
+                    {(q.question || 'Untitled').replace(/<[^>]*>/g, '').substring(0, 40)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sticky Save Button */}
       <div className="fixed bottom-6 right-6 z-20">
         <Button 
