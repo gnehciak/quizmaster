@@ -1052,31 +1052,52 @@ export default function CreateQuiz() {
 
       {/* Floating Question Menu */}
       {showQuestionMenu && quiz.questions && quiz.questions.length > 0 && (
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm">
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm animate-in fade-in-0 duration-300">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="text-xs font-semibold text-slate-700 px-3 py-2 border-b border-slate-200">Jump to Question</div>
             <div className="max-h-96 overflow-y-auto">
-              {quiz.questions?.map((q, idx) => (
-                <button
-                  key={q.id}
-                  onClick={() => {
-                    const el = document.getElementById(`question-editor-${idx}`);
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      if (collapsedQuestions.has(idx)) {
-                        toggleCollapseQuestion(idx);
+              {quiz.questions?.map((q, idx) => {
+                const typeMap = {
+                  'multiple_choice': 'MC',
+                  'reading_comprehension': 'RC',
+                  'drag_drop_single': 'DD1',
+                  'drag_drop_dual': 'DD2',
+                  'inline_dropdown_separate': 'IDS',
+                  'inline_dropdown_same': 'IDD',
+                  'matching_list_dual': 'ML',
+                  'long_response_dual': 'LR'
+                };
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      const el = document.getElementById(`question-editor-${idx}`);
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (collapsedQuestions.has(idx)) {
+                          toggleCollapseQuestion(idx);
+                        }
                       }
-                    }
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 flex items-center gap-2 group"
-                >
-                  <span className="font-medium text-slate-700 whitespace-nowrap">Q{idx + 1}</span>
-                  <span className="text-slate-600 text-xs truncate">
-                    {(q.question || 'Untitled').replace(/<[^>]*>/g, '')}
-                  </span>
-                </button>
-              ))}
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 flex items-center gap-2"
+                  >
+                    <span className="font-medium text-slate-700 whitespace-nowrap">Q{idx + 1}</span>
+                    <span className="text-slate-600 text-xs truncate flex-1">
+                      {(q.question || 'Untitled').replace(/<[^>]*>/g, '')}
+                    </span>
+                    <span className="bg-slate-100 text-slate-600 text-xs px-1.5 py-0.5 rounded whitespace-nowrap">
+                      {typeMap[q.type] || 'Q'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="w-full text-xs px-3 py-2 hover:bg-slate-50 transition-colors border-t border-slate-200 text-slate-600 font-medium"
+            >
+              ↑ Back to Top
+            </button>
           </div>
         </div>
       )}
