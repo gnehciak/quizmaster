@@ -439,7 +439,7 @@ ${aiInput}`;
           </div>
 
           {/* Multiple Choice Options */}
-      {question.type === 'multiple_choice' && (
+          {question.type === 'multiple_choice' && (
         <div className="space-y-2">
           <Label className="text-sm">Answer Options</Label>
           {question.options?.map((option, idx) => (
