@@ -134,12 +134,12 @@ export default function CourseContentList({
     return new Date(dueDate) < new Date();
   };
 
-  const toggleTopic = (topicId) => {
+  const toggleTopic = React.useCallback((topicId) => {
     setExpandedTopics(prev => ({
       ...prev,
       [topicId]: !prev[topicId]
     }));
-  };
+  }, []);
 
   const RenderBlockContent = ({ block, isLocked, isChild = false }) => {
     if (block.type === 'topic') {
