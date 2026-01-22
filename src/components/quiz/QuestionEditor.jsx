@@ -358,7 +358,7 @@ ${aiInput}`;
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-3">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button
@@ -397,6 +397,16 @@ ${aiInput}`;
             </Select>
           )}
         </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="text-red-500 hover:text-red-600 h-8 w-8"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
 
       {!isCollapsed && (
