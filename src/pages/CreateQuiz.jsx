@@ -608,13 +608,14 @@ export default function CreateQuiz() {
                                       {idx + 1}
                                     </span>
                                     <div className="flex-1 min-w-0">
-                                      <div className="text-sm font-medium text-slate-800 truncate">
-                                        {(question.question || 'Untitled Question').replace(/<[^>]*>/g, '')}
-                                      </div>
-                                      <div className="text-xs text-slate-500">
-                                        {question.type?.replace(/_/g, ' ')}
-                                      </div>
-                                    </div>
+                                       <div className="text-sm font-medium text-slate-800 truncate">
+                                         {(question.question || 'Untitled Question').replace(/<[^>]*>/g, '')}
+                                       </div>
+                                       <div className="text-xs text-slate-500 flex items-center gap-2">
+                                         <span>{question.type?.replace(/_/g, ' ')}</span>
+                                         {question.marks && <span className="text-indigo-600 font-medium">({question.marks} marks)</span>}
+                                       </div>
+                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Button
                                         variant="ghost"
@@ -687,9 +688,17 @@ export default function CreateQuiz() {
                         )}
                       </Droppable>
                     </DragDropContext>
-                  </div>
+                    </div>
 
-                  <div className="flex gap-2 mb-8">
+                    {quiz.questions?.some(q => q.marks) && (
+                     <div className="text-right pr-4 mb-6">
+                       <p className="text-xs text-slate-600">
+                         Total Marks: <span className="font-semibold text-slate-800">{quiz.questions?.reduce((sum, q) => sum + (q.marks || 0), 0)}</span>
+                       </p>
+                     </div>
+                    )}
+
+                    <div className="flex gap-2 mb-8">
                     <Button
                       variant="outline"
                       size="sm"
