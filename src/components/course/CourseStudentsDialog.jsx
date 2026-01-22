@@ -9,12 +9,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Trash2, UserPlus, Mail, Calendar, Loader2 } from 'lucide-react';
+import { Search, Trash2, UserPlus, Mail, Calendar, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CourseStudentsDialog({ open, onOpenChange, courseId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [classFilter, setClassFilter] = useState('all');
   const queryClient = useQueryClient();
 
   const { data: students = [], isLoading } = useQuery({
@@ -43,9 +51,13 @@ export default function CourseStudentsDialog({ open, onOpenChange, courseId }) {
     }
   });
 
-  const filteredStudents = students.filter(s => 
-    s.user_email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = s.user_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClass = classFilter === 'all' || s.class_name === classFilter;
+    return matchesSearch && matchesClass;
+  });
+
+  const uniqueClasses = [...new Set(students.map(s => s.class_name).filter(Boolean))].sort();
 
   const handleGrantAccess = () => {
     if (!inviteEmail.trim()) return;
@@ -80,14 +92,30 @@ export default function CourseStudentsDialog({ open, onOpenChange, courseId }) {
           </div>
         </div>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input 
-            placeholder="Search students..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input 
+              placeholder="Search students..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="All Classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {uniqueClasses.map(className => (
+                <SelectItem key={className} value={className}>
+                  {className || 'No Class'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex-1 overflow-y-auto border rounded-lg">
@@ -100,6 +128,7 @@ export default function CourseStudentsDialog({ open, onOpenChange, courseId }) {
               <thead className="bg-slate-50 text-slate-500 font-medium">
                 <tr>
                   <th className="px-4 py-3">Student</th>
+                  <th className="px-4 py-3">Class</th>
                   <th className="px-4 py-3">Method</th>
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -113,6 +142,15 @@ export default function CourseStudentsDialog({ open, onOpenChange, courseId }) {
                         <Mail className="w-3.5 h-3.5 text-slate-400" />
                         {student.user_email}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {student.class_name ? (
+                        <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-medium">
+                          {student.class_name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className="capitalize bg-slate-100 px-2 py-1 rounded text-xs">

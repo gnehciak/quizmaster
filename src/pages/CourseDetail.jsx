@@ -66,6 +66,7 @@ import CourseHero from '@/components/course/CourseHero';
 import CourseAdminTools from '@/components/course/CourseAdminTools';
 import CourseStudentsDialog from '@/components/course/CourseStudentsDialog';
 import CourseContentList from '@/components/course/CourseContentList';
+import AccessCodeManager from '@/components/course/AccessCodeManager';
 
 export default function CourseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -110,6 +111,7 @@ export default function CourseDetail() {
   const [addToTopicDialogOpen, setAddToTopicDialogOpen] = useState(false);
   const [blockToMove, setBlockToMove] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState('');
+  const [accessCodeManagerOpen, setAccessCodeManagerOpen] = useState(false);
 
   const quillModules = {
     toolbar: [
@@ -231,13 +233,16 @@ export default function CourseDetail() {
     }
   }, []);
 
-  // Auto-generate unlock code if course is locked but has no code
+  // Auto-generate initial access code if course is locked but has no codes
   React.useEffect(() => {
-    if (isAdmin && course?.is_locked && !course?.unlock_code) {
-      const newCode = Math.random().toString(36).substring(2, 10);
-      updateCourseMutation.mutate({ unlock_code: newCode });
+    if (isAdmin && course?.is_locked && (!course?.access_codes || course.access_codes.length === 0)) {
+      const defaultCode = {
+        code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        class_name: 'Default Class'
+      };
+      updateCourseMutation.mutate({ access_codes: [defaultCode] });
     }
-  }, [course?.is_locked, course?.unlock_code, isAdmin]);
+  }, [course?.is_locked, course?.access_codes, isAdmin]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
@@ -260,7 +265,12 @@ export default function CourseDetail() {
       return;
     }
 
-    if (unlockCode !== course.unlock_code) {
+    // Check new access_codes array
+    const accessCodes = course.access_codes || [];
+    const matchingCode = accessCodes.find(ac => ac.code.toUpperCase() === unlockCode.trim().toUpperCase());
+
+    // Fallback to legacy unlock_code for backwards compatibility
+    if (!matchingCode && unlockCode !== course.unlock_code) {
       setError('Invalid code');
       return;
     }
@@ -268,7 +278,8 @@ export default function CourseDetail() {
     await unlockMutation.mutateAsync({
       user_email: user.email,
       course_id: courseId,
-      unlock_method: 'code'
+      unlock_method: 'code',
+      class_name: matchingCode?.class_name || 'Legacy Access'
     });
   };
 
@@ -560,19 +571,8 @@ export default function CourseDetail() {
     setSchedulingBlock(null);
   };
 
-  const handleCopyCode = () => {
-    if (course?.unlock_code) {
-      navigator.clipboard.writeText(course.unlock_code);
-      toast.success('Code copied to clipboard');
-    }
-  };
-
-  const handleResetCode = async () => {
-    if (!confirm('Reset unlock code? This will generate a new code and invalidate the old one.')) return;
-    
-    const newCode = Math.random().toString(36).substring(2, 10);
-    await updateCourseMutation.mutateAsync({ unlock_code: newCode });
-    toast.success('Unlock code reset successfully');
+  const handleUpdateAccessCodes = async (codes) => {
+    await updateCourseMutation.mutateAsync({ access_codes: codes });
   };
 
   const handleAddToTopic = (block) => {
@@ -680,6 +680,13 @@ export default function CourseDetail() {
         open={studentsDialogOpen} 
         onOpenChange={setStudentsDialogOpen} 
         courseId={courseId} 
+      />
+
+      <AccessCodeManager
+        open={accessCodeManagerOpen}
+        onOpenChange={setAccessCodeManagerOpen}
+        accessCodes={course?.access_codes || []}
+        onUpdate={handleUpdateAccessCodes}
       />
 
       {/* Unlock Dialog */}
@@ -971,37 +978,61 @@ export default function CourseDetail() {
       </Dialog>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        {/* Admin: Class Code Display (Compact) */}
-        {isAdmin && course?.is_locked && course?.unlock_code && (
-          <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-4 mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-lg border border-indigo-100">
-                <Key className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Access Code</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-slate-800 tracking-widest">{course.unlock_code}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleCopyCode}
-                    className="h-6 w-6 text-indigo-400 hover:text-indigo-600"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
+        {/* Admin: Access Codes Display */}
+        {isAdmin && course?.is_locked && course?.access_codes && course.access_codes.length > 0 && (
+          <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-5 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white p-2 rounded-lg border border-indigo-100">
+                  <Key className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Access Codes</p>
+                  <p className="text-sm text-slate-600">{course.access_codes.length} {course.access_codes.length === 1 ? 'class' : 'classes'}</p>
                 </div>
               </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setAccessCodeManagerOpen(true)}
+                className="text-indigo-600 hover:bg-indigo-100"
+              >
+                Manage Classes
+              </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleResetCode}
-              className="text-indigo-600 hover:bg-indigo-100"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {course.access_codes.slice(0, 4).map((item, index) => (
+                <div key={index} className="bg-white rounded-lg p-3 border border-indigo-100">
+                  <div className="text-xs text-slate-500 mb-1">{item.class_name}</div>
+                  <div className="flex items-center justify-between">
+                    <code className="text-sm font-mono font-bold text-indigo-600 tracking-wider">
+                      {item.code}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.code);
+                        toast.success('Code copied');
+                      }}
+                      className="h-6 w-6 text-indigo-400 hover:text-indigo-600"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {course.access_codes.length > 4 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAccessCodeManagerOpen(true)}
+                className="w-full mt-2 text-slate-600"
+              >
+                View {course.access_codes.length - 4} more...
+              </Button>
+            )}
           </div>
         )}
 
