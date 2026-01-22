@@ -92,6 +92,7 @@ export default function TakeQuiz() {
   const [showSeconds, setShowSeconds] = useState(false);
   const [currentQuestionTime, setCurrentQuestionTime] = useState(0);
   const [showQuestionTime, setShowQuestionTime] = useState(false);
+  const [overviewCollapsed, setOverviewCollapsed] = useState(false);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -2211,13 +2212,14 @@ Provide a helpful hint with quoted sentences. Example structure:
               </span>
             </div>
           )}
-          <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <List className="w-4 h-4" />
-                Overview
-              </Button>
-            </DialogTrigger>
+          {!overviewCollapsed ? (
+            <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <List className="w-4 h-4" />
+                  Overview
+                </Button>
+              </DialogTrigger>
             <DialogContent className={cn(
               "max-h-[80vh] overflow-y-auto",
               totalQuestions <= 20 && "max-w-lg",
@@ -2327,7 +2329,30 @@ Provide a helpful hint with quoted sentences. Example structure:
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOverviewCollapsed(false)}
+              className="gap-2"
+              title="Show overview"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          )}
+          
+          {!overviewCollapsed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOverviewCollapsed(true)}
+              className="text-slate-400 hover:text-slate-600 p-1"
+              title="Hide overview"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Edit Quiz Button (Admin Only) & Fullscreen Button */}
