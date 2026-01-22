@@ -398,15 +398,66 @@ ${aiInput}`;
           )}
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          className="text-red-500 hover:text-red-600 h-8 w-8"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {onPreview && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onPreview}
+              className="text-slate-500 hover:text-indigo-600 h-8 w-8"
+              title="Preview"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          {onCopy && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onCopy}
+              className="text-slate-500 hover:text-indigo-600 h-8 w-8"
+              title="Copy as JSON"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
+          {onExport && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onExport}
+              className="text-slate-500 hover:text-indigo-600 h-8 w-8"
+              title="Export"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
+          {onEditSchema && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onEditSchema}
+              className="text-slate-500 hover:text-indigo-600 h-8 w-8"
+              title="Edit Schema"
+            >
+              <Code className="w-4 h-4" />
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            className="text-red-500 hover:text-red-600 h-8 w-8"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {!isCollapsed && (
