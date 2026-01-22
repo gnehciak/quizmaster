@@ -1112,7 +1112,7 @@ ${aiInput}`;
                                updateBlank(idx, 'options', options);
                              }}
                              placeholder={`Opt ${optIdx + 1}`}
-                             className="text-xs h-7 px-2"
+                             className="text-xs h-6 px-2"
                            />
                          </div>
                          {blank.options.length > 2 && (
