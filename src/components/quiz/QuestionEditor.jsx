@@ -1427,46 +1427,40 @@ ${aiInput}`;
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Label>Correct Answers for Each Blank</Label>
             {question.blanks?.map((blank, idx) => (
-              <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
-                      {`{{${blank.id}}}`}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(`{{${blank.id}}}`);
-                      }}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeBlank(idx)}
-                    className="text-red-500 h-8"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Correct Answer</Label>
-                  <Input
-                    value={blank.correctAnswer || ''}
-                    onChange={(e) => updateBlank(idx, 'correctAnswer', e.target.value)}
-                    placeholder="Type the correct answer..."
-                    className="h-9 text-sm"
-                  />
-                </div>
+              <div key={blank.id} className="bg-slate-50 rounded-xl p-3 border-2 border-slate-200 flex items-center gap-2">
+                <span className="font-mono text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold flex-shrink-0">
+                  {`{{${blank.id}}}`}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`{{${blank.id}}}`);
+                    toast.success('Copied to clipboard!');
+                  }}
+                  className="h-8 w-8 p-0 flex-shrink-0"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+                <Input
+                  value={blank.correctAnswer || ''}
+                  onChange={(e) => updateBlank(idx, 'correctAnswer', e.target.value)}
+                  placeholder="Type the correct answer..."
+                  className="h-8 text-sm flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeBlank(idx)}
+                  className="text-red-500 h-8 w-8 p-0 flex-shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             ))}
             <Button type="button" variant="outline" onClick={addBlank} className="gap-2 w-full">
