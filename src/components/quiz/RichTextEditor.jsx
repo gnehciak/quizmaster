@@ -23,33 +23,6 @@ export default function RichTextEditor({
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  React.useEffect(() => {
-    if (!disableImages && quillRef.current) {
-      const editor = quillRef.current.getEditor();
-      const container = editor.root;
-      
-      // Make all images resizable
-      container.querySelectorAll('img').forEach(img => {
-        img.style.cursor = 'resize';
-        img.setAttribute('contenteditable', 'false');
-      });
-
-      // Add resize observer for new images
-      const observer = new MutationObserver(() => {
-        container.querySelectorAll('img').forEach(img => {
-          if (!img.style.cursor) {
-            img.style.cursor = 'resize';
-            img.style.maxWidth = '100%';
-            img.style.height = 'auto';
-          }
-        });
-      });
-
-      observer.observe(container, { childList: true, subtree: true });
-      return () => observer.disconnect();
-    }
-  }, [disableImages, value]);
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !quillRef.current) return;
@@ -146,7 +119,7 @@ export default function RichTextEditor({
             placeholder={placeholder}
             modules={modules}
             formats={formats}
-            className="bg-white rounded-lg flex-1 flex flex-col [&>.ql-container]:flex-1 [&>.ql-container]:rounded-b-lg [&>.ql-toolbar]:rounded-t-lg [&_.ql-image]:cursor-pointer [&_img]:max-w-full [&_img]:h-auto"
+            className="bg-white rounded-lg flex-1 flex flex-col [&>.ql-container]:flex-1 [&>.ql-container]:rounded-b-lg [&>.ql-toolbar]:rounded-t-lg [&_.ql-image]:cursor-pointer"
             style={{ minHeight }}
           />
           {!disableImages && (
