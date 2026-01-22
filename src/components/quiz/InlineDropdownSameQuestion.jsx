@@ -300,31 +300,34 @@ export default function InlineDropdownSameQuestion({
   const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      {isUnattempted && (
-        <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-          <X className="w-5 h-5 text-red-600" />
-          <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+    <div className="h-full p-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {isUnattempted && (
+          <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <X className="w-5 h-5 text-red-600" />
+            <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+          </div>
+        )}
+        <div 
+          className="text-xl font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md"
+          dangerouslySetInnerHTML={{ __html: question.question }}
+        />
+        
+        <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
+          <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
+            {renderTextWithDropdowns()}
+          </div>
         </div>
-      )}
-      <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
-        <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
-          {renderTextWithDropdowns()}
-        </div>
+        
+        {showResults && question.explanation && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div 
+              className="text-sm text-slate-700 prose prose-slate max-w-none prose-p:my-0"
+              dangerouslySetInnerHTML={{ __html: question.explanation }}
+            />
+          </div>
+        )}
       </div>
-      
-      {showResults && question.explanation && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div 
-            className="text-sm text-slate-700 prose prose-slate max-w-none prose-p:my-0"
-            dangerouslySetInnerHTML={{ __html: question.explanation }}
-          />
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
 }
