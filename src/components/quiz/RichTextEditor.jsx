@@ -26,12 +26,17 @@ export default function RichTextEditor({
 
   React.useEffect(() => {
     if (quillRef.current && !disableImages) {
-      const quill = quillRef.current.getEditor();
-      if (quill) {
-        quill.getModule('toolbar').addHandler('image', () => {
-          fileInputRef.current?.click();
-        });
-      }
+      setTimeout(() => {
+        const editor = quillRef.current?.getEditor();
+        if (editor) {
+          const toolbar = editor.getModule('toolbar');
+          if (toolbar) {
+            toolbar.addHandler('image', () => {
+              fileInputRef.current?.click();
+            });
+          }
+        }
+      }, 100);
     }
   }, [disableImages]);
 
