@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
@@ -190,13 +190,13 @@ export default function CourseContentList({
             </div>
           </div>
           
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {isExpanded && block.children && block.children.length > 0 && (
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.35, ease: "easeInOut" }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3 overflow-hidden"
               >
               {editMode && isAdmin ? (
