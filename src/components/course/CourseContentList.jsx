@@ -568,8 +568,7 @@ export default function CourseContentList({
     }
 
     return null;
-    };
-  }, [expandedTopics, calculateTopicCompletion, isTopicOverdue, isBlockVisible, isBlockLocked, editMode, isAdmin, onEdit, onAddToTopic, onDelete, hasAccess, isAdmin, editMode, quizzes, allQuizAttempts, onToggleVisibility, onScheduleVisibility, onToggleLock, onScheduleLock]);
+  };
 
   if (!blocks || blocks.length === 0) {
     return (
