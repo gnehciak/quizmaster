@@ -52,7 +52,14 @@ export default function InlineDropdownSameQuestion({
   };
 
   const renderTextWithDropdowns = () => {
-    const text = question.textWithBlanks || '';
+    let text = question.textWithBlanks || '';
+    // Remove block-level HTML tags and convert to spaces
+    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, ' ');
+    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, ' ');
+    text = text.replace(/<br\s*\/?>/gi, ' ');
+    // Clean up multiple spaces but preserve structure
+    text = text.replace(/\s+/g, ' ').trim();
+    
     const parts = text.split(/(\{\{blank_\d+\}\})/g);
     
     return parts.map((part, idx) => {
