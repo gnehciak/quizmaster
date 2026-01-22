@@ -503,10 +503,26 @@ export default function CourseDetail() {
     await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
   };
 
-  const handleDeleteBlock = async (blockId) => {
+  const handleDeleteBlock = async (blockId, parentTopicId = null) => {
     if (!confirm('Delete this content block?')) return;
-    const updatedBlocks = contentBlocks.filter(b => b.id !== blockId);
-    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    
+    if (parentTopicId) {
+      // Remove from topic's children
+      const updatedBlocks = contentBlocks.map(b => {
+        if (b.id === parentTopicId && b.type === 'topic') {
+          return {
+            ...b,
+            children: (b.children || []).filter(child => child.id !== blockId)
+          };
+        }
+        return b;
+      });
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    } else {
+      // Remove from main content blocks
+      const updatedBlocks = contentBlocks.filter(b => b.id !== blockId);
+      await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    }
   };
 
   const handleToggleVisibility = async (blockId) => {
