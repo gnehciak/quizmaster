@@ -329,7 +329,7 @@ export default function InlineDropdownSameQuestion({
         />
         
         <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
-          <div className="text-lg leading-loose text-slate-700 prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
+          <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap">
             {renderTextWithDropdowns()}
           </div>
         </div>
