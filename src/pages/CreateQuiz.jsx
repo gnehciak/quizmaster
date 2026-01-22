@@ -1052,7 +1052,7 @@ export default function CreateQuiz() {
 
       {/* Floating Question Menu */}
       {showQuestionMenu && quiz.questions && quiz.questions.length > 0 && (
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm opacity-0 animate-in fade-in duration-300">
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm" style={{animation: 'fadeInOut 0.3s ease-in-out'}}>
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="text-xs font-semibold text-slate-700 px-3 py-2 border-b border-slate-200">Jump to Question</div>
             <div className="max-h-96 overflow-y-auto">
