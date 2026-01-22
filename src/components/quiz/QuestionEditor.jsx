@@ -359,37 +359,44 @@ ${aiInput}`;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-3">
-      <div className="flex items-start justify-between gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onToggleCollapse}
-          className="gap-2"
-        >
-          {isCollapsed ? (
-            <>
-              <ChevronDown className="w-4 h-4" />
-              Expand
-            </>
-          ) : (
-            <>
-              <ChevronUp className="w-4 h-4" />
-              Collapse
-            </>
-          )}
-        </Button>
-
-        {!isCollapsed && (
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           <Button
+            type="button"
             variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="gap-2 h-8"
           >
-            <Trash2 className="w-4 h-4" />
+            {isCollapsed ? (
+              <>
+                <ChevronDown className="w-4 h-4" />
+                Expand
+              </>
+            ) : (
+              <>
+                <ChevronUp className="w-4 h-4" />
+                Collapse
+              </>
+            )}
           </Button>
-        )}
+
+          {!isCollapsed && (
+            <Select
+              value={question.type || ''}
+              onValueChange={(value) => updateField('type', value)}
+            >
+              <SelectTrigger className="w-56 h-8">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(typeLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {!isCollapsed && (
