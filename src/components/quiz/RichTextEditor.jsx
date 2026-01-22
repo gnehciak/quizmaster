@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
+import ImageResize from 'quill-image-resize-module-react';
 
 export default function RichTextEditor({ 
   value, 
@@ -22,6 +23,12 @@ export default function RichTextEditor({
   const lastValueRef = useRef(value);
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  React.useEffect(() => {
+    if (!disableImages && quillRef.current) {
+      quillRef.current.getEditor().enable();
+    }
+  }, [disableImages]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -53,13 +60,18 @@ export default function RichTextEditor({
       ...(disableImages ? [] : [['image']]),
       ...(disableHighlight ? [] : [[{ 'background': [] }]]),
       [{ 'align': [] }]
-    ]
+    ],
+    ...(disableImages ? {} : {
+      imageResize: {
+        displaySize: true
+      }
+    })
   }), [disableLinks, disableHighlight, disableImages]);
 
   const formats = [
     'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
     ...(disableLinks ? [] : ['link']),
-    ...(disableImages ? [] : ['image']),
+    ...(disableImages ? [] : ['image', 'imageresize']),
     ...(disableHighlight ? [] : ['background'])
   ];
 
