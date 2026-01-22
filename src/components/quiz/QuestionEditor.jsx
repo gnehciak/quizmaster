@@ -331,6 +331,7 @@ ${aiInput}`;
     drag_drop_dual: 'Drag & Drop (Dual Pane)',
     inline_dropdown_separate: 'Fill in the Blanks (Separate Options)',
     inline_dropdown_same: 'Fill in the Blanks (Same Options)',
+    inline_dropdown_typed: 'Fill in the Blanks (Typed Answer)',
     matching_list_dual: 'Matching List (Dual Pane)',
     long_response_dual: 'Long Response (Dual Pane)'
   };
@@ -1406,6 +1407,66 @@ ${aiInput}`;
               placeholder="e.g. 1. Addresses the main argument (2 marks) 2. Uses evidence from text (3 marks)..."
               className="min-h-[150px]"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Inline Dropdown Typed */}
+      {question.type === 'inline_dropdown_typed' && (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label>Text with Blanks</Label>
+            <p className="text-xs text-slate-500">
+              Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where text inputs should appear
+            </p>
+            <RichTextEditor
+              value={question.textWithBlanks || ''}
+              onChange={(value) => updateField('textWithBlanks', value)}
+              placeholder="The {{blank_1}} is a type of {{blank_2}}..."
+              minHeight="100px"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <Label>Correct Answers for Each Blank</Label>
+            {question.blanks?.map((blank, idx) => (
+              <div key={blank.id} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+                <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">
+                  {`{{${blank.id}}}`}
+                </span>
+                <Input
+                  value={blank.correctAnswer || ''}
+                  onChange={(e) => updateBlank(idx, 'correctAnswer', e.target.value)}
+                  placeholder="Type correct answer..."
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeBlank(idx)}
+                  className="text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => {
+              const blanks = [...(question.blanks || [])];
+              const blankId = `blank_${blanks.length + 1}`;
+              blanks.push({
+                id: blankId,
+                correctAnswer: ''
+              });
+              const text = question.textWithBlanks || '';
+              onChange({
+                ...question,
+                blanks: blanks,
+                textWithBlanks: text + ` {{${blankId}}}`
+              });
+            }} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Blank
+            </Button>
           </div>
         </div>
       )}
