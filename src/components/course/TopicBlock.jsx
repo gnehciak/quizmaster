@@ -77,16 +77,10 @@ const TopicBlock = React.memo(({
         </div>
       </div>
       
-      <AnimatePresence>
-        {isExpanded && block.children && block.children.length > 0 && (
-          <motion.div 
-            key={`topic-content-${block.id}`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3 overflow-hidden"
-          >
+      {isExpanded && block.children && block.children.length > 0 && (
+        <div 
+          className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3"
+        >
             {editMode && isAdmin ? (
               <Droppable droppableId={`topic-${block.id}`} type={`topic-${block.id}`}>
                 {(provided) => (
@@ -174,9 +168,8 @@ const TopicBlock = React.memo(({
                 })}
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 });
