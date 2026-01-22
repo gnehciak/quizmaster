@@ -1088,7 +1088,7 @@ ${aiInput}`;
                 </div>
 
                 <div className="space-y-2">
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {blank.options?.map((opt, optIdx) => (
                       <div key={optIdx} className="flex items-center gap-1 bg-white rounded p-2 border border-slate-200">
                          <input
@@ -1112,7 +1112,7 @@ ${aiInput}`;
                                updateBlank(idx, 'options', options);
                              }}
                              placeholder={`Opt ${optIdx + 1}`}
-                             className="text-xs h-7"
+                             className="text-xs h-7 px-1"
                            />
                          </div>
                          {blank.options.length > 2 && (
