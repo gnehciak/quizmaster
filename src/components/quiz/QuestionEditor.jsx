@@ -465,37 +465,35 @@ ${aiInput}`;
 
       {/* Multiple Choice Options */}
       {question.type === 'multiple_choice' && (
-        <div className="space-y-4">
-          <Label>Answer Options</Label>
+        <div className="space-y-2">
+          <Label className="text-sm">Answer Options</Label>
           {question.options?.map((option, idx) => (
-            <div key={idx} className="flex items-center gap-3">
+            <div key={idx} className="flex items-center gap-2">
               <input
                 type="radio"
                 name={`correct_${question.id}`}
                 checked={question.correctAnswer === option && option !== ''}
                 onChange={() => updateField('correctAnswer', option)}
-                className="w-4 h-4 text-indigo-600"
+                className="w-4 h-4 text-indigo-600 flex-shrink-0"
               />
-              <div className="flex-1">
-                <RichTextEditor
-                  value={option}
-                  onChange={(value) => updateOption(idx, value)}
-                  placeholder={`Option ${idx + 1}`}
-                  minHeight="60px"
-                />
-              </div>
+              <Input
+                value={option}
+                onChange={(e) => updateOption(idx, e.target.value)}
+                placeholder={`Option ${idx + 1}`}
+                className="flex-1 h-8 text-sm"
+              />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => removeOption(idx)}
-                className="text-slate-400 hover:text-red-500"
+                className="text-slate-400 hover:text-red-500 h-8 w-8"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3 h-3" />
               </Button>
             </div>
           ))}
-          <Button variant="outline" onClick={addOption} className="gap-2">
-            <Plus className="w-4 h-4" />
+          <Button variant="outline" onClick={addOption} className="gap-2 h-8 text-xs">
+            <Plus className="w-3 h-3" />
             Add Option
           </Button>
         </div>
