@@ -1059,7 +1059,7 @@ ${aiInput}`;
                       <div key={optIdx} className="flex items-start gap-2 bg-white rounded-lg p-3 border border-slate-200">
                         <input
                             type="radio"
-                            name={`correct_blank_${blank.id}`}
+                            name={`correct_blank_${question.id}_${blank.id}`}
                             checked={(selectedAnswers[idx] !== undefined ? selectedAnswers[idx] : blank.correctAnswer) === opt && opt !== ''}
                             onChange={() => {
                                 flushSync(() => {
