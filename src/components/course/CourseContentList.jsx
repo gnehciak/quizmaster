@@ -141,7 +141,7 @@ export default function CourseContentList({
     }));
   }, []);
 
-  const RenderBlockContent = ({ block, isLocked, isChild = false }) => {
+  const RenderBlockContent = React.useMemo(() => ({ block, isLocked, isChild = false }) => {
     if (block.type === 'topic') {
       return (
         <TopicBlock
