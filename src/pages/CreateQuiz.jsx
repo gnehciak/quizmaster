@@ -718,13 +718,17 @@ export default function CreateQuiz() {
                           </span>
                         </div>
                         <QuestionEditor
-                          question={question}
-                          onChange={(updated) => updateQuestion(idx, updated)}
-                          onDelete={() => deleteQuestion(idx)}
-                          isCollapsed={collapsedQuestions.has(idx)}
-                          onToggleCollapse={() => toggleCollapseQuestion(idx)}
-                          existingQuestionNames={questionNames.map(qn => qn.name)}
-                        />
+                           question={question}
+                           onChange={(updated) => updateQuestion(idx, updated)}
+                           onDelete={() => deleteQuestion(idx)}
+                           isCollapsed={collapsedQuestions.has(idx)}
+                           onToggleCollapse={() => toggleCollapseQuestion(idx)}
+                           existingQuestionNames={questionNames.map(qn => qn.name)}
+                           onPreview={() => setPreviewQuestion(question)}
+                           onCopy={() => handleCopyQuestion(question)}
+                           onExport={() => handleExportQuestion(question, idx)}
+                           onEditSchema={() => handleOpenEditSchema(question, idx)}
+                         />
                       </div>
                     ))}
                   </div>
