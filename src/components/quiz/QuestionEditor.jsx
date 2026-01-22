@@ -440,19 +440,7 @@ ${aiInput}`;
               minHeight="80px"
             />
           </div>
-
-
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+          </div>
 
       {/* Multiple Choice Options */}
       {question.type === 'multiple_choice' && (
