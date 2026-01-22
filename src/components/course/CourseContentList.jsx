@@ -140,7 +140,8 @@ export default function CourseContentList({
     }));
   };
 
-  const RenderBlockContent = ({ block, isLocked, isChild = false }) => {
+  const RenderBlockContent = React.useMemo(() => {
+    return ({ block, isLocked, isChild = false }) => {
     if (block.type === 'topic') {
       const { completed, total } = calculateTopicCompletion(block);
       const isExpanded = expandedTopics[block.id] ?? true;
