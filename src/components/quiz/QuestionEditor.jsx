@@ -809,22 +809,22 @@ ${aiInput}`;
                     <SelectValue placeholder="Correct..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {question.options?.filter(o => o).map((opt) => (
+                    {question.options?.filter(o => o && o.trim()).map((opt) => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-                <Button
+                  </Select>
+                  <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => removeDropZone(idx)}
                   className="text-slate-400 hover:text-red-500"
-                >
+                  >
                   <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-            <Button variant="outline" onClick={addDropZone} className="gap-2">
+                  </Button>
+                  </div>
+                  ))}
+                  <Button variant="outline" onClick={addDropZone} className="gap-2">
               <Plus className="w-4 h-4" />
               Add Drop Zone
             </Button>
@@ -1358,22 +1358,22 @@ ${aiInput}`;
                     <SelectValue placeholder="Answer..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {question.options?.filter(o => o).map((opt) => (
+                    {question.options?.filter(o => o && o.trim()).map((opt) => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-                <Button
+                  </Select>
+                  <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => removeMatchingQuestion(qIdx)}
                   className="text-slate-400 hover:text-red-500 h-9 w-9"
-                >
+                  >
                   <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            ))}
-            <Button variant="outline" onClick={addMatchingQuestion} className="gap-2">
+                  </Button>
+                  </div>
+                  ))}
+                  <Button variant="outline" onClick={addMatchingQuestion} className="gap-2">
               <Plus className="w-4 h-4" />
               Add Matching Question
             </Button>
@@ -1466,22 +1466,22 @@ ${aiInput}`;
                     <SelectValue placeholder="Select correct answer..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {question.options?.filter(o => o).map((opt) => (
+                    {question.options?.filter(o => o && o.trim()).map((opt) => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-                <Button
+                  </Select>
+                  <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => removeBlank(idx)}
                   className="text-slate-400 hover:text-red-500"
-                >
+                  >
                   <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-            <Button type="button" variant="outline" onClick={() => {
+                  </Button>
+                  </div>
+                  ))}
+                  <Button type="button" variant="outline" onClick={() => {
               const blanks = [...(question.blanks || [])];
               const blankId = `blank_${blanks.length + 1}`;
               blanks.push({
