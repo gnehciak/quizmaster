@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
-import RichTextEditor from '@/components/quiz/RichTextEditor';
+import { CheckCircle2, XCircle, X } from 'lucide-react';
 
 export default function InlineDropdownTypedQuestion({ 
   question, 
@@ -8,91 +8,100 @@ export default function InlineDropdownTypedQuestion({
   onAnswer,
   showResults = false
 }) {
-  const [answers, setAnswers] = useState(selectedAnswers);
-
   const handleInputChange = (blankId, value) => {
-    const newAnswers = { ...answers, [blankId]: value };
-    setAnswers(newAnswers);
-    onAnswer(newAnswers);
+    onAnswer({
+      ...selectedAnswers,
+      [blankId]: value
+    });
   };
 
-  if (!question.blanks || question.blanks.length === 0) {
-    return (
-      <div className="p-6 text-center text-slate-500">
-        No blanks configured for this question
-      </div>
-    );
-  }
+  // Parse text with blanks and render inline input fields
+  const renderTextWithBlanks = () => {
+    let text = question.textWithBlanks || "";
+    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n');
+    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
+    text = text.replace(/<br\s*\/?>/gi, '\n');
+    text = text.replace(/\n{3,}/g, '\n\n');
+    text = text.replace(/[ \t]+/g, ' ');
+    
+    const parts = text.split(/(\{\{[^}]+\}\})/g);
+    
+    return parts.map((part, idx) => {
+      const blankMatch = part.match(/\{\{([^}]+)\}\}/);
+      
+      if (blankMatch) {
+        const blankId = blankMatch[1];
+        const blank = question.blanks?.find(b => b.id === blankId);
+        
+        if (!blank) return null;
+        
+        const userAnswer = selectedAnswers[blankId] || '';
+        const correctAnswer = blank.correctAnswer || '';
+        const isCorrect = showResults && userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+        const isWrong = showResults && userAnswer && userAnswer.toLowerCase().trim() !== correctAnswer.toLowerCase().trim();
+        const hasAttempted = userAnswer.length > 0;
+        
+        return (
+          <span key={idx} className="inline-flex items-center gap-1 mx-1 align-middle">
+            <input
+              type="text"
+              value={userAnswer}
+              onChange={(e) => handleInputChange(blankId, e.target.value)}
+              disabled={showResults}
+              placeholder="Type answer"
+              className={cn(
+                "h-9 px-3 rounded-lg border-2 text-sm transition-all inline-block w-auto min-w-[120px]",
+                !showResults && "border-slate-300 hover:border-indigo-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200",
+                !showResults && userAnswer && "border-indigo-500 bg-indigo-50",
+                isCorrect && "border-emerald-500 bg-emerald-50 text-emerald-700",
+                isWrong && "border-red-400 bg-red-50 text-red-600",
+                showResults && "cursor-not-allowed bg-slate-100"
+              )}
+            />
+            
+            {showResults && isCorrect && (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+            )}
+            {showResults && isWrong && (
+              <span className="flex items-center gap-1 text-xs text-red-600">
+                <XCircle className="w-4 h-4" />
+                <span>Correct: <span className="font-medium">{correctAnswer}</span></span>
+              </span>
+            )}
+            {showResults && !hasAttempted && (
+              <span className="flex items-center gap-1 text-xs text-slate-600">
+                <span>Correct: <span className="font-medium">{correctAnswer}</span></span>
+              </span>
+            )}
+          </span>
+        );
+      }
+      
+      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
+    });
+  };
+
+  const hasAnswers = selectedAnswers && Object.keys(selectedAnswers).length > 0;
+  const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Question Text */}
-      <div className="space-y-4">
+    <div className="h-full p-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {isUnattempted && (
+          <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <X className="w-5 h-5 text-red-600" />
+            <span className="text-sm font-semibold text-red-700">Not Attempted</span>
+          </div>
+        )}
         <div 
-          className="prose prose-slate max-w-none text-slate-800 leading-relaxed prose-p:my-2"
-          dangerouslySetInnerHTML={{ __html: question.textWithBlanks || question.question }}
+          className="text-xl font-medium text-slate-800 leading-relaxed prose prose-slate max-w-none prose-p:my-0"
+          dangerouslySetInnerHTML={{ __html: question.question }}
         />
-      </div>
-
-      {/* Blanks Input Section */}
-      <div className="bg-slate-50 rounded-lg p-6 space-y-4 border border-slate-200">
-        <h3 className="font-semibold text-slate-700">Fill in the Blanks</h3>
         
-        <div className="space-y-4">
-          {question.blanks.map((blank, idx) => {
-            const userAnswer = answers[blank.id] || '';
-            const correctAnswer = blank.correctAnswer || '';
-            const isCorrect = userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
-            const hasAttempted = userAnswer.length > 0;
-
-            return (
-              <div key={blank.id} className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">
-                  Blank {idx + 1}
-                </label>
-                
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={userAnswer}
-                    onChange={(e) => handleInputChange(blank.id, e.target.value)}
-                    disabled={showResults}
-                    placeholder={`Enter answer for blank ${idx + 1}`}
-                    className={cn(
-                      "flex-1 px-4 py-3 rounded-lg border-2 transition-all text-base",
-                      !showResults && "focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200",
-                      showResults && "cursor-not-allowed bg-slate-100",
-                      !showResults && "border-slate-300 hover:border-slate-400",
-                      showResults && hasAttempted && isCorrect && "border-emerald-500 bg-emerald-50",
-                      showResults && hasAttempted && !isCorrect && "border-red-500 bg-red-50"
-                    )}
-                  />
-                  
-                  {showResults && hasAttempted && (
-                    <div className="flex items-center gap-1 text-sm font-medium">
-                      {isCorrect ? (
-                        <span className="text-emerald-700">✓ Correct</span>
-                      ) : (
-                        <span className="text-red-700">✗ Incorrect</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {showResults && hasAttempted && !isCorrect && (
-                  <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
-                    <strong>Correct answer:</strong> {correctAnswer}
-                  </div>
-                )}
-
-                {showResults && !hasAttempted && (
-                  <div className="px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-sm text-slate-600">
-                    <strong>Correct answer:</strong> {correctAnswer}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
+          <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap">
+            {renderTextWithBlanks()}
+          </div>
         </div>
       </div>
     </div>
