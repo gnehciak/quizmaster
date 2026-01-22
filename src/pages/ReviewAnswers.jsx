@@ -33,6 +33,7 @@ import DragDropQuestion from '@/components/quiz/DragDropQuestion';
 import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
+import InlineDropdownTypedQuestion from '@/components/quiz/InlineDropdownTypedQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -2390,6 +2391,15 @@ Provide HTML formatted explanation:`;
             onDeleteExplanation={handleDeleteBlankExplanation}
             onEditExplanation={handleOpenEditBlankExplanation}
             onEditExplanationPrompt={handleOpenEditBlankExplanationPrompt}
+          />
+        );
+      case 'inline_dropdown_typed':
+        return (
+          <InlineDropdownTypedQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={() => {}}
+            showResults={true}
           />
         );
       case 'matching_list_dual':
