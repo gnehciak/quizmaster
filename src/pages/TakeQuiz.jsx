@@ -2342,17 +2342,7 @@ Provide a helpful hint with quoted sentences. Example structure:
             </Button>
           )}
           
-          {!overviewCollapsed && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setOverviewCollapsed(true)}
-              className="text-slate-400 hover:text-slate-600 p-1"
-              title="Hide overview"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          )}
+
         </div>
 
         {/* Edit Quiz Button (Admin Only) & Fullscreen Button */}
