@@ -305,7 +305,7 @@ export default function InlineDropdownSameQuestion({
         );
       }
       
-      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} className="prose prose-sm max-w-none" />;
+      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
     });
   };
 
