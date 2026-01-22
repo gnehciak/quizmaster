@@ -1,11 +1,15 @@
 import React, { useState, useRef, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
+import Quill from 'quill';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
+
+Quill.register('modules/imageResize', ImageResize);
 
 export default function RichTextEditor({ 
   value, 
@@ -53,7 +57,10 @@ export default function RichTextEditor({
       ...(disableImages ? [] : [['image']]),
       ...(disableHighlight ? [] : [[{ 'background': [] }]]),
       [{ 'align': [] }]
-    ]
+    ],
+    imageResize: {
+      displaySize: true
+    }
   }), [disableLinks, disableHighlight, disableImages]);
 
   const formats = [
