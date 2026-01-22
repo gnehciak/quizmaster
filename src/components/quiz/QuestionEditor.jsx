@@ -1087,49 +1087,49 @@ ${aiInput}`;
                   </Button>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="grid grid-cols-4 gap-3">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-5 gap-2">
                     {blank.options?.map((opt, optIdx) => (
-                      <div key={optIdx} className="flex items-start gap-2 bg-white rounded-lg p-3 border border-slate-200">
-                        <input
-                            type="radio"
-                            name={`correct_blank_${question.id}_${blank.id}`}
-                            checked={(selectedAnswers[idx] !== undefined ? selectedAnswers[idx] : blank.correctAnswer) === opt && opt !== ''}
-                            onChange={() => {
-                                flushSync(() => {
-                                  setSelectedAnswers(prev => ({ ...prev, [idx]: opt }));
-                                });
-                              updateBlank(idx, 'correctAnswer', opt);
-                            }}
-                            className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-1"
-                          />
-                        <div className="flex-1 min-w-0">
-                          <Input
-                            value={opt}
-                            onChange={(e) => {
-                              const options = [...blank.options];
-                              options[optIdx] = e.target.value;
-                              updateBlank(idx, 'options', options);
-                            }}
-                            placeholder={`Option ${optIdx + 1}`}
-                            className="text-sm h-9"
-                          />
-                        </div>
-                        {blank.options.length > 2 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              const options = blank.options.filter((_, i) => i !== optIdx);
-                              updateBlank(idx, 'options', options);
-                            }}
-                            className="text-slate-400 hover:text-red-500 h-9 w-9 flex-shrink-0"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
+                      <div key={optIdx} className="flex items-start gap-1 bg-white rounded p-2 border border-slate-200">
+                         <input
+                             type="radio"
+                             name={`correct_blank_${question.id}_${blank.id}`}
+                             checked={(selectedAnswers[idx] !== undefined ? selectedAnswers[idx] : blank.correctAnswer) === opt && opt !== ''}
+                             onChange={() => {
+                                 flushSync(() => {
+                                   setSelectedAnswers(prev => ({ ...prev, [idx]: opt }));
+                                 });
+                               updateBlank(idx, 'correctAnswer', opt);
+                             }}
+                             className="w-3 h-3 text-indigo-600 flex-shrink-0 mt-0.5"
+                           />
+                         <div className="flex-1 min-w-0">
+                           <Input
+                             value={opt}
+                             onChange={(e) => {
+                               const options = [...blank.options];
+                               options[optIdx] = e.target.value;
+                               updateBlank(idx, 'options', options);
+                             }}
+                             placeholder={`Opt ${optIdx + 1}`}
+                             className="text-xs h-7"
+                           />
+                         </div>
+                         {blank.options.length > 2 && (
+                           <Button
+                             type="button"
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => {
+                               const options = blank.options.filter((_, i) => i !== optIdx);
+                               updateBlank(idx, 'options', options);
+                             }}
+                             className="text-slate-400 hover:text-red-500 h-7 w-7 flex-shrink-0"
+                           >
+                             <Trash2 className="w-2.5 h-2.5" />
+                           </Button>
+                         )}
+                       </div>
                     ))}
                   </div>
                   
