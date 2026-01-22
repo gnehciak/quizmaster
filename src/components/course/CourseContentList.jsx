@@ -243,6 +243,11 @@ export default function CourseContentList({
                                         <DropdownMenuItem onClick={() => onEdit(child)}>
                                           <Pencil className="w-4 h-4 mr-2" /> Edit Content
                                         </DropdownMenuItem>
+                                        {onAddToTopic && (
+                                          <DropdownMenuItem onClick={() => onAddToTopic({ ...child, parentTopicId: block.id })}>
+                                            <FolderOpen className="w-4 h-4 mr-2" /> Move to Other Topic
+                                          </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem onClick={() => onDelete(child.id, block.id)}>
                                           <Trash2 className="w-4 h-4 mr-2" /> Remove from Topic
                                         </DropdownMenuItem>
