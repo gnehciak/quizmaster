@@ -1048,9 +1048,12 @@ ${aiInput}`;
                         <input
                             type="radio"
                             name={`correct_blank_${blank.id}`}
-                            checked={blank.correctAnswer === opt && opt !== ''}
+                            checked={selectedAnswers[idx] === opt && opt !== ''}
                             onChange={() => {
-                              flushSync(() => updateBlank(idx, 'correctAnswer', opt));
+                              flushSync(() => {
+                                setSelectedAnswers(prev => ({ ...prev, [idx]: opt }));
+                              });
+                              updateBlank(idx, 'correctAnswer', opt);
                             }}
                             className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-1"
                           />
