@@ -18,7 +18,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [] }) {
+export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [], onPreview, onCopy, onExport, onEditSchema }) {
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
