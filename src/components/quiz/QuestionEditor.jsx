@@ -40,7 +40,7 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
       answers[idx] = blank.correctAnswer;
     });
     setSelectedAnswers(answers);
-  }, [question.id, JSON.stringify(question.blanks?.map(b => b.correctAnswer))]);
+  }, [question.id, question.blanks?.length]);
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
