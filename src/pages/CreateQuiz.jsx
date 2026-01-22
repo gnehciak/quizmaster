@@ -1019,7 +1019,7 @@ export default function CreateQuiz() {
                <Textarea
                  value={importJsonText}
                  onChange={(e) => setImportJsonText(e.target.value)}
-                 placeholder='{} or {}_{} or [{}]'
+                 placeholder='{} or {},{} or [{}]'
                  className="font-mono text-xs min-h-[150px]"
                />
                <p className="text-xs text-slate-400">Supports formats: single object, comma-separated objects, or JSON array</p>
