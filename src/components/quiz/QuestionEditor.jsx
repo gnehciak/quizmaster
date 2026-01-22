@@ -443,11 +443,12 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-1">
-            <Label>Question</Label>
+            <Label className="text-sm">Question</Label>
             <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
               placeholder="Enter your question..."
+              minHeight="80px"
             />
           </div>
 
