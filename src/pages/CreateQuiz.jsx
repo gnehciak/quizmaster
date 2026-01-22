@@ -581,20 +581,9 @@ export default function CreateQuiz() {
               {/* Questions List & Editors */}
               {quiz.questions && quiz.questions.length > 0 ? (
                <>
-                  <div ref={reorderSectionRef} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8">
+                  <div ref={reorderSectionRef} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-2">
                                             <div className="flex items-center justify-between mb-2">
                                               <h3 className="text-sm font-medium text-slate-500">Reorder Questions</h3>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                  const allIndices = quiz.questions.map((_, idx) => idx);
-                                                  setCollapsedQuestions(new Set(allIndices));
-                                                }}
-                                                className="text-xs"
-                                              >
-                                                Collapse All
-                                              </Button>
                                             </div>
                     <DragDropContext onDragEnd={handleDragEnd}>
                       <Droppable droppableId="questions">
