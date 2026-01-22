@@ -687,7 +687,29 @@ export default function CreateQuiz() {
                     </DragDropContext>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="flex gap-2 mb-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const allIndices = quiz.questions.map((_, idx) => idx);
+                        setCollapsedQuestions(new Set(allIndices));
+                      }}
+                      className="text-xs"
+                    >
+                      Collapse All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCollapsedQuestions(new Set())}
+                      className="text-xs"
+                    >
+                      Expand All
+                    </Button>
+                  </div>
+
+                   <div className="space-y-6">
                     {quiz.questions?.map((question, idx) => (
                       <div key={question.id} id={`question-editor-${idx}`} className="scroll-mt-24">
                         <div className="flex items-center gap-2 mb-2">
