@@ -60,7 +60,12 @@ export default function CourseAnalytics() {
 
   const { data: attempts = [], isLoading: attemptsLoading } = useQuery({
     queryKey: ['courseAttempts', courseId],
-    queryFn: () => base44.entities.QuizAttempt.filter({ course_id: courseId }),
+    queryFn: async () => {
+      // Get all attempts
+      const allAttempts = await base44.entities.QuizAttempt.list();
+      // Filter by course_id on the frontend
+      return allAttempts.filter(attempt => attempt.course_id === courseId);
+    },
     enabled: !!courseId
   });
 
