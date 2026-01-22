@@ -49,6 +49,7 @@ export default function CourseContentList({
   onToggleLock,
   onScheduleVisibility,
   onScheduleLock,
+  onAddToTopic,
   isAdmin,
   hasAccess,
   quizzes,
@@ -509,13 +510,18 @@ export default function CourseContentList({
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => onEdit(block)}>
-                                        <Pencil className="w-4 h-4 mr-2" /> Edit Content
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onToggleVisibility(block.id)}>
-                                        {block.visible === false ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-                                        {block.visible === false ? "Make Visible" : "Hide from Students"}
-                                    </DropdownMenuItem>
+                                   <DropdownMenuItem onClick={() => onEdit(block)}>
+                                       <Pencil className="w-4 h-4 mr-2" /> Edit Content
+                                   </DropdownMenuItem>
+                                   {block.type !== 'topic' && onAddToTopic && (
+                                     <DropdownMenuItem onClick={() => onAddToTopic(block)}>
+                                       <FolderOpen className="w-4 h-4 mr-2" /> Add to Topic
+                                     </DropdownMenuItem>
+                                   )}
+                                   <DropdownMenuItem onClick={() => onToggleVisibility(block.id)}>
+                                       {block.visible === false ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                                       {block.visible === false ? "Make Visible" : "Hide from Students"}
+                                   </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onScheduleVisibility(block)}>
                                         <Clock className="w-4 h-4 mr-2" /> Schedule Visibility
                                     </DropdownMenuItem>

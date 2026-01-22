@@ -107,6 +107,9 @@ export default function CourseDetail() {
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [topicTitle, setTopicTitle] = useState('');
   const [topicDueDate, setTopicDueDate] = useState('');
+  const [addToTopicDialogOpen, setAddToTopicDialogOpen] = useState(false);
+  const [blockToMove, setBlockToMove] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState('');
 
   const quillModules = {
     toolbar: [
@@ -557,6 +560,32 @@ export default function CourseDetail() {
     const newCode = Math.random().toString(36).substring(2, 10);
     await updateCourseMutation.mutateAsync({ unlock_code: newCode });
     toast.success('Unlock code reset successfully');
+  };
+
+  const handleAddToTopic = (block) => {
+    setBlockToMove(block);
+    setSelectedTopic('');
+    setAddToTopicDialogOpen(true);
+  };
+
+  const handleMoveToTopic = async () => {
+    if (!selectedTopic || !blockToMove) return;
+    
+    const updatedBlocks = contentBlocks.map(b => {
+      if (b.id === selectedTopic && b.type === 'topic') {
+        return {
+          ...b,
+          children: [...(b.children || []), blockToMove]
+        };
+      }
+      return b;
+    }).filter(b => b.id !== blockToMove.id);
+    
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    setAddToTopicDialogOpen(false);
+    setBlockToMove(null);
+    setSelectedTopic('');
+    toast.success('Block moved to topic');
   };
 
   const isBlockVisible = (block) => {
@@ -1587,6 +1616,47 @@ export default function CourseDetail() {
             </DialogContent>
           </Dialog>
 
+          <Dialog open={addToTopicDialogOpen} onOpenChange={setAddToTopicDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add to Topic</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label>Select Topic</Label>
+                  <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a topic..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contentBlocks.filter(b => b.type === 'topic').map(topic => (
+                        <SelectItem key={topic.id} value={topic.id}>
+                          {topic.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleMoveToTopic} 
+                    className="flex-1"
+                    disabled={!selectedTopic}
+                  >
+                    Move to Topic
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddToTopicDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <CourseContentList 
             blocks={contentBlocks}
             editMode={editMode}
@@ -1603,6 +1673,7 @@ export default function CourseDetail() {
                 setLockingBlock(block);
                 setLockDialogOpen(true);
             }}
+            onAddToTopic={handleAddToTopic}
             isAdmin={isAdmin}
             hasAccess={hasAccess}
             quizzes={quizzes}
