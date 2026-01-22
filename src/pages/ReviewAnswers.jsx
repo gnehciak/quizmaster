@@ -1869,7 +1869,7 @@ Provide HTML formatted explanation:`;
         isCorrect = earnedMarks === questionMarks;
         userAnswer = zones.map(z => `${z.label}: ${answer?.[z.id] || '(empty)'}`).join('; ');
         correctAnswer = zones.map(z => `${z.label}: ${z.correctAnswer}`).join('; ');
-      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same' || q.type === 'inline_dropdown_typed') {
         const blanks = q.blanks || [];
         questionMarks = blanks.length;
         earnedMarks = blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
@@ -2831,6 +2831,7 @@ Provide HTML formatted explanation:`;
               'drag_drop_dual': 'Drag & Drop (Dual)',
               'inline_dropdown_separate': 'Fill in Blanks',
               'inline_dropdown_same': 'Fill in Blanks',
+              'inline_dropdown_typed': 'Fill in Blanks',
               'matching_list_dual': 'Matching List'
             };
 
