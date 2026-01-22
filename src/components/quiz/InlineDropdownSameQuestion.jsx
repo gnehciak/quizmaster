@@ -52,16 +52,7 @@ export default function InlineDropdownSameQuestion({
   };
 
   const renderTextWithDropdowns = () => {
-    let text = question.textWithBlanks || '';
-    // Replace block-level HTML tags with newlines
-    text = text.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n');
-    text = text.replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '\n');
-    text = text.replace(/<br\s*\/?>/gi, '\n');
-    // Clean up multiple consecutive newlines (more than 2)
-    text = text.replace(/\n{3,}/g, '\n\n');
-    // Clean up multiple consecutive spaces/tabs but keep newlines
-    text = text.replace(/[ \t]+/g, ' ');
-    
+    const text = question.textWithBlanks || '';
     const parts = text.split(/(\{\{blank_\d+\}\})/g);
     
     return parts.map((part, idx) => {
@@ -301,7 +292,7 @@ export default function InlineDropdownSameQuestion({
         );
       }
       
-      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
+      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} className="prose prose-sm max-w-none" />;
     });
   };
 
@@ -320,8 +311,10 @@ export default function InlineDropdownSameQuestion({
           <span className="text-sm font-semibold text-red-700">Not Attempted</span>
         </div>
       )}
-      <div className="text-lg font-medium text-slate-800 leading-relaxed whitespace-pre-wrap">
-        {renderTextWithDropdowns()}
+      <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 lg:p-8 border border-slate-200/60">
+        <div className="text-lg leading-loose text-slate-700 whitespace-pre-wrap prose prose-slate max-w-none prose-p:my-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md">
+          {renderTextWithDropdowns()}
+        </div>
       </div>
       
       {showResults && question.explanation && (
