@@ -24,21 +24,7 @@ export default function RichTextEditor({
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  React.useEffect(() => {
-    if (quillRef.current && !disableImages) {
-      setTimeout(() => {
-        const editor = quillRef.current?.getEditor();
-        if (editor) {
-          const toolbar = editor.getModule('toolbar');
-          if (toolbar) {
-            toolbar.addHandler('image', () => {
-              fileInputRef.current?.click();
-            });
-          }
-        }
-      }, 100);
-    }
-  }, [disableImages]);
+
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -61,17 +47,26 @@ export default function RichTextEditor({
     }
   };
 
+  const imageHandler = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   const modules = React.useMemo(() => ({
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ...(disableLinks ? [] : [['link']]),
-      ...(disableImages ? [] : [['image']]),
-      ...(disableHighlight ? [] : [[{ 'background': [] }]]),
-      [{ 'align': [] }]
-    ]
-  }), [disableLinks, disableHighlight, disableImages]);
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ...(disableLinks ? [] : [['link']]),
+        ...(disableImages ? [] : [['image']]),
+        ...(disableHighlight ? [] : [[{ 'background': [] }]]),
+        [{ 'align': [] }]
+      ],
+      handlers: disableImages ? {} : {
+        image: imageHandler
+      }
+    }
+  }), [disableLinks, disableHighlight, disableImages, imageHandler]);
 
   const formats = [
     'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
@@ -148,19 +143,7 @@ export default function RichTextEditor({
               style={{ display: 'none' }}
             />
           )}
-          {!disableImages && (
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  if (document.querySelector('.ql-image')) {
-                    document.querySelector('.ql-image').onclick = function() {
-                      document.querySelector('input[type="file"]')?.click();
-                    };
-                  }
-                `
-              }}
-            />
-          )}
+  
         </>
       )}
     </div>
