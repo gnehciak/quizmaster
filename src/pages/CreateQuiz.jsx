@@ -1052,10 +1052,10 @@ export default function CreateQuiz() {
 
       {/* Floating Question Menu */}
       {showQuestionMenu && quiz.questions && quiz.questions.length > 0 && (
-        <div className="fixed left-6 top-24 z-40 max-w-xs">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-lg p-3">
-            <div className="text-xs font-semibold text-slate-700 mb-2 px-2">Jump to Question</div>
-            <div className="max-h-96 overflow-y-auto space-y-1">
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="text-xs font-semibold text-slate-700 px-3 py-2 border-b border-slate-200">Jump to Question</div>
+            <div className="max-h-96 overflow-y-auto">
               {quiz.questions?.map((q, idx) => (
                 <button
                   key={q.id}
@@ -1068,11 +1068,11 @@ export default function CreateQuiz() {
                       }
                     }
                   }}
-                  className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-100 transition-colors text-xs"
+                  className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 flex items-center gap-2 group"
                 >
-                  <span className="font-medium text-slate-700">Q{idx + 1}</span>
-                  <span className="text-slate-500 ml-2 truncate inline-block max-w-xs">
-                    {(q.question || 'Untitled').replace(/<[^>]*>/g, '').substring(0, 40)}
+                  <span className="font-medium text-slate-700 whitespace-nowrap">Q{idx + 1}</span>
+                  <span className="text-slate-600 text-xs truncate">
+                    {(q.question || 'Untitled').replace(/<[^>]*>/g, '')}
                   </span>
                 </button>
               ))}
