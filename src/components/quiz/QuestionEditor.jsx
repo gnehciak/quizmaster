@@ -1036,12 +1036,14 @@ ${aiInput}`;
                     {blank.options?.map((opt, optIdx) => (
                       <div key={optIdx} className="flex items-start gap-2 bg-white rounded-lg p-3 border border-slate-200">
                         <input
-                          type="radio"
-                          name={`correct_blank_${blank.id}`}
-                          checked={blank.correctAnswer === opt && opt !== ''}
-                          onChange={() => updateBlank(idx, 'correctAnswer', opt)}
-                          className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-1"
-                        />
+                            type="radio"
+                            name={`correct_blank_${blank.id}`}
+                            checked={blank.correctAnswer === opt && opt !== ''}
+                            onChange={() => {
+                              flushSync(() => updateBlank(idx, 'correctAnswer', opt));
+                            }}
+                            className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-1"
+                          />
                         <div className="flex-1 min-w-0">
                           <Input
                             value={opt}
