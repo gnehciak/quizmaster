@@ -248,12 +248,12 @@ export default function CreateQuiz() {
       } else {
         // Try to parse comma-separated objects {},{},{}
         const objectStrings = trimmedText.split('},{');
-        const fixedStrings = objectStrings.map((str, idx) => {
-          if (idx === 0) return str + '}';
-          if (idx === objectStrings.length - 1) return '{' + str;
-          return '{' + str + '}';
+        questions = objectStrings.map((str, idx) => {
+          let obj = str.trim();
+          if (idx > 0) obj = '{' + obj;
+          if (idx < objectStrings.length - 1) obj = obj + '}';
+          return JSON.parse(obj);
         });
-        questions = fixedStrings.map(str => JSON.parse(str));
       }
 
       // Ensure it's an array
