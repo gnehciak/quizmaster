@@ -51,6 +51,7 @@ export default function CourseContentList({
   onScheduleVisibility,
   onScheduleLock,
   onAddToTopic,
+  onReorderTopicChildren,
   isAdmin,
   hasAccess,
   quizzes,
@@ -80,7 +81,15 @@ export default function CourseContentList({
   }, [blocks, quizzes]);
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    onReorder(result.source.index, result.destination.index);
+    
+    // Check if dragging within a topic
+    if (result.type && result.type.startsWith('topic-')) {
+      const topicId = result.type.replace('topic-', '');
+      onReorderTopicChildren(topicId, result.source.index, result.destination.index);
+    } else {
+      // Top-level reordering
+      onReorder(result.source.index, result.destination.index);
+    }
   };
 
   const isBlockVisible = (block) => {
@@ -182,21 +191,83 @@ export default function CourseContentList({
           
           {isExpanded && block.children && block.children.length > 0 && (
             <div className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3">
-              {block.children.map(child => {
-                if (!isBlockVisible(child)) return null;
-                const childLocked = isBlockLocked(child);
-                return (
-                  <div key={child.id} className="relative">
-                    {childLocked && !isAdmin && (
-                      <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
-                        <Lock className="w-3 h-3" />
-                        {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
-                      </div>
-                    )}
-                    <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
-                  </div>
-                );
-              })}
+              {editMode && isAdmin ? (
+                <Droppable droppableId={`topic-${block.id}`} type={`topic-${block.id}`}>
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                      {block.children.map((child, childIndex) => {
+                        if (!isBlockVisible(child)) return null;
+                        const childLocked = isBlockLocked(child);
+                        return (
+                          <Draggable key={child.id} draggableId={`${block.id}-${child.id}`} index={childIndex}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={cn(
+                                  "group relative flex gap-3",
+                                  snapshot.isDragging && "z-50 scale-105 opacity-90"
+                                )}
+                              >
+                                <div 
+                                  {...provided.dragHandleProps}
+                                  className="flex-shrink-0 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+                                >
+                                  <GripVertical className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 relative">
+                                  {childLocked && !isAdmin && (
+                                    <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
+                                      <Lock className="w-3 h-3" />
+                                      {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
+                                    </div>
+                                  )}
+                                  <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
+                                  
+                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-lg border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                                          <MoreVertical className="w-4 h-4 text-slate-500" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => onEdit(child)}>
+                                          <Pencil className="w-4 h-4 mr-2" /> Edit Content
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onDelete(child.id)}>
+                                          <Trash2 className="w-4 h-4 mr-2" /> Remove from Topic
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              ) : (
+                block.children.map(child => {
+                  if (!isBlockVisible(child)) return null;
+                  const childLocked = isBlockLocked(child);
+                  return (
+                    <div key={child.id} className="relative">
+                      {childLocked && !isAdmin && (
+                        <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
+                          <Lock className="w-3 h-3" />
+                          {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
+                        </div>
+                      )}
+                      <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </div>

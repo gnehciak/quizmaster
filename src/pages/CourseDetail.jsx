@@ -479,6 +479,19 @@ export default function CourseDetail() {
     await updateCourseMutation.mutateAsync({ content_blocks: result });
   };
 
+  const handleReorderTopicChildren = async (topicId, startIndex, endIndex) => {
+    const updatedBlocks = contentBlocks.map(block => {
+      if (block.id === topicId && block.type === 'topic') {
+        const children = Array.from(block.children || []);
+        const [removed] = children.splice(startIndex, 1);
+        children.splice(endIndex, 0, removed);
+        return { ...block, children };
+      }
+      return block;
+    });
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+  };
+
   const handleDeleteBlock = async (blockId) => {
     if (!confirm('Delete this content block?')) return;
     const updatedBlocks = contentBlocks.filter(b => b.id !== blockId);
@@ -1674,6 +1687,7 @@ export default function CourseDetail() {
                 setLockDialogOpen(true);
             }}
             onAddToTopic={handleAddToTopic}
+            onReorderTopicChildren={handleReorderTopicChildren}
             isAdmin={isAdmin}
             hasAccess={hasAccess}
             quizzes={quizzes}
