@@ -119,6 +119,19 @@ export default function CreateQuiz() {
     }
   }, [existingQuiz?.category_id, categories]);
 
+  useEffect(() => {
+    // Detect when reorder section is out of view
+    const handleScroll = () => {
+      if (reorderSectionRef.current) {
+        const rect = reorderSectionRef.current.getBoundingClientRect();
+        setShowQuestionMenu(rect.bottom < 0);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       const sanitizedData = {
