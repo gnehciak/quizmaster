@@ -31,7 +31,8 @@ import {
   Calendar,
   MoreVertical,
   RefreshCw,
-  X
+  X,
+  FolderOpen
 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
@@ -104,6 +105,8 @@ export default function CourseDetail() {
   const [editMode, setEditMode] = useState(false);
   const [studentsDialogOpen, setStudentsDialogOpen] = useState(false);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+  const [topicTitle, setTopicTitle] = useState('');
+  const [topicDueDate, setTopicDueDate] = useState('');
 
   const quillModules = {
     toolbar: [
@@ -313,6 +316,10 @@ export default function CourseDetail() {
             updated.icon = sectionIcon;
             updated.color = sectionColor;
           }
+          else if (contentType === 'topic') {
+            updated.title = topicTitle;
+            updated.due_date = topicDueDate || undefined;
+          }
           return updated;
         }
         return block;
@@ -342,6 +349,11 @@ export default function CourseDetail() {
         newBlock.icon = sectionIcon;
         newBlock.color = sectionColor;
       }
+      else if (contentType === 'topic') {
+        newBlock.title = topicTitle;
+        newBlock.due_date = topicDueDate || undefined;
+        newBlock.children = [];
+      }
 
       const updatedBlocks = [...contentBlocks, newBlock];
       await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
@@ -360,6 +372,8 @@ export default function CourseDetail() {
     setSectionColor('indigo');
     setCustomIconInput('');
     setCustomColorInput('');
+    setTopicTitle('');
+    setTopicDueDate('');
     setContentType('');
     setEditingBlock(null);
   };
@@ -385,6 +399,10 @@ export default function CourseDetail() {
       setSectionColor(block.color || 'indigo');
       setCustomIconInput('');
       setCustomColorInput('');
+    }
+    else if (block.type === 'topic') {
+      setTopicTitle(block.title || '');
+      setTopicDueDate(block.due_date || '');
     }
     setAddContentOpen(true);
   };
@@ -986,6 +1004,13 @@ export default function CourseDetail() {
                       <div className="space-y-2">
                         <label className="text-sm font-medium mb-2 block">Select Content Type</label>
                         <div className="grid gap-2">
+                          <Button variant="outline" onClick={() => setContentType('topic')} className="justify-start gap-2 h-auto py-3">
+                            <FolderOpen className="w-5 h-5 text-indigo-600" />
+                            <div className="text-left">
+                              <div className="font-medium">Topic Container</div>
+                              <div className="text-xs text-slate-500">Group content with completion tracking</div>
+                            </div>
+                          </Button>
                           <Button variant="outline" onClick={() => setContentType('section')} className="justify-start gap-2 h-auto py-3">
                             <div className="w-5 h-5 flex items-center justify-center text-indigo-600 font-bold">#</div>
                             <div className="text-left">
@@ -1274,6 +1299,33 @@ export default function CourseDetail() {
                           </div>
                         )}
 
+                        {contentType === 'topic' && (
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Topic Title</label>
+                              <Input
+                                value={topicTitle}
+                                onChange={(e) => setTopicTitle(e.target.value)}
+                                placeholder="e.g. Module 1: Introduction to React"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Due Date (optional)</label>
+                              <Input
+                                type="datetime-local"
+                                value={topicDueDate}
+                                onChange={(e) => setTopicDueDate(e.target.value)}
+                              />
+                              <p className="text-xs text-slate-500 mt-1">
+                                Overdue topics will be highlighted to students
+                              </p>
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-slate-700">
+                              <strong>Note:</strong> After creating the topic, you can drag and drop other content blocks into it to organize your course materials with automatic completion tracking.
+                            </div>
+                          </div>
+                        )}
+
                         {contentType === 'section' && (
                           <div className="space-y-4">
                             <div>
@@ -1443,7 +1495,8 @@ export default function CourseDetail() {
                             (contentType === 'embed_file' && !fileUrl?.trim()) ||
                             (contentType === 'embed_youtube' && !youtubeUrl?.trim()) ||
                             (contentType === 'upload_file' && !fileUrl?.trim()) ||
-                            (contentType === 'section' && !sectionTitle?.trim())
+                            (contentType === 'section' && !sectionTitle?.trim()) ||
+                            (contentType === 'topic' && !topicTitle?.trim())
                           }
                         >
                           {editingBlock ? 'Update Content' : 'Add Content'}

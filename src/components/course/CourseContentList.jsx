@@ -19,7 +19,11 @@ import {
   MoreVertical,
   CheckCircle2,
   BarChart3,
-  RotateCcw
+  RotateCcw,
+  ChevronDown,
+  ChevronRight,
+  AlertCircle,
+  FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -50,6 +54,7 @@ export default function CourseContentList({
   quizzes,
   allQuizAttempts
 }) {
+  const [expandedTopics, setExpandedTopics] = React.useState({});
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     onReorder(result.source.index, result.destination.index);
@@ -76,7 +81,105 @@ export default function CourseContentList({
     return false;
   };
 
-  const RenderBlockContent = ({ block, isLocked }) => {
+  const calculateTopicCompletion = (topic) => {
+    if (!topic.children || topic.children.length === 0) return { completed: 0, total: 0 };
+    
+    const quizChildren = topic.children.filter(child => child.type === 'quiz');
+    if (quizChildren.length === 0) return { completed: 0, total: 0 };
+    
+    const completed = quizChildren.filter(child => {
+      const attempts = allQuizAttempts?.filter(a => a.quiz_id === child.quiz_id) || [];
+      return attempts.length > 0;
+    }).length;
+    
+    return { completed, total: quizChildren.length };
+  };
+
+  const isTopicOverdue = (dueDate) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
+
+  const toggleTopic = (topicId) => {
+    setExpandedTopics(prev => ({
+      ...prev,
+      [topicId]: !prev[topicId]
+    }));
+  };
+
+  const RenderBlockContent = ({ block, isLocked, isChild = false }) => {
+    if (block.type === 'topic') {
+      const { completed, total } = calculateTopicCompletion(block);
+      const isExpanded = expandedTopics[block.id] ?? true;
+      const isOverdue = isTopicOverdue(block.due_date);
+      const isCompleted = total > 0 && completed === total;
+      
+      return (
+        <div className="space-y-3">
+          <div 
+            className={cn(
+              "flex items-center gap-4 px-5 py-4 rounded-xl border-2 shadow-sm w-full cursor-pointer transition-all",
+              isOverdue && !isCompleted ? "bg-red-50 border-red-300 hover:border-red-400" : "bg-indigo-50 border-indigo-200 hover:border-indigo-300",
+              isCompleted && "bg-emerald-50 border-emerald-300"
+            )}
+            onClick={() => toggleTopic(block.id)}
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <div 
+                className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xl shadow-sm",
+                  isOverdue && !isCompleted ? "bg-red-500 text-white" : isCompleted ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"
+                )}
+              >
+                {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+              </div>
+              <div className="flex-1">
+                <h3 className={cn("text-lg font-bold flex items-center gap-2", isOverdue && !isCompleted ? "text-red-900" : isCompleted ? "text-emerald-900" : "text-indigo-900")}>
+                  {block.title}
+                  {isCompleted && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                  {isOverdue && !isCompleted && <AlertCircle className="w-5 h-5 text-red-600" />}
+                </h3>
+                <div className="flex items-center gap-3 mt-1 text-sm">
+                  {total > 0 && (
+                    <span className={cn("font-medium", isCompleted ? "text-emerald-700" : isOverdue && !isCompleted ? "text-red-700" : "text-indigo-700")}>
+                      {completed}/{total} completed
+                    </span>
+                  )}
+                  {block.due_date && (
+                    <span className={cn("flex items-center gap-1", isOverdue && !isCompleted ? "text-red-700 font-semibold" : "text-slate-600")}>
+                      <Calendar className="w-3 h-3" />
+                      Due {new Date(block.due_date).toLocaleDateString()}
+                      {isOverdue && !isCompleted && " (Overdue)"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {isExpanded && block.children && block.children.length > 0 && (
+            <div className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3">
+              {block.children.map(child => {
+                if (!isBlockVisible(child)) return null;
+                const childLocked = isBlockLocked(child);
+                return (
+                  <div key={child.id} className="relative">
+                    {childLocked && !isAdmin && (
+                      <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
+                        <Lock className="w-3 h-3" />
+                        {child.unlockDate ? `Unlocks ${new Date(child.unlockDate).toLocaleDateString()}` : "Content Locked"}
+                      </div>
+                    )}
+                    <RenderBlockContent block={child} isLocked={childLocked} isChild={true} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     if (block.type === 'section') {
         const getColorStyles = (colorValue) => {
           if (colorValue?.startsWith('#')) {
