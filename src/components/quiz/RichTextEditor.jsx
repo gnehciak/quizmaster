@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ImageResize from 'quill-image-resize-module-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
+
+Quill.register('modules/imageResize', ImageResize);
 
 export default function RichTextEditor({ 
   value, 
@@ -65,6 +67,10 @@ export default function RichTextEditor({
       handlers: disableImages ? {} : {
         image: imageHandler
       }
+    },
+    imageResize: disableImages ? undefined : {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize']
     }
   }), [disableLinks, disableHighlight, disableImages, imageHandler]);
 
