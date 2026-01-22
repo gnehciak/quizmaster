@@ -597,6 +597,41 @@ export default function CourseDetail() {
     setAddToTopicDialogOpen(true);
   };
 
+  const handleMoveToOtherTopic = async () => {
+    if (!selectedTopic || !blockToMove) return;
+    
+    const parentTopicId = blockToMove.parentTopicId;
+    
+    const updatedBlocks = contentBlocks.map(b => {
+      // Remove from current topic if moving between topics
+      if (parentTopicId && b.id === parentTopicId && b.type === 'topic') {
+        return {
+          ...b,
+          children: (b.children || []).filter(child => child.id !== blockToMove.id)
+        };
+      }
+      // Add to new topic
+      if (b.id === selectedTopic && b.type === 'topic') {
+        return {
+          ...b,
+          children: [...(b.children || []), blockToMove]
+        };
+      }
+      // Remove from main blocks if it was at top level
+      return b;
+    }).filter(b => {
+      // Don't remove if just moving between topics
+      if (parentTopicId) return true;
+      return b.id !== blockToMove.id;
+    });
+    
+    await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
+    setAddToTopicDialogOpen(false);
+    setBlockToMove(null);
+    setSelectedTopic('');
+    toast.success('Block moved to topic');
+  };
+
   const handleMoveToTopic = async () => {
     if (!selectedTopic || !blockToMove) return;
     
