@@ -358,7 +358,7 @@ ${aiInput}`;
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+    <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-3">
       <div className="flex items-start justify-between gap-4">
         <Button
           type="button"
