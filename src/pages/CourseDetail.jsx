@@ -784,7 +784,7 @@ export default function CourseDetail() {
             onEdit={handleEditCourse}
             onAddContent={() => setAddContentOpen(true)}
             onManageStudents={() => setStudentsDialogOpen(true)}
-            onAnalytics={() => window.location.href = createPageUrl('QuizAnalytics')}
+            onAnalytics={() => window.location.href = createPageUrl(`CourseAnalytics?id=${courseId}`)}
             editMode={editMode}
             setEditMode={setEditMode}
           />

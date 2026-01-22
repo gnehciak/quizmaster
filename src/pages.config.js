@@ -14,6 +14,7 @@ import ReviewAnswers from './pages/ReviewAnswers';
 import TakeQuiz from './pages/TakeQuiz';
 import UserDetails from './pages/UserDetails';
 import UserManagement from './pages/UserManagement';
+import CourseAnalytics from './pages/CourseAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "TakeQuiz": TakeQuiz,
     "UserDetails": UserDetails,
     "UserManagement": UserManagement,
+    "CourseAnalytics": CourseAnalytics,
 }
 
 export const pagesConfig = {
