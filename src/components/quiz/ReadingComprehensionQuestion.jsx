@@ -225,63 +225,8 @@ export default function ReadingComprehensionQuestion({
         <div className="flex-1 px-8 py-6">
           <div className="bg-white rounded-lg p-6 border border-slate-200 h-full overflow-auto">
             <div 
-              className="prose prose-slate max-w-none text-slate-800 leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:cursor-resize [&_img]:rounded-lg [&_img]:shadow-md"
+              className="prose prose-slate max-w-none text-slate-800 leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:shadow-md"
               dangerouslySetInnerHTML={{ __html: highlightedPassages[activePassage?.id] || activePassage?.content }}
-              onClick={(e) => {
-                if (e.target.tagName === 'IMG') {
-                  const img = e.target;
-                  const wrapper = document.createElement('div');
-                  wrapper.style.position = 'relative';
-                  wrapper.style.display = 'inline-block';
-                  
-                  if (!img.parentElement?.classList.contains('image-resizer')) {
-                    const controls = document.createElement('div');
-                    controls.className = 'image-resize-controls';
-                    controls.style.cssText = `
-                      position: absolute;
-                      bottom: -30px;
-                      left: 50%;
-                      transform: translateX(-50%);
-                      display: flex;
-                      gap: 8px;
-                      background: white;
-                      padding: 4px 8px;
-                      border-radius: 4px;
-                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                      z-index: 100;
-                    `;
-                    
-                    const sizes = [
-                      { label: 'S', width: '150px' },
-                      { label: 'M', width: '250px' },
-                      { label: 'L', width: '400px' },
-                      { label: 'Full', width: '100%' }
-                    ];
-                    
-                    sizes.forEach(size => {
-                      const btn = document.createElement('button');
-                      btn.textContent = size.label;
-                      btn.style.cssText = `
-                        padding: 4px 8px;
-                        font-size: 12px;
-                        border: 1px solid #ccc;
-                        border-radius: 3px;
-                        background: white;
-                        cursor: pointer;
-                      `;
-                      btn.onclick = (e) => {
-                        e.stopPropagation();
-                        img.style.width = size.width;
-                        img.style.height = 'auto';
-                      };
-                      controls.appendChild(btn);
-                    });
-                    
-                    img.parentElement.style.position = 'relative';
-                    img.parentElement.appendChild(controls);
-                  }
-                }
-              }}
             />
           </div>
         </div>
