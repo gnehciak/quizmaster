@@ -22,18 +22,25 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
-  const [selectedAnswers, setSelectedAnswers] = React.useState({});
+  const [selectedAnswers, setSelectedAnswers] = React.useState(() => {
+    // Initialize from question data
+    const answers = {};
+    (question.blanks || []).forEach((blank, idx) => {
+      answers[idx] = blank.correctAnswer;
+    });
+    return answers;
+  });
   const updateTimeoutRef = React.useRef(null);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    // Sync selected answers from question data
+    // Sync selected answers when question.blanks changes
     const answers = {};
     (question.blanks || []).forEach((blank, idx) => {
       answers[idx] = blank.correctAnswer;
     });
     setSelectedAnswers(answers);
-  }, [question.blanks]);
+  }, [question.id, JSON.stringify(question.blanks?.map(b => b.correctAnswer))]);
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
