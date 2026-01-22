@@ -12,33 +12,54 @@ export default function CourseCodeSection({ user }) {
 
   const enrollMutation = useMutation({
     mutationFn: async (unlockCode) => {
-      // Find course with matching unlock code
-      const courses = await base44.entities.Course.filter({ unlock_code: unlockCode });
-      
-      if (courses.length === 0) {
-        throw new Error('Invalid code');
+      // Find courses and check against all access codes
+      const allCourses = await base44.entities.Course.list();
+      let matchedCourse = null;
+      let matchedClass = null;
+
+      for (const course of allCourses) {
+        // Check new access_codes array
+        if (course.access_codes && Array.isArray(course.access_codes)) {
+          const match = course.access_codes.find(ac => 
+            ac.code.toUpperCase() === unlockCode.toUpperCase()
+          );
+          if (match) {
+            matchedCourse = course;
+            matchedClass = match.class_name;
+            break;
+          }
+        }
+        // Fallback to legacy unlock_code
+        if (course.unlock_code && course.unlock_code.toUpperCase() === unlockCode.toUpperCase()) {
+          matchedCourse = course;
+          matchedClass = 'Legacy Access';
+          break;
+        }
       }
 
-      const course = courses[0];
+      if (!matchedCourse) {
+        throw new Error('Invalid code');
+      }
 
       // Check if already enrolled
       const existingAccess = await base44.entities.CourseAccess.filter({
         user_email: user.email,
-        course_id: course.id
+        course_id: matchedCourse.id
       });
 
       if (existingAccess.length > 0) {
         throw new Error('already_enrolled');
       }
 
-      // Create course access
+      // Create course access with class name
       await base44.entities.CourseAccess.create({
         user_email: user.email,
-        course_id: course.id,
-        unlock_method: 'code'
+        course_id: matchedCourse.id,
+        unlock_method: 'code',
+        class_name: matchedClass
       });
 
-      return course;
+      return matchedCourse;
     },
     onSuccess: (course) => {
       window.location.href = createPageUrl(`CourseDetail?id=${course.id}`);

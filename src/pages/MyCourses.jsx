@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
-import { Search, BookOpen, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, BookOpen, Loader2, KeyRound, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from 'sonner';
 import CourseCard from '@/components/course/CourseCard';
 
 export default function MyCourses() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -58,6 +70,76 @@ export default function MyCourses() {
 
   const isLoading = coursesLoading || accessLoading || !user;
 
+  const joinCourseMutation = useMutation({
+    mutationFn: async (code) => {
+      const allCourses = await base44.entities.Course.list();
+      let matchedCourse = null;
+      let matchedClass = null;
+
+      for (const course of allCourses) {
+        if (course.access_codes && Array.isArray(course.access_codes)) {
+          const match = course.access_codes.find(ac => 
+            ac.code.toUpperCase() === code.toUpperCase()
+          );
+          if (match) {
+            matchedCourse = course;
+            matchedClass = match.class_name;
+            break;
+          }
+        }
+        if (course.unlock_code && course.unlock_code.toUpperCase() === code.toUpperCase()) {
+          matchedCourse = course;
+          matchedClass = 'Legacy Access';
+          break;
+        }
+      }
+
+      if (!matchedCourse) {
+        throw new Error('Invalid code');
+      }
+
+      const existingAccess = await base44.entities.CourseAccess.filter({
+        user_email: user.email,
+        course_id: matchedCourse.id
+      });
+
+      if (existingAccess.length > 0) {
+        throw new Error('already_enrolled');
+      }
+
+      await base44.entities.CourseAccess.create({
+        user_email: user.email,
+        course_id: matchedCourse.id,
+        unlock_method: 'code',
+        class_name: matchedClass
+      });
+
+      return matchedCourse;
+    },
+    onSuccess: (course) => {
+      queryClient.invalidateQueries({ queryKey: ['courseAccess'] });
+      setJoinDialogOpen(false);
+      setAccessCode('');
+      toast.success(`Successfully joined ${course.title}`);
+    },
+    onError: (error) => {
+      if (error.message === 'already_enrolled') {
+        toast.error('You are already enrolled in this course');
+      } else {
+        toast.error('Invalid code. Please check and try again.');
+      }
+    }
+  });
+
+  const handleJoinCourse = (e) => {
+    e.preventDefault();
+    if (!accessCode.trim()) {
+      toast.error('Please enter a code');
+      return;
+    }
+    joinCourseMutation.mutate(accessCode.trim());
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
@@ -70,15 +152,59 @@ export default function MyCourses() {
             </p>
           </div>
 
-          {/* Search */}
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <Input
-              placeholder="Search your courses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 text-base bg-white border-slate-200 rounded-xl shadow-sm"
-            />
+          {/* Search & Join Button */}
+          <div className="flex gap-3 max-w-2xl mx-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                placeholder="Search your courses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 h-12 text-base bg-white border-slate-200 rounded-xl shadow-sm"
+              />
+            </div>
+            <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="h-12 px-6 gap-2 bg-indigo-600 hover:bg-indigo-700">
+                  <Plus className="w-5 h-5" />
+                  Join Course
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <KeyRound className="w-5 h-5 text-indigo-600" />
+                    Join Course with Code
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleJoinCourse} className="space-y-4 py-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Access Code</label>
+                    <Input
+                      placeholder="Enter course code"
+                      value={accessCode}
+                      onChange={(e) => setAccessCode(e.target.value)}
+                      className="text-center uppercase h-12"
+                      disabled={joinCourseMutation.isPending}
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12"
+                    disabled={joinCourseMutation.isPending}
+                  >
+                    {joinCourseMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Joining...
+                      </>
+                    ) : (
+                      'Join Course'
+                    )}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
