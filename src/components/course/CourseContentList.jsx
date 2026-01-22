@@ -23,7 +23,8 @@ import {
   ChevronDown,
   ChevronRight,
   AlertCircle,
-  FolderOpen
+  FolderOpen,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,27 @@ export default function CourseContentList({
   allQuizAttempts
 }) {
   const [expandedTopics, setExpandedTopics] = React.useState({});
+  const [loadingQuizzes, setLoadingQuizzes] = React.useState({});
+
+  React.useEffect(() => {
+    const quizBlocks = blocks.filter(b => b.type === 'quiz');
+    const newLoading = {};
+    
+    quizBlocks.forEach(block => {
+      const quiz = quizzes.find(q => q.id === block.quiz_id);
+      if (!quiz && !loadingQuizzes[block.quiz_id]) {
+        newLoading[block.quiz_id] = true;
+        
+        setTimeout(() => {
+          setLoadingQuizzes(prev => ({ ...prev, [block.quiz_id]: false }));
+        }, 5000);
+      }
+    });
+    
+    if (Object.keys(newLoading).length > 0) {
+      setLoadingQuizzes(prev => ({ ...prev, ...newLoading }));
+    }
+  }, [blocks, quizzes]);
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     onReorder(result.source.index, result.destination.index);
@@ -252,7 +274,23 @@ export default function CourseContentList({
 
     if (block.type === 'quiz') {
       const quiz = quizzes.find(q => q.id === block.quiz_id);
-      if (!quiz) return <div className="p-4 bg-red-50 text-red-500 rounded-lg">Quiz not found</div>;
+      
+      if (!quiz) {
+        if (loadingQuizzes[block.quiz_id] !== false) {
+          return (
+            <div className="flex items-center gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm w-full">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+              </div>
+              <div className="flex-1">
+                <div className="h-5 bg-slate-200 rounded w-48 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-slate-100 rounded w-32 animate-pulse"></div>
+              </div>
+            </div>
+          );
+        }
+        return <div className="p-4 bg-red-50 text-red-500 rounded-lg">Quiz not found</div>;
+      }
       
       const attempts = allQuizAttempts?.filter(a => a.quiz_id === quiz.id) || [];
       const attemptsAllowed = quiz.attempts_allowed || 999;
