@@ -190,14 +190,14 @@ export default function CourseContentList({
             </div>
           </div>
           
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {isExpanded && block.children && block.children.length > 0 && (
               <motion.div 
-                key={`topic-${block.id}`}
+                key={`topic-expand-${block.id}`}
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                transition={{ duration: 0.2 }}
                 className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3 overflow-hidden"
               >
               {editMode && isAdmin ? (
