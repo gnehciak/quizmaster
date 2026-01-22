@@ -633,6 +633,11 @@ export default function CourseDetail() {
   };
 
   const handleMoveToTopic = async () => {
+    // If block has parentTopicId, use the new handler
+    if (blockToMove?.parentTopicId) {
+      return handleMoveToOtherTopic();
+    }
+    
     if (!selectedTopic || !blockToMove) return;
     
     const updatedBlocks = contentBlocks.map(b => {
