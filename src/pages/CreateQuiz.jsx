@@ -421,6 +421,27 @@ export default function CreateQuiz() {
     setQuiz(prev => ({ ...prev, questions: items }));
   };
 
+  const calculateQuestionMarks = (question) => {
+    switch (question.type) {
+      case 'multiple_choice':
+        return 1;
+      case 'reading_comprehension':
+        return question.comprehensionQuestions?.length || 0;
+      case 'drag_drop_single':
+      case 'drag_drop_dual':
+        return question.dropZones?.length || 0;
+      case 'inline_dropdown_separate':
+      case 'inline_dropdown_same':
+        return question.blanks?.length || 0;
+      case 'matching_list_dual':
+        return question.matchingQuestions?.length || 0;
+      case 'long_response_dual':
+        return 1;
+      default:
+        return 0;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -613,7 +634,7 @@ export default function CreateQuiz() {
                                        </div>
                                        <div className="text-xs text-slate-500 flex items-center gap-2">
                                          <span>{question.type?.replace(/_/g, ' ')}</span>
-                                         {question.marks && <span className="text-indigo-600 font-medium">({question.marks} marks)</span>}
+                                         <span className="text-indigo-600 font-medium">({calculateQuestionMarks(question)} marks)</span>
                                        </div>
                                      </div>
                                     <div className="flex items-center gap-1">
@@ -690,13 +711,11 @@ export default function CreateQuiz() {
                     </DragDropContext>
                     </div>
 
-                    {quiz.questions?.some(q => q.marks) && (
-                     <div className="text-right pr-4 mb-6">
-                       <p className="text-xs text-slate-600">
-                         Total Marks: <span className="font-semibold text-slate-800">{quiz.questions?.reduce((sum, q) => sum + (q.marks || 0), 0)}</span>
-                       </p>
-                     </div>
-                    )}
+                    <div className="text-right pr-4 mb-6">
+                      <p className="text-xs text-slate-600">
+                        Total Marks: <span className="font-semibold text-slate-800">{quiz.questions?.reduce((sum, q) => sum + calculateQuestionMarks(q), 0)}</span>
+                      </p>
+                    </div>
 
                     <div className="flex gap-2 mb-8">
                     <Button
