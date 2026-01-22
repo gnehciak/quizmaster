@@ -401,9 +401,6 @@ ${aiInput}`;
 
       {!isCollapsed && (
         <>
-      <div className="flex-1 space-y-3">
-           <div className="space-y-1">
-
           <div className="space-y-1 relative">
             <Label className="text-sm">Question Name (optional)</Label>
             <Input
