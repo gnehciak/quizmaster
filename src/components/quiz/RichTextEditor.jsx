@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
-import ImageResize from 'quill-image-resize-module-react';
 
 export default function RichTextEditor({ 
   value, 
@@ -26,9 +25,30 @@ export default function RichTextEditor({
 
   React.useEffect(() => {
     if (!disableImages && quillRef.current) {
-      quillRef.current.getEditor().enable();
+      const editor = quillRef.current.getEditor();
+      const container = editor.root;
+      
+      // Make all images resizable
+      container.querySelectorAll('img').forEach(img => {
+        img.style.cursor = 'resize';
+        img.setAttribute('contenteditable', 'false');
+      });
+
+      // Add resize observer for new images
+      const observer = new MutationObserver(() => {
+        container.querySelectorAll('img').forEach(img => {
+          if (!img.style.cursor) {
+            img.style.cursor = 'resize';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+          }
+        });
+      });
+
+      observer.observe(container, { childList: true, subtree: true });
+      return () => observer.disconnect();
     }
-  }, [disableImages]);
+  }, [disableImages, value]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -60,18 +80,13 @@ export default function RichTextEditor({
       ...(disableImages ? [] : [['image']]),
       ...(disableHighlight ? [] : [[{ 'background': [] }]]),
       [{ 'align': [] }]
-    ],
-    ...(disableImages ? {} : {
-      imageResize: {
-        displaySize: true
-      }
-    })
+    ]
   }), [disableLinks, disableHighlight, disableImages]);
 
   const formats = [
     'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
     ...(disableLinks ? [] : ['link']),
-    ...(disableImages ? [] : ['image', 'imageresize']),
+    ...(disableImages ? [] : ['image']),
     ...(disableHighlight ? [] : ['background'])
   ];
 
@@ -131,7 +146,7 @@ export default function RichTextEditor({
             placeholder={placeholder}
             modules={modules}
             formats={formats}
-            className="bg-white rounded-lg flex-1 flex flex-col [&>.ql-container]:flex-1 [&>.ql-container]:rounded-b-lg [&>.ql-toolbar]:rounded-t-lg [&_.ql-image]:cursor-pointer"
+            className="bg-white rounded-lg flex-1 flex flex-col [&>.ql-container]:flex-1 [&>.ql-container]:rounded-b-lg [&>.ql-toolbar]:rounded-t-lg [&_.ql-image]:cursor-pointer [&_img]:max-w-full [&_img]:h-auto"
             style={{ minHeight }}
           />
           {!disableImages && (
