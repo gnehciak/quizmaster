@@ -580,8 +580,8 @@ export default function CreateQuiz() {
 
               {/* Questions List & Editors */}
               {quiz.questions && quiz.questions.length > 0 ? (
-                <>
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8">
+               <>
+                  <div ref={reorderSectionRef} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-medium text-slate-500">Reorder Questions</h3>
                     </div>
