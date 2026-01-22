@@ -395,10 +395,10 @@ ${aiInput}`;
       {!isCollapsed && (
         <>
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Question Type</Label>
+        <div className="flex-1 space-y-3">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-sm">Question Type</Label>
               <Select
                 value={question.type || ''}
                 onValueChange={(value) => updateField('type', value)}
