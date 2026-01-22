@@ -2237,6 +2237,7 @@ Provide a helpful hint with quoted sentences. Example structure:
                     'drag_drop_dual': 'Drag & Drop (Dual Pane)',
                     'inline_dropdown_separate': 'Fill in the Blanks',
                     'inline_dropdown_same': 'Fill in the Blanks',
+                    'inline_dropdown_typed': 'Fill in the Blanks',
                     'matching_list_dual': 'Matching List',
                     'long_response_dual': 'Long Response'
                   };
