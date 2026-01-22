@@ -415,8 +415,8 @@ ${aiInput}`;
             </div>
           </div>
 
-          <div className="space-y-2 relative">
-            <Label>Question Name (optional)</Label>
+          <div className="space-y-1 relative">
+            <Label className="text-sm">Question Name (optional)</Label>
             <Input
               value={question.questionName || ''}
               onChange={(e) => updateField('questionName', e.target.value)}
@@ -433,6 +433,7 @@ ${aiInput}`;
               }}
               placeholder="e.g., 'Introduction', 'Main Analysis', 'Summary'..."
               list={`question-names-${question.id}`}
+              className="h-8 text-sm"
             />
             <datalist id={`question-names-${question.id}`}>
               {existingQuestionNames.map((name, idx) => (
@@ -441,7 +442,7 @@ ${aiInput}`;
             </datalist>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Question</Label>
             <RichTextEditor
               value={question.question || ''}
