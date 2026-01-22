@@ -512,6 +512,7 @@ ${aiInput}`;
                 onChange={() => updateField('correctAnswer', option)}
                 className="w-4 h-4 text-indigo-600 flex-shrink-0"
               />
+              <span className="text-sm font-medium text-slate-600 w-6 text-center">{idx + 1})</span>
               <Input
                 value={option}
                 onChange={(e) => updateOption(idx, e.target.value)}
