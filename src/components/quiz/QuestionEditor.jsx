@@ -1090,7 +1090,7 @@ ${aiInput}`;
                 <div className="space-y-2">
                   <div className="grid grid-cols-5 gap-2">
                     {blank.options?.map((opt, optIdx) => (
-                      <div key={optIdx} className="flex items-start gap-1 bg-white rounded p-2 border border-slate-200">
+                      <div key={optIdx} className="flex items-center gap-1 bg-white rounded p-2 border border-slate-200">
                          <input
                              type="radio"
                              name={`correct_blank_${question.id}_${blank.id}`}
@@ -1101,7 +1101,7 @@ ${aiInput}`;
                                  });
                                updateBlank(idx, 'correctAnswer', opt);
                              }}
-                             className="w-3 h-3 text-indigo-600 flex-shrink-0 mt-0.5"
+                             className="w-3 h-3 text-indigo-600 flex-shrink-0"
                            />
                          <div className="flex-1 min-w-0">
                            <Input
