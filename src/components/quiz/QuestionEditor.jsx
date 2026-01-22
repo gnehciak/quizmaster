@@ -1559,9 +1559,12 @@ ${aiInput}`;
             ))}
             <Button type="button" variant="outline" onClick={() => {
               const blanks = [...(question.blanks || [])];
-              const blankId = `blank_${blanks.length + 1}`;
+              const nextNumber = Math.max(...blanks.map(b => {
+                const match = b.id.match(/blank_(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+              }), 0) + 1;
               blanks.push({
-                id: blankId,
+                id: `blank_${nextNumber}`,
                 correctAnswer: ''
               });
               onChange({
