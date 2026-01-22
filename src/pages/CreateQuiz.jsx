@@ -1015,20 +1015,22 @@ export default function CreateQuiz() {
             </div>
 
             <div className="space-y-2">
-              <Textarea
-                value={importJsonText}
-                onChange={(e) => setImportJsonText(e.target.value)}
-                placeholder='{"id": "q_123", "type": "multiple_choice", ...}'
-                className="font-mono text-xs min-h-[150px]"
-              />
-              <Button
-                onClick={handleImportFromText}
-                disabled={!importJsonText.trim()}
-                className="w-full"
-              >
-                Import from Text
-              </Button>
-            </div>
+               <p className="text-xs text-slate-500">Paste one or multiple questions as JSON:</p>
+               <Textarea
+                 value={importJsonText}
+                 onChange={(e) => setImportJsonText(e.target.value)}
+                 placeholder='{} or {}_{} or [{}]'
+                 className="font-mono text-xs min-h-[150px]"
+               />
+               <p className="text-xs text-slate-400">Supports formats: single object, comma-separated objects, or JSON array</p>
+               <Button
+                 onClick={handleImportFromText}
+                 disabled={!importJsonText.trim()}
+                 className="w-full"
+               >
+                 Import Questions
+               </Button>
+             </div>
           </div>
         </DialogContent>
       </Dialog>
