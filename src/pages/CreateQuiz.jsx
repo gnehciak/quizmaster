@@ -32,7 +32,8 @@ import {
   Trash2,
   Upload,
   Copy,
-  Code
+  Code,
+  ChevronRight
 } from 'lucide-react';
 import QuestionEditor from '@/components/quiz/QuestionEditor';
 import QuestionPreview from '@/components/quiz/QuestionPreview';
@@ -81,6 +82,7 @@ export default function CreateQuiz() {
   const [editSchemaJson, setEditSchemaJson] = useState('');
   const [editSchemaIndex, setEditSchemaIndex] = useState(null);
   const [showQuestionMenu, setShowQuestionMenu] = useState(false);
+  const [questionMenuCollapsed, setQuestionMenuCollapsed] = useState(false);
   const reorderSectionRef = React.useRef(null);
 
   const { data: existingQuiz, isLoading } = useQuery({
@@ -1079,9 +1081,19 @@ export default function CreateQuiz() {
       {/* Floating Question Menu */}
       {showQuestionMenu && quiz.questions && quiz.questions.length > 0 && (
         <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 max-w-sm animate-in fade-in-0 duration-300">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="text-xs font-semibold text-slate-700 px-3 py-2 border-b border-slate-200">Jump to Question</div>
-            <div className="max-h-96 overflow-y-auto">
+          {!questionMenuCollapsed ? (
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+                <div className="text-xs font-semibold text-slate-700">Jump to Question</div>
+                <button
+                  onClick={() => setQuestionMenuCollapsed(true)}
+                  className="text-slate-400 hover:text-slate-600 p-0.5"
+                  title="Hide menu"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
               {quiz.questions?.map((q, idx) => {
                 const typeMap = {
                   'multiple_choice': 'MC',
@@ -1117,14 +1129,23 @@ export default function CreateQuiz() {
                   </button>
                 );
               })}
+              </div>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="w-full text-xs px-3 py-2 hover:bg-slate-50 transition-colors border-t border-slate-200 text-slate-600 font-medium"
+              >
+                ↑ Back to Top
+              </button>
             </div>
+          ) : (
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="w-full text-xs px-3 py-2 hover:bg-slate-50 transition-colors border-t border-slate-200 text-slate-600 font-medium"
+              onClick={() => setQuestionMenuCollapsed(false)}
+              className="bg-white rounded-lg shadow-lg p-2 hover:bg-slate-50 transition-colors"
+              title="Show menu"
             >
-              ↑ Back to Top
+              <List className="w-4 h-4 text-slate-600" />
             </button>
-          </div>
+          )}
         </div>
       )}
 
