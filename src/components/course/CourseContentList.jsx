@@ -433,7 +433,7 @@ export default function CourseContentList({
     }
 
     return null;
-  }, [expandedTopics, calculateTopicCompletion, isTopicOverdue, isBlockVisible, isBlockLocked, editMode, isAdmin, onEdit, onDelete, onAddToTopic, hasAccess, quizzes, allQuizAttempts, onToggleVisibility, onScheduleVisibility, onToggleLock, onScheduleLock, toggleTopic]);
+  };
 
   if (!blocks || blocks.length === 0) {
     return (
