@@ -39,8 +39,13 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
     (question.blanks || []).forEach((blank, idx) => {
       answers[idx] = blank.correctAnswer;
     });
-    setSelectedAnswers(answers);
-  }, [question.id, question.blanks?.length]);
+    // Only update if actually different to avoid unnecessary re-renders
+    setSelectedAnswers(prev => {
+      const isDifferent = Object.keys(answers).some(key => answers[key] !== prev[key]) || 
+                          Object.keys(prev).length !== Object.keys(answers).length;
+      return isDifferent ? answers : prev;
+    });
+  }, [question.id, JSON.stringify(question.blanks?.map(b => b.correctAnswer))]);
 
   const updateField = (field, value) => {
     onChange({ ...question, [field]: value });
