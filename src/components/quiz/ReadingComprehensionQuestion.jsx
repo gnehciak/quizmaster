@@ -115,6 +115,81 @@ export default function ReadingComprehensionQuestion({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [showResults, singleQuestion, subQuestion, question, onAnswer]);
 
+  // Setup image resize handlers
+  useEffect(() => {
+    const passageContent = containerRef.current?.querySelector('[dangerouslySetInnerHTML]');
+    if (!passageContent) return;
+
+    const images = passageContent.querySelectorAll('img');
+    
+    const setupImageResize = (img) => {
+      img.style.cursor = 'pointer';
+      img.onclick = (e) => {
+        e.stopPropagation();
+        
+        // Remove existing controls
+        img.parentElement?.querySelectorAll('.image-resize-controls').forEach(el => el.remove());
+        
+        const controls = document.createElement('div');
+        controls.className = 'image-resize-controls';
+        controls.style.cssText = `
+          position: absolute;
+          bottom: -35px;
+          left: 0;
+          display: flex;
+          gap: 6px;
+          background: white;
+          padding: 6px 8px;
+          border-radius: 4px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          z-index: 100;
+        `;
+        
+        const sizes = [
+          { label: 'S', width: '150px' },
+          { label: 'M', width: '250px' },
+          { label: 'L', width: '400px' },
+          { label: 'Full', width: '100%' }
+        ];
+        
+        sizes.forEach(size => {
+          const btn = document.createElement('button');
+          btn.textContent = size.label;
+          btn.style.cssText = `
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+          `;
+          btn.onmouseenter = () => {
+            btn.style.background = '#f0f0f0';
+          };
+          btn.onmouseleave = () => {
+            btn.style.background = 'white';
+          };
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            img.style.width = size.width;
+            img.style.height = 'auto';
+          };
+          controls.appendChild(btn);
+        });
+        
+        // Wrap in relative container if not already
+        if (img.parentElement?.style.position !== 'relative') {
+          img.parentElement.style.position = 'relative';
+        }
+        img.parentElement.appendChild(controls);
+      };
+    };
+    
+    images.forEach(setupImageResize);
+  }, [activePassage?.id]);
+
   return (
     <div ref={containerRef} className="h-full flex relative">
       {/* Left Pane - Passage */}
