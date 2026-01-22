@@ -5,6 +5,7 @@ import DragDropQuestion from './DragDropQuestion';
 import DragDropDualQuestion from './DragDropDualQuestion';
 import InlineDropdownQuestion from './InlineDropdownQuestion';
 import InlineDropdownSameQuestion from './InlineDropdownSameQuestion';
+import InlineDropdownTypedQuestion from './InlineDropdownTypedQuestion';
 import MatchingListQuestion from './MatchingListQuestion';
 
 export default function QuestionPreview({ question, index }) {
@@ -60,6 +61,14 @@ export default function QuestionPreview({ question, index }) {
       case 'inline_dropdown_same':
         return (
           <InlineDropdownSameQuestion
+            question={question}
+            selectedAnswers={{}}
+            onAnswer={handleAnswer}
+          />
+        );
+      case 'inline_dropdown_typed':
+        return (
+          <InlineDropdownTypedQuestion
             question={question}
             selectedAnswers={{}}
             onAnswer={handleAnswer}

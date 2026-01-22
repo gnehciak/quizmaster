@@ -1430,40 +1430,46 @@ ${aiInput}`;
           <div className="space-y-4">
             <Label>Correct Answers for Each Blank</Label>
             {question.blanks?.map((blank, idx) => (
-              <div key={blank.id} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
-                <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">
-                  {`{{${blank.id}}}`}
-                </span>
-                <Input
-                  value={blank.correctAnswer || ''}
-                  onChange={(e) => updateBlank(idx, 'correctAnswer', e.target.value)}
-                  placeholder="Type correct answer..."
-                  className="flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeBlank(idx)}
-                  className="text-slate-400 hover:text-red-500"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
+                      {`{{${blank.id}}}`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`{{${blank.id}}}`);
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeBlank(idx)}
+                    className="text-red-500 h-8"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Correct Answer</Label>
+                  <Input
+                    value={blank.correctAnswer || ''}
+                    onChange={(e) => updateBlank(idx, 'correctAnswer', e.target.value)}
+                    placeholder="Type the correct answer..."
+                    className="h-9 text-sm"
+                  />
+                </div>
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => {
-              const blanks = [...(question.blanks || [])];
-              const blankId = `blank_${blanks.length + 1}`;
-              blanks.push({
-                id: blankId,
-                correctAnswer: ''
-              });
-              const text = question.textWithBlanks || '';
-              onChange({
-                ...question,
-                blanks: blanks,
-                textWithBlanks: text + ` {{${blankId}}}`
-              });
-            }} className="gap-2">
+            <Button type="button" variant="outline" onClick={addBlank} className="gap-2 w-full">
               <Plus className="w-4 h-4" />
               Add Blank
             </Button>
