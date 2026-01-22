@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   GripVertical, Pencil, Trash2, Lock, Calendar, CheckCircle2, AlertCircle, ChevronDown, ChevronRight, FolderOpen
