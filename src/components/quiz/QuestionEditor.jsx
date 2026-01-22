@@ -1061,9 +1061,9 @@ ${aiInput}`;
               <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded font-semibold">
-                      {`{{${blank.id}}}`}
-                    </span>
+                    <span className="font-mono text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
+                        {`{{${blank.id}}}`}
+                      </span>
                     <Button
                       type="button"
                       variant="ghost"
