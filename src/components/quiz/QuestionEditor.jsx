@@ -401,26 +401,8 @@ ${aiInput}`;
 
       {!isCollapsed && (
         <>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-3">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-sm">Question Type</Label>
-              <Select
-                value={question.type || ''}
-                onValueChange={(value) => updateField('type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Please select question type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(typeLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="flex-1 space-y-3">
+           <div className="space-y-1">
 
           <div className="space-y-1 relative">
             <Label className="text-sm">Question Name (optional)</Label>
