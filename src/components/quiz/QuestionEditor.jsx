@@ -1483,13 +1483,14 @@ ${aiInput}`;
           <div className="space-y-2">
             <Label>Text with Blanks</Label>
             <p className="text-xs text-slate-500">
-              Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear
+              Use {"{{blank_1}}"}, {"{{blank_2}}"}, etc. to mark where dropdowns should appear. Copy the blank ID from the list below.
             </p>
             <RichTextEditor
               value={question.textWithBlanks || ''}
               onChange={(value) => updateField('textWithBlanks', value)}
               placeholder="The {{blank_1}} is a type of {{blank_2}}..."
               minHeight="100px"
+              allowImages={true}
             />
           </div>
 
@@ -1522,15 +1523,40 @@ ${aiInput}`;
           <div className="space-y-4">
             <Label>Correct Answers for Each Blank</Label>
             {question.blanks?.map((blank, idx) => (
-              <div key={blank.id} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
-                <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">
-                  {`{{${blank.id}}}`}
-                </span>
+              <div key={blank.id} className="bg-slate-50 rounded-xl p-4 space-y-3 border-2 border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold">
+                      {`{{${blank.id}}}`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`{{${blank.id}}}`);
+                        toast.success('Copied to clipboard!');
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeBlank(idx)}
+                    className="text-red-500 h-8"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
                 <Select
                   value={blank.correctAnswer || ''}
                   onValueChange={(value) => updateBlank(idx, 'correctAnswer', value)}
                 >
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select correct answer..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -1538,31 +1564,21 @@ ${aiInput}`;
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
                   </SelectContent>
-                  </Select>
-                  <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeBlank(idx)}
-                  className="text-slate-400 hover:text-red-500"
-                  >
-                  <Trash2 className="w-4 h-4" />
-                  </Button>
-                  </div>
-                  ))}
-                  <Button type="button" variant="outline" onClick={() => {
+                </Select>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => {
               const blanks = [...(question.blanks || [])];
               const blankId = `blank_${blanks.length + 1}`;
               blanks.push({
                 id: blankId,
                 correctAnswer: ''
               });
-              const text = question.textWithBlanks || '';
               onChange({
                 ...question,
-                blanks: blanks,
-                textWithBlanks: text + ` {{${blankId}}}`
+                blanks: blanks
               });
-            }} className="gap-2">
+            }} className="gap-2 w-full">
               <Plus className="w-4 h-4" />
               Add Blank
             </Button>
