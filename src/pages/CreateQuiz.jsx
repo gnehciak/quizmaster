@@ -80,6 +80,8 @@ export default function CreateQuiz() {
   const [editSchemaDialogOpen, setEditSchemaDialogOpen] = useState(false);
   const [editSchemaJson, setEditSchemaJson] = useState('');
   const [editSchemaIndex, setEditSchemaIndex] = useState(null);
+  const [showQuestionMenu, setShowQuestionMenu] = useState(false);
+  const reorderSectionRef = React.useRef(null);
 
   const { data: existingQuiz, isLoading } = useQuery({
     queryKey: ['quiz', quizId],
