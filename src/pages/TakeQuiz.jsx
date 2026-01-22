@@ -17,6 +17,7 @@ import DragDropQuestion from '@/components/quiz/DragDropQuestion';
 import DragDropDualQuestion from '@/components/quiz/DragDropDualQuestion';
 import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
+import InlineDropdownTypedQuestion from '@/components/quiz/InlineDropdownTypedQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import LongResponseDualQuestion from '@/components/quiz/LongResponseDualQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
@@ -1860,6 +1861,14 @@ Provide a helpful hint with quoted sentences. Example structure:
             onDeleteHelp={handleDeleteBlankHelp}
             onEditHelp={handleOpenEditBlankTip}
             onEditPrompt={handleOpenEditBlankPrompt}
+          />
+        );
+      case 'inline_dropdown_typed':
+        return (
+          <InlineDropdownTypedQuestion
+            {...commonProps}
+            selectedAnswers={answers[currentIndex] || {}}
+            onAnswer={handleAnswer}
           />
         );
       case 'matching_list_dual':
