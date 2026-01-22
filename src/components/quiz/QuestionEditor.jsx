@@ -437,9 +437,8 @@ ${aiInput}`;
               minHeight="80px"
             />
           </div>
-          </div>
 
-      {/* Multiple Choice Options */}
+          {/* Multiple Choice Options */}
       {question.type === 'multiple_choice' && (
         <div className="space-y-2">
           <Label className="text-sm">Answer Options</Label>
