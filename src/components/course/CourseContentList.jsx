@@ -196,7 +196,7 @@ export default function CourseContentList({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
                 className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3 overflow-hidden"
               >
               {editMode && isAdmin ? (
