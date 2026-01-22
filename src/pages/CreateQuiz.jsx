@@ -162,7 +162,8 @@ export default function CreateQuiz() {
   };
 
   const handleExportQuestion = (question, index) => {
-    const dataStr = JSON.stringify(question, null, 2);
+    const cleanQuestion = getCleanQuestionSchema(question);
+    const dataStr = JSON.stringify(cleanQuestion, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -216,7 +217,8 @@ export default function CreateQuiz() {
   };
 
   const handleCopyQuestion = (question) => {
-    const jsonStr = JSON.stringify(question, null, 2);
+    const cleanQuestion = getCleanQuestionSchema(question);
+    const jsonStr = JSON.stringify(cleanQuestion, null, 2);
     navigator.clipboard.writeText(jsonStr);
   };
 
