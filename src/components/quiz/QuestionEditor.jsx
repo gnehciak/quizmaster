@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2, Eye, Download, Code } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
