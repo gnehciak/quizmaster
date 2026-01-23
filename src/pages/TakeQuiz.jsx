@@ -1905,7 +1905,7 @@ Provide a helpful hint with quoted sentences. Example structure:
         return (
           <LongResponseDualQuestion
             {...commonProps}
-            selectedAnswer={answers[currentIndex] || ''}
+            selectedAnswer={answers[currentIndex]}
             onAnswer={handleAnswer}
             isAdmin={user?.role === 'admin'}
           />
