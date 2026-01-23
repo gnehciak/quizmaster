@@ -10,37 +10,6 @@ import { base44 } from '@/api/base44Client';
 
 Quill.register("modules/resize", QuillResizeImage);
 
-// Preserve image width/height styles so resized images persist after save/reload
-const Parchment = Quill.import('parchment');
-const BaseImage = Quill.import('formats/image');
-
-const WidthStyle = new Parchment.Attributor.Style('width', 'width');
-const HeightStyle = new Parchment.Attributor.Style('height', 'height');
-Quill.register(WidthStyle, true);
-Quill.register(HeightStyle, true);
-
-class ImageFormat extends BaseImage {
-  static formats(domNode) {
-    const formats = super.formats(domNode) || {};
-    if (domNode.style.width) formats.width = domNode.style.width;
-    if (domNode.style.height) formats.height = domNode.style.height;
-    return formats;
-  }
-  format(name, value) {
-    if (name === 'width' || name === 'height') {
-      if (value) {
-        this.domNode.style[name] = value;
-      } else {
-        this.domNode.style[name] = '';
-      }
-    } else {
-      super.format(name, value);
-    }
-  }
-}
-
-Quill.register(ImageFormat, true);
-
 export default function RichTextEditor({ 
   value, 
   onChange, 
@@ -108,9 +77,7 @@ export default function RichTextEditor({
     'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
     ...(disableLinks ? [] : ['link']),
     ...(disableImages ? [] : ['image']),
-    ...(disableHighlight ? [] : ['background']),
-    // Allow persisted image sizing
-    'width', 'height'
+    ...(disableHighlight ? [] : ['background'])
   ];
 
   const handleChange = useCallback((newValue) => {
