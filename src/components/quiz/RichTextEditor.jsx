@@ -76,7 +76,7 @@ export default function RichTextEditor({
   const formats = [
     'header', 'bold', 'italic', 'underline', 'list', 'bullet', 'align',
     ...(disableLinks ? [] : ['link']),
-    ...(disableImages ? [] : ['image']),
+    ...(disableImages ? [] : ['image', 'width', 'height', 'style']),
     ...(disableHighlight ? [] : ['background'])
   ];
 
