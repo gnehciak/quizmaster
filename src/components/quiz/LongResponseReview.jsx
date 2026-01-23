@@ -12,6 +12,7 @@ export default function LongResponseReview({
   savedMarks,
   onMarkingComplete,
   aiConfig,
+  aiPrompts = [],
   isAdmin 
 }) {
   const [leftWidth, setLeftWidth] = useState(50);
@@ -64,27 +65,29 @@ export default function LongResponseReview({
       const model = genAI.getGenerativeModel({ model: aiConfig.model_name });
 
       const totalMarks = question.marks || 10;
-      const prompt = `You are an experienced teacher marking a student's long-form written response. 
+      
+      // Get prompt from AIPrompt database or use default
+      const globalPrompt = aiPrompts.find(p => p.key === 'long_response_marking');
+      const defaultPrompt = `You are an experienced teacher marking a student's long-form written response. 
       
 QUESTION (Left Pane):
-${question.question?.replace(/<[^>]*>/g, '') || 'No question provided'}
+{{QUESTION}}
 
-${question.rightPaneQuestion ? `TASK (Right Pane):
-${question.rightPaneQuestion.replace(/<[^>]*>/g, '')}` : ''}
+{{TASK_SECTION}}
 
 MARKING CRITERIA:
-${question.marking_criteria || 'Mark based on relevance, clarity, and completeness.'}
+{{MARKING_CRITERIA}}
 
-TOTAL MARKS AVAILABLE: ${totalMarks}
+TOTAL MARKS AVAILABLE: {{TOTAL_MARKS}}
 
 STUDENT'S RESPONSE:
-${answer?.replace(/<[^>]*>/g, '') || '(No response provided)'}
+{{STUDENT_RESPONSE}}
 
 TASK: Mark the student's response according to the marking criteria.
 
 Return a JSON response in this exact format:
 {
-  "marks_awarded": <number between 0 and ${totalMarks}>,
+  "marks_awarded": <number between 0 and {{TOTAL_MARKS}}>,
   "feedback": "<constructive feedback explaining the mark, what was done well, and areas for improvement. Use HTML formatting with <p>, <strong>, <ul>, <li> tags for clarity.>"
 }
 
@@ -95,6 +98,13 @@ Be fair but rigorous in your marking. Consider:
 4. Completeness of the response
 
 Return ONLY the JSON object, no other text.`;
+
+      let prompt = globalPrompt?.template || defaultPrompt;
+      prompt = prompt.replace(/\{\{QUESTION\}\}/g, question.question?.replace(/<[^>]*>/g, '') || 'No question provided');
+      prompt = prompt.replace(/\{\{TASK_SECTION\}\}/g, question.rightPaneQuestion ? `TASK (Right Pane):\n${question.rightPaneQuestion.replace(/<[^>]*>/g, '')}` : '');
+      prompt = prompt.replace(/\{\{MARKING_CRITERIA\}\}/g, question.marking_criteria || 'Mark based on relevance, clarity, and completeness.');
+      prompt = prompt.replace(/\{\{TOTAL_MARKS\}\}/g, totalMarks.toString());
+      prompt = prompt.replace(/\{\{STUDENT_RESPONSE\}\}/g, answer?.replace(/<[^>]*>/g, '') || '(No response provided)');
 
       console.log('=== LONG RESPONSE MARKING PROMPT ===');
       console.log(prompt);

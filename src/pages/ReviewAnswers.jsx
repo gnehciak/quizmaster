@@ -2455,6 +2455,7 @@ Provide HTML formatted explanation:`;
             savedMarks={longResponseMarks[currentIndex]}
             onMarkingComplete={handleLongResponseMarking}
             aiConfig={aiConfig}
+            aiPrompts={globalPrompts}
             isAdmin={isAdmin}
           />
         );
