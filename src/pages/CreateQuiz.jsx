@@ -357,6 +357,7 @@ export default function CreateQuiz() {
         };
         if (question.passage) mlQuestion.passage = question.passage;
         if (question.passages?.length > 0) mlQuestion.passages = question.passages;
+        if (question.rightPaneQuestion) mlQuestion.rightPaneQuestion = question.rightPaneQuestion;
         return mlQuestion;
       
       case 'long_response_dual':
