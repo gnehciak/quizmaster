@@ -157,6 +157,28 @@ export default function TakeQuiz() {
     enabled: !!quizId && !!user?.email
   });
 
+  // Check for paused attempt to resume
+  const pausedAttempt = React.useMemo(() => {
+    if (!resumeAttemptId) return null;
+    return userAttempts.find(a => a.id === resumeAttemptId && a.paused === true);
+  }, [userAttempts, resumeAttemptId]);
+
+  // Auto-resume paused quiz
+  useEffect(() => {
+    if (pausedAttempt && !isResuming && !quizStarted) {
+      setIsResuming(true);
+      setQuizStarted(true);
+      setCurrentAttemptId(pausedAttempt.id);
+      setAnswers(pausedAttempt.answers || {});
+      setQuestionTimes(pausedAttempt.question_times || {});
+      setCurrentIndex(pausedAttempt.current_question_index || 0);
+      setTipsUsed(pausedAttempt.tips_used || 0);
+      if (pausedAttempt.time_remaining) {
+        setTimeLeft(pausedAttempt.time_remaining);
+      }
+    }
+  }, [pausedAttempt, isResuming, quizStarted]);
+
   // Track window focus/blur during quiz (disabled for admins)
   useEffect(() => {
     if (!user || !quizStarted || submitted || showResults || user.role === 'admin') return;
