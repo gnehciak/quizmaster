@@ -109,6 +109,11 @@ export default function QuestionPreview({ question, index }) {
         <span className="text-xs text-slate-400 uppercase tracking-wider">
           {question.type?.replace(/_/g, ' ')}
         </span>
+        {question.type === 'long_response_dual' && question.marks && (
+          <span className="text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-1 rounded ml-auto">
+            {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+          </span>
+        )}
       </div>
       {renderQuestion()}
     </div>

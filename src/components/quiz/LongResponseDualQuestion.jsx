@@ -84,7 +84,14 @@ export default function LongResponseDualQuestion({
       {/* Right Pane - Answer Area */}
       <div className="flex-1 flex flex-col h-full bg-white overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50">
-          <h3 className="font-semibold text-slate-800">Your Response</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800">Your Response</h3>
+            {question.marks && (
+              <span className="text-sm font-medium bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
+                {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+              </span>
+            )}
+          </div>
           {question.marking_criteria && (
             <div className="mt-2 text-xs text-slate-500 bg-white p-2 rounded border border-slate-200">
                <span className="font-medium text-slate-700">Marking Criteria:</span> 

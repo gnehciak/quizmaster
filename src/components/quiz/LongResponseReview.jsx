@@ -187,9 +187,11 @@ Return ONLY the JSON object, no other text.`;
 
           {/* Marking Info */}
           {question.marks && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span className="font-medium">Total Marks:</span>
-              <span className="bg-slate-100 px-2 py-0.5 rounded">{question.marks}</span>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium text-slate-600">Total Marks:</span>
+              <span className="bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded">
+                {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+              </span>
             </div>
           )}
 
