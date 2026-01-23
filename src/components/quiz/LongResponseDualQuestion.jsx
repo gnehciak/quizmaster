@@ -110,7 +110,7 @@ export default function LongResponseDualQuestion({
         <div className="flex-1 p-6 flex flex-col overflow-y-auto">
           <div className="flex-1 flex flex-col min-h-0">
             <RichTextEditor
-              value={selectedAnswer || ''}
+              value={selectedAnswer}
               onChange={handleChange}
               placeholder="Type your extended response here..."
               className="h-full"
@@ -118,6 +118,7 @@ export default function LongResponseDualQuestion({
               hideRawView={true}
               disableLinks={true}
               disableHighlight={true}
+              disableImages={true}
             />
             {showResults && !isAdmin && (
                <div className="absolute inset-0 bg-slate-50/50 z-10 cursor-not-allowed" />
