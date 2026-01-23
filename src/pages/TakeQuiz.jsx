@@ -361,7 +361,44 @@ export default function TakeQuiz() {
   };
 
   const handleSubmitClick = () => {
-    setConfirmSubmitOpen(true);
+    // Show save & exit dialog for pausable quizzes, otherwise show normal submit
+    if (quiz?.pausable) {
+      setSaveAndExitOpen(true);
+    } else {
+      setConfirmSubmitOpen(true);
+    }
+  };
+
+  const handleSaveAndExit = async () => {
+    const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
+    const finalQuestionTimes = {
+      ...questionTimes,
+      [currentIndex]: (questionTimes[currentIndex] || 0) + timeSpent
+    };
+
+    try {
+      if (currentAttemptId) {
+        await base44.entities.QuizAttempt.update(currentAttemptId, {
+          answers,
+          question_times: finalQuestionTimes,
+          time_remaining: timeLeft,
+          current_question_index: currentIndex,
+          paused: true,
+          completed: false
+        });
+        queryClient.invalidateQueries({ queryKey: ['quizAttempts'] });
+      }
+
+      // Navigate back to course
+      const courseId = urlParams.get('courseId');
+      if (courseId) {
+        window.location.href = createPageUrl(`CourseDetail?id=${courseId}`);
+      } else {
+        window.location.href = createPageUrl('Home');
+      }
+    } catch (e) {
+      console.error('Failed to save quiz progress:', e);
+    }
   };
 
   const handleStartQuiz = () => {
