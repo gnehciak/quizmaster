@@ -1396,6 +1396,18 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-2">
+            <Label>Total Marks</Label>
+            <Input
+              type="number"
+              min="1"
+              value={question.marks || ''}
+              onChange={(e) => updateField('marks', parseInt(e.target.value) || 0)}
+              placeholder="e.g. 5"
+              className="w-32"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Marking Criteria (for AI Grading)</Label>
             <p className="text-xs text-slate-500">
               Describe how this question should be marked. Include key points, required structure, or specific vocabulary.

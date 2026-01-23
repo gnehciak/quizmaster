@@ -365,6 +365,11 @@ export default function TakeQuiz() {
     }
   };
 
+  // Check if quiz has long response questions
+  const hasLongResponseQuestions = React.useMemo(() => {
+    return questions.some(q => q.type === 'long_response_dual');
+  }, [questions]);
+
   const handleConfirmSubmit = async () => {
     // Track time for last question
     const timeSpent = Math.round((Date.now() - questionStartTime) / 1000);
@@ -391,7 +396,9 @@ export default function TakeQuiz() {
           percentage,
           answers,
           question_times: finalQuestionTimes,
-          time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0)
+          time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0),
+          requires_marking: hasLongResponseQuestions,
+          marking_complete: false
         });
 
         // Invalidate queries to refresh data across all pages
@@ -2086,6 +2093,7 @@ Provide a helpful hint with quoted sentences. Example structure:
             onReview={handleReview}
             quizTitle={quiz.title}
             courseId={urlParams.get('courseId')}
+            hasLongResponseQuestions={hasLongResponseQuestions}
           />
         </div>
       );
