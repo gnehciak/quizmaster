@@ -2629,6 +2629,86 @@ Provide a helpful hint with quoted sentences. Example structure:
           </DialogContent>
           </Dialog>
 
+          {/* Save & Exit Dialog (for pausable quizzes) */}
+          <Dialog open={saveAndExitOpen} onOpenChange={setSaveAndExitOpen}>
+          <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Save or Submit Quiz?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-base text-slate-800">
+              Choose whether to save your progress for later or submit your quiz now.
+            </p>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-700">Question Status:</h4>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <div className="text-2xl font-bold text-emerald-700">
+                      {questions.filter((_, idx) => answers[idx] !== undefined).length}
+                    </div>
+                    <div className="text-xs text-emerald-600">Answered</div>
+                  </div>
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <div className="text-2xl font-bold text-amber-700">
+                      {flaggedQuestions.size}
+                    </div>
+                    <div className="text-xs text-amber-600">Flagged</div>
+                  </div>
+                  <div className="p-2 bg-slate-200 rounded-lg">
+                    <div className="text-2xl font-bold text-slate-700">
+                      {questions.filter((_, idx) => answers[idx] === undefined).length}
+                    </div>
+                    <div className="text-xs text-slate-600">Unanswered</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {quiz?.timer_enabled && quiz?.timer_duration && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-semibold">Time Remaining:</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-900 mt-2">
+                  {formatTimeDisplay(timeLeft, true)}
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Will be saved when you return
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleSaveAndExit}
+              variant="outline"
+              className="w-full py-6"
+            >
+              💾 Save & Exit
+              <span className="text-xs text-slate-500 ml-2">(Resume later)</span>
+            </Button>
+            <Button
+              onClick={handleConfirmSubmit}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 py-6"
+            >
+              ✓ Finish & Submit
+              <span className="text-xs text-emerald-200 ml-2">(Complete now)</span>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setSaveAndExitOpen(false)}
+              className="w-full"
+            >
+              Cancel
+            </Button>
+          </div>
+          </DialogContent>
+          </Dialog>
+
           {/* Focus Warning Dialog */}
           <Dialog open={showFocusWarning} onOpenChange={setShowFocusWarning}>
             <DialogContent className="max-w-md">
