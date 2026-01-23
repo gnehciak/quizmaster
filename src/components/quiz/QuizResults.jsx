@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Trophy, RotateCcw, Home, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { Trophy, RotateCcw, Home, CheckCircle2, XCircle, BookOpen, FileText, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function QuizResults({ score, total, onRetry, quizTitle, onReview, courseId }) {
+export default function QuizResults({ score, total, onRetry, quizTitle, onReview, courseId, hasLongResponseQuestions }) {
   const percentage = Math.round((score / total) * 100);
   
   const getGrade = () => {
@@ -76,6 +76,25 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
         </div>
       </motion.div>
 
+      {hasLongResponseQuestions && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl"
+        >
+          <div className="flex items-center gap-3 text-amber-800">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="text-left">
+              <p className="font-semibold">This quiz contains long response questions</p>
+              <p className="text-sm text-amber-700">
+                Your written answers will be marked by AI when you review your answers.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,16 +102,27 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
         className="flex gap-3 justify-center flex-wrap"
       >
         <Button
-          variant="outline"
           size="lg"
           onClick={onReview}
-          className="gap-2"
+          className={cn(
+            "gap-2",
+            hasLongResponseQuestions 
+              ? "bg-indigo-600 hover:bg-indigo-700" 
+              : ""
+          )}
+          variant={hasLongResponseQuestions ? "default" : "outline"}
         >
-          Review Answers
+          <FileText className="w-4 h-4" />
+          {hasLongResponseQuestions ? 'Review & Mark Answers' : 'Review Answers'}
         </Button>
         
         <Link to={courseId ? createPageUrl(`CourseDetail?id=${courseId}`) : createPageUrl('Home')}>
-          <Button size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button size="lg" className={cn(
+            "gap-2",
+            hasLongResponseQuestions 
+              ? "" 
+              : "bg-indigo-600 hover:bg-indigo-700"
+          )} variant={hasLongResponseQuestions ? "outline" : "default"}>
             <BookOpen className="w-4 h-4" />
             {courseId ? 'Back to Course' : 'Back to Courses'}
           </Button>
