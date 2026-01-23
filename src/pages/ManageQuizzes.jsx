@@ -30,7 +30,9 @@ import { Textarea } from '@/components/ui/textarea';
 
 export default function ManageQuizzes() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return localStorage.getItem('manageQuizzes_selectedCategory') || 'all';
+  });
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState('card');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -96,6 +98,11 @@ export default function ManageQuizzes() {
   });
 
   const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Persist selected category to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('manageQuizzes_selectedCategory', selectedCategory);
+  }, [selectedCategory]);
 
   // Filter by search and category
   const filteredQuizzes = quizzes.filter((quiz) => {
