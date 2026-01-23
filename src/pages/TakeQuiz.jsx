@@ -38,6 +38,7 @@ import { List } from 'lucide-react';
 export default function TakeQuiz() {
   const urlParams = new URLSearchParams(window.location.search);
   const quizId = urlParams.get('id');
+  const resumeAttemptId = urlParams.get('resumeAttemptId');
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -55,7 +56,9 @@ export default function TakeQuiz() {
   const [loadingExplanations, setLoadingExplanations] = useState({});
   const [quizStarted, setQuizStarted] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const [saveAndExitOpen, setSaveAndExitOpen] = useState(false);
   const [currentAttemptId, setCurrentAttemptId] = useState(null);
+  const [isResuming, setIsResuming] = useState(false);
   const [aiHelperOpen, setAiHelperOpen] = useState(false);
   const [aiHelperContent, setAiHelperContent] = useState('');
   const [aiHelperLoading, setAiHelperLoading] = useState(false);
