@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Code2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
+import CustomImage from './CustomImageBlot';
 
 Quill.register("modules/resize", QuillResizeImage);
+Quill.register(CustomImage, true);
 
 export default function RichTextEditor({ 
   value, 
