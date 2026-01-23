@@ -2127,11 +2127,20 @@ Provide a helpful hint with quoted sentences. Example structure:
                 <p className="text-base text-slate-800">
                   Please confirm you have read all the instructions.
                 </p>
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800">
-                    ⚠️ <strong>Important:</strong> Once you start, you cannot pause or stop the quiz. Make sure you're ready to complete it now.
-                  </p>
-                </div>
+                {!quiz?.pausable && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800">
+                      ⚠️ <strong>Important:</strong> Once you start, you cannot pause or stop the quiz. Make sure you're ready to complete it now.
+                    </p>
+                  </div>
+                )}
+                {quiz?.pausable && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <p className="text-sm text-emerald-800">
+                      ✓ <strong>Pausable Quiz:</strong> You can save your progress and return later to continue where you left off.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 justify-end">
                 <Button
