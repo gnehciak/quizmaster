@@ -7,6 +7,7 @@ import InlineDropdownQuestion from './InlineDropdownQuestion';
 import InlineDropdownSameQuestion from './InlineDropdownSameQuestion';
 import InlineDropdownTypedQuestion from './InlineDropdownTypedQuestion';
 import MatchingListQuestion from './MatchingListQuestion';
+import LongResponseDualQuestion from './LongResponseDualQuestion';
 
 export default function QuestionPreview({ question, index }) {
   // Dummy handlers for preview interaction
@@ -86,18 +87,12 @@ export default function QuestionPreview({ question, index }) {
         );
       case 'long_response_dual':
         return (
-          <div className="h-[600px] border rounded-lg overflow-hidden flex flex-col md:flex-row">
-            <div className="flex-1 p-6 overflow-y-auto border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50">
-              <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: question.question || '<p>Question text will appear here...</p>' }} />
-            </div>
-            <div className="flex-1 p-6 bg-white flex flex-col">
-              <label className="text-sm font-medium text-slate-700 mb-2">Your Response</label>
-              <textarea 
-                className="flex-1 w-full p-4 border rounded-lg resize-none bg-slate-50 text-slate-500"
-                placeholder="Student will type their extended response here..."
-                disabled
-              />
-            </div>
+          <div className="h-[600px] border rounded-lg overflow-hidden">
+            <LongResponseDualQuestion
+              question={question}
+              selectedAnswer=""
+              onAnswer={handleAnswer}
+            />
           </div>
         );
       default:
