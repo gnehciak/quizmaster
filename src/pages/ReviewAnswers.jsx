@@ -2477,11 +2477,52 @@ Provide HTML formatted explanation:`;
     
     const allMarked = longResponseQuestions.every(({ idx }) => newMarks[idx]);
 
-    // Save to attempt
+    // Recalculate total score including long response marks
+    let newScore = 0;
+    let newTotal = 0;
+
+    questions.forEach((q, idx) => {
+      const answer = answers[idx];
+
+      if (q.isSubQuestion) {
+        newTotal += 1;
+        if (answer === q.subQuestion.correctAnswer) newScore += 1;
+      } else if (q.type === 'multiple_choice') {
+        newTotal += 1;
+        if (answer === q.correctAnswer) newScore += 1;
+      } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+        const zones = q.dropZones || [];
+        newTotal += zones.length;
+        newScore += zones.filter(zone => answer?.[zone.id] === zone.correctAnswer).length;
+      } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same' || q.type === 'inline_dropdown_typed') {
+        const blanks = q.blanks || [];
+        newTotal += blanks.length;
+        newScore += blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
+      } else if (q.type === 'matching_list_dual') {
+        const matchingQs = q.matchingQuestions || [];
+        newTotal += matchingQs.length;
+        newScore += matchingQs.filter(mq => answer?.[mq.id] === mq.correctAnswer).length;
+      } else if (q.type === 'long_response_dual') {
+        const questionMarks = q.marks || 1;
+        newTotal += questionMarks;
+        // Use the new marks if this is the question being marked, otherwise use saved marks
+        const marking = idx === questionIndex ? markingData : newMarks[idx];
+        if (marking) {
+          newScore += marking.marks_awarded || 0;
+        }
+      }
+    });
+
+    const newPercentage = newTotal > 0 ? Math.round((newScore / newTotal) * 100) : 0;
+
+    // Save to attempt with updated score
     try {
       await base44.entities.QuizAttempt.update(attemptId, {
         long_response_marks: newMarks,
-        marking_complete: allMarked
+        marking_complete: allMarked,
+        score: newScore,
+        total: newTotal,
+        percentage: newPercentage
       });
       queryClient.invalidateQueries({ queryKey: ['attempt', attemptId] });
     } catch (err) {
