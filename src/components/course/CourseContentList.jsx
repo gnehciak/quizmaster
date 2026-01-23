@@ -253,9 +253,11 @@ export default function CourseContentList({
       }
       
       const attempts = allQuizAttempts?.filter(a => a.quiz_id === quiz.id) || [];
+      const pausedAttempt = attempts.find(a => a.paused === true);
+      const completedAttempts = attempts.filter(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
       const attemptsAllowed = quiz.attempts_allowed || 999;
-      const attemptsUsed = attempts.length;
-      const sortedAttempts = attempts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      const attemptsUsed = completedAttempts.length;
+      const sortedAttempts = completedAttempts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       const latestAttempt = sortedAttempts[0];
       const hasCompleted = !!latestAttempt;
       const canRetry = hasCompleted && (attemptsUsed < attemptsAllowed);
