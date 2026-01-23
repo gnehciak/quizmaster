@@ -30,7 +30,9 @@ export default function ManageCourses() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return localStorage.getItem('manageCourses_selectedCategory') || 'all';
+  });
   const [sortBy, setSortBy] = useState('newest');
 
   const [viewMode, setViewMode] = useState('card');
@@ -68,6 +70,11 @@ export default function ManageCourses() {
       return cats.sort((a, b) => (a.order || 0) - (b.order || 0));
     },
   });
+
+  // Persist selected category to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('manageCourses_selectedCategory', selectedCategory);
+  }, [selectedCategory]);
 
   const saveMutation = useMutation({
     mutationFn: (data) => {
