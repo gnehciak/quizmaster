@@ -217,7 +217,7 @@ Return ONLY the JSON object, no other text.`;
 
           {/* Marking Section */}
           <div className="space-y-4 pt-4 border-t border-slate-200">
-            {!markingResult && !isMarking && (
+            {!markingResult && !isMarking && isAdmin && (
               <Button
                 onClick={handleMarkAnswer}
                 className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
@@ -226,6 +226,12 @@ Return ONLY the JSON object, no other text.`;
                 <Sparkles className="w-4 h-4" />
                 Mark Answer with AI
               </Button>
+            )}
+            
+            {!markingResult && !isMarking && !isAdmin && (
+              <div className="text-center text-slate-500 text-sm p-4 bg-slate-50 rounded-lg">
+                This response has not been marked yet.
+              </div>
             )}
 
             {isMarking && (
