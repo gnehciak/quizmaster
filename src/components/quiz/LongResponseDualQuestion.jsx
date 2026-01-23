@@ -17,7 +17,10 @@ export default function LongResponseDualQuestion({
 
   const handleChange = (value) => {
     if (showResults && !isAdmin) return;
-    onAnswer(value);
+    // Only update if value actually changed to avoid unnecessary re-renders
+    if (value !== selectedAnswer) {
+      onAnswer(value);
+    }
   };
 
   const handleMouseDown = (e) => {
