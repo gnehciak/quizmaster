@@ -470,6 +470,8 @@ export default function TakeQuiz() {
         total += (q.blanks?.length || 0);
       } else if (q.type === 'matching_list_dual') {
         total += (q.matchingQuestions?.length || 0);
+      } else if (q.type === 'long_response_dual') {
+        total += (q.marks || 0);
       }
     });
     return total;

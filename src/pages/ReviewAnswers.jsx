@@ -1888,6 +1888,19 @@ Provide HTML formatted explanation:`;
         isCorrect = earnedMarks === questionMarks;
         userAnswer = matchingQs.map(mq => `${mq.question}: ${answer?.[mq.id] || '(empty)'}`).join('; ');
         correctAnswer = matchingQs.map(mq => `${mq.question}: ${mq.correctAnswer}`).join('; ');
+      } else if (q.type === 'long_response_dual') {
+        questionMarks = q.marks || 1;
+        // Check if we have AI marking for this question
+        const marking = attempt?.long_response_marks?.[idx];
+        if (marking) {
+          earnedMarks = marking.marks_awarded || 0;
+          isCorrect = earnedMarks === questionMarks;
+        } else {
+          earnedMarks = 0;
+          isCorrect = false;
+        }
+        userAnswer = answer ? '(Written response - see review)' : '(No answer)';
+        correctAnswer = '(AI marked)';
       }
 
       const questionText = (q.isSubQuestion ? q.subQuestion.question : q.question)?.replace(/<[^>]*>/g, '') || 'Question';
@@ -2925,6 +2938,10 @@ Provide HTML formatted explanation:`;
                     } else if (q.type === 'matching_list_dual') {
                       const matchingQs = q.matchingQuestions || [];
                       isCorrect = matchingQs.length > 0 && matchingQs.every(mq => answer?.[mq.id] === mq.correctAnswer);
+                    } else if (q.type === 'long_response_dual') {
+                      // For long response, check AI marking
+                      const marking = attempt?.long_response_marks?.[idx];
+                      isCorrect = marking ? marking.marks_awarded === (q.marks || 1) : false;
                     }
 
                     // Calculate marks for this question
@@ -2935,6 +2952,8 @@ Provide HTML formatted explanation:`;
                       questionMarks = q.blanks?.length || 1;
                     } else if (q.type === 'matching_list_dual') {
                       questionMarks = q.matchingQuestions?.length || 1;
+                    } else if (q.type === 'long_response_dual') {
+                      questionMarks = q.marks || 1;
                     }
 
                     const timeSpent = questionTimes[idx] || 0;

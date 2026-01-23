@@ -64,13 +64,13 @@ export default function QuizResults({ score, total, onRetry, quizTitle, onReview
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
             <span className="text-slate-600">
-              <span className="font-semibold text-emerald-600">{score}</span> Correct
+              <span className="font-semibold text-emerald-600">{score}</span> {hasLongResponseQuestions ? 'Marks' : 'Correct'}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <XCircle className="w-5 h-5 text-red-400" />
             <span className="text-slate-600">
-              <span className="font-semibold text-red-500">{total - score}</span> Wrong
+              <span className="font-semibold text-red-500">{total - score}</span> {hasLongResponseQuestions ? 'Marks Lost' : 'Wrong'}
             </span>
           </div>
         </div>
