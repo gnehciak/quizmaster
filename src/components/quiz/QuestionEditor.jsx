@@ -1387,16 +1387,6 @@ ${aiInput}`;
       {question.type === 'long_response_dual' && (
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label>Left Pane Question</Label>
-            <RichTextEditor
-              value={question.question || ''}
-              onChange={(value) => updateField('question', value)}
-              placeholder="Enter question text for left pane..."
-              minHeight="200px"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label>Right Pane Question (shown above response area)</Label>
             <RichTextEditor
               value={question.rightPaneQuestion || ''}
