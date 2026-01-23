@@ -1054,6 +1054,26 @@ Return ONLY the JSON object, no other text.`;
                       )}
                     </div>
                   </div>
+
+                  <div className="flex items-start gap-3 p-4 border rounded-xl bg-slate-50">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        id="pausable"
+                        checked={quiz.pausable || false}
+                        onChange={(e) => setQuiz(prev => ({ ...prev, pausable: e.target.checked }))}
+                        className="w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="pausable" className="text-base font-medium cursor-pointer block mb-1">
+                        Allow Pause & Resume
+                      </Label>
+                      <p className="text-sm text-slate-500">
+                        Students can save their progress and return later
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
