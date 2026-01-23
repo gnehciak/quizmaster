@@ -442,6 +442,7 @@ export default function TakeQuiz() {
     setQuestionTimes(finalQuestionTimes);
     
     setConfirmSubmitOpen(false);
+    setSaveAndExitOpen(false);
     setSubmitted(true);
     setShowResults(true);
 
@@ -460,7 +461,11 @@ export default function TakeQuiz() {
           question_times: finalQuestionTimes,
           time_taken: quiz?.timer_enabled ? (quiz.timer_duration * 60 - timeLeft) : Object.values(finalQuestionTimes).reduce((a, b) => a + b, 0),
           requires_marking: hasLongResponseQuestions,
-          marking_complete: false
+          marking_complete: false,
+          paused: false,
+          completed: true,
+          time_remaining: null,
+          current_question_index: null
         });
 
         // Invalidate queries to refresh data across all pages
