@@ -83,6 +83,8 @@ export default function CreateQuiz() {
   const [editSchemaIndex, setEditSchemaIndex] = useState(null);
   const [showQuestionMenu, setShowQuestionMenu] = useState(false);
   const [questionMenuCollapsed, setQuestionMenuCollapsed] = useState(false);
+  const [editAiPromptDialogOpen, setEditAiPromptDialogOpen] = useState(false);
+  const [editAiPromptText, setEditAiPromptText] = useState('');
   const reorderSectionRef = React.useRef(null);
 
   const { data: existingQuiz, isLoading } = useQuery({
@@ -100,6 +102,11 @@ export default function CreateQuiz() {
   const { data: questionNames = [] } = useQuery({
     queryKey: ['questionNames'],
     queryFn: () => base44.entities.QuestionName.list(),
+  });
+
+  const { data: aiPrompts = [] } = useQuery({
+    queryKey: ['aiPrompts'],
+    queryFn: () => base44.entities.AIPrompt.list(),
   });
 
   const sortedCategories = React.useMemo(() => 
@@ -251,6 +258,66 @@ export default function CreateQuiz() {
       setEditSchemaDialogOpen(false);
     } catch (err) {
       alert('Invalid JSON: ' + err.message);
+    }
+  };
+
+  const handleOpenEditAiPrompt = () => {
+    const existingPrompt = aiPrompts.find(p => p.key === 'long_response_marking');
+    const defaultPrompt = `You are an experienced teacher marking a student's long-form written response. 
+      
+QUESTION (Left Pane):
+{{QUESTION}}
+
+{{TASK_SECTION}}
+
+MARKING CRITERIA:
+{{MARKING_CRITERIA}}
+
+TOTAL MARKS AVAILABLE: {{TOTAL_MARKS}}
+
+STUDENT'S RESPONSE:
+{{STUDENT_RESPONSE}}
+
+TASK: Mark the student's response according to the marking criteria.
+
+Return a JSON response in this exact format:
+{
+  "marks_awarded": <number between 0 and {{TOTAL_MARKS}}>,
+  "feedback": "<constructive feedback explaining the mark, what was done well, and areas for improvement. Use HTML formatting with <p>, <strong>, <ul>, <li> tags for clarity.>"
+}
+
+Be fair but rigorous in your marking. Consider:
+1. How well the response addresses the question/task
+2. Quality of evidence/examples used
+3. Clarity of expression and structure
+4. Completeness of the response
+
+Return ONLY the JSON object, no other text.`;
+    
+    setEditAiPromptText(existingPrompt?.template || defaultPrompt);
+    setEditAiPromptDialogOpen(true);
+  };
+
+  const handleSaveAiPrompt = async () => {
+    try {
+      const existingPrompt = aiPrompts.find(p => p.key === 'long_response_marking');
+      
+      if (existingPrompt) {
+        await base44.entities.AIPrompt.update(existingPrompt.id, {
+          template: editAiPromptText
+        });
+      } else {
+        await base44.entities.AIPrompt.create({
+          key: 'long_response_marking',
+          template: editAiPromptText,
+          description: 'Prompt template for AI marking of long response questions'
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['aiPrompts'] });
+      setEditAiPromptDialogOpen(false);
+    } catch (err) {
+      alert('Failed to save prompt: ' + err.message);
     }
   };
 
@@ -759,6 +826,7 @@ export default function CreateQuiz() {
                            onCopy={() => handleCopyQuestion(question)}
                            onExport={() => handleExportQuestion(question, idx)}
                            onEditSchema={() => handleOpenEditSchema(question, idx)}
+                           onEditAiPrompt={handleOpenEditAiPrompt}
                          />
                       </div>
                     ))}
@@ -1028,6 +1096,42 @@ export default function CreateQuiz() {
               </Button>
               <Button onClick={handleSaveSchema} className="bg-indigo-600 hover:bg-indigo-700">
                 Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit AI Prompt Dialog */}
+      <Dialog open={editAiPromptDialogOpen} onOpenChange={setEditAiPromptDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Edit Long Response Marking Prompt (Global)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <strong>Instructions:</strong> Available placeholders:
+              <ul className="mt-2 space-y-1">
+                <li><code className="bg-white px-1 rounded">{'{{QUESTION}}'}</code> - The question text from left pane</li>
+                <li><code className="bg-white px-1 rounded">{'{{TASK_SECTION}}'}</code> - The task/question text from right pane (if exists)</li>
+                <li><code className="bg-white px-1 rounded">{'{{MARKING_CRITERIA}}'}</code> - The marking criteria for this question</li>
+                <li><code className="bg-white px-1 rounded">{'{{TOTAL_MARKS}}'}</code> - Total marks available for this question</li>
+                <li><code className="bg-white px-1 rounded">{'{{STUDENT_RESPONSE}}'}</code> - The student's written response</li>
+              </ul>
+              <p className="mt-2">This prompt is used globally for AI marking of all long response questions.</p>
+            </div>
+            <Textarea
+              value={editAiPromptText}
+              onChange={(e) => setEditAiPromptText(e.target.value)}
+              className="font-mono text-xs min-h-[400px]"
+              placeholder="Enter your custom prompt template..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditAiPromptDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveAiPrompt} className="bg-indigo-600 hover:bg-indigo-700">
+                Save Prompt
               </Button>
             </div>
           </div>
