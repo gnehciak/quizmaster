@@ -419,7 +419,9 @@ export default function TakeQuiz() {
         total: getTotalPoints(),
         percentage: 0,
         time_taken: 0,
-        tips_used: 0
+        tips_used: 0,
+        paused: false,
+        completed: false
       });
       setCurrentAttemptId(newAttempt.id);
     } catch (e) {
