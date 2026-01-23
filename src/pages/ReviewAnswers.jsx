@@ -35,6 +35,7 @@ import InlineDropdownQuestion from '@/components/quiz/InlineDropdownQuestion';
 import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQuestion';
 import InlineDropdownTypedQuestion from '@/components/quiz/InlineDropdownTypedQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
+import LongResponseReview from '@/components/quiz/LongResponseReview';
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
 
@@ -93,6 +94,7 @@ export default function ReviewAnswers() {
   const [editMatchingQuestionId, setEditMatchingQuestionId] = useState(null);
   const [editMatchingExplanationPromptDialogOpen, setEditMatchingExplanationPromptDialogOpen] = useState(false);
   const [editMatchingExplanationPrompt, setEditMatchingExplanationPrompt] = useState('');
+  const [longResponseMarks, setLongResponseMarks] = useState({});
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -163,6 +165,9 @@ export default function ReviewAnswers() {
   React.useEffect(() => {
     if (attempt?.ai_performance_analysis) {
       setPerformanceAnalysis(attempt.ai_performance_analysis);
+    }
+    if (attempt?.long_response_marks) {
+      setLongResponseMarks(attempt.long_response_marks);
     }
   }, [attempt]);
 
@@ -2428,8 +2433,46 @@ Provide HTML formatted explanation:`;
             onEditExplanationPrompt={handleOpenEditMatchingExplanationPrompt}
           />
         );
+      case 'long_response_dual':
+        return (
+          <LongResponseReview
+            question={currentQuestion}
+            answer={answers[currentIndex]}
+            questionIndex={currentIndex}
+            savedMarks={longResponseMarks[currentIndex]}
+            onMarkingComplete={handleLongResponseMarking}
+            aiConfig={aiConfig}
+            isAdmin={isAdmin}
+          />
+        );
       default:
         return null;
+    }
+  };
+
+  const handleLongResponseMarking = async (questionIndex, markingData) => {
+    const newMarks = {
+      ...longResponseMarks,
+      [questionIndex]: markingData
+    };
+    setLongResponseMarks(newMarks);
+
+    // Check if all long response questions are marked
+    const longResponseQuestions = questions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => q.type === 'long_response_dual');
+    
+    const allMarked = longResponseQuestions.every(({ idx }) => newMarks[idx]);
+
+    // Save to attempt
+    try {
+      await base44.entities.QuizAttempt.update(attemptId, {
+        long_response_marks: newMarks,
+        marking_complete: allMarked
+      });
+      queryClient.invalidateQueries({ queryKey: ['attempt', attemptId] });
+    } catch (err) {
+      console.error('Failed to save marking:', err);
     }
   };
 
