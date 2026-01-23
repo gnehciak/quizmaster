@@ -11,14 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2, Eye, Download, Code } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy, Sparkles, Loader2, Eye, Download, Code, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [], onPreview, onCopy, onExport, onEditSchema }) {
+export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [], onPreview, onCopy, onExport, onEditSchema, onEditAiPrompt }) {
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
@@ -446,6 +446,18 @@ ${aiInput}`;
               title="Edit Schema"
             >
               <Code className="w-4 h-4" />
+            </Button>
+          )}
+          {onEditAiPrompt && question.type === 'long_response_dual' && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onEditAiPrompt}
+              className="text-slate-500 hover:text-indigo-600 h-8 w-8"
+              title="Edit AI Marking Prompt"
+            >
+              <FileText className="w-4 h-4" />
             </Button>
           )}
           <Button
