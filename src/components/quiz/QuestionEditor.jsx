@@ -1387,11 +1387,12 @@ ${aiInput}`;
       {question.type === 'long_response_dual' && (
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label>Left Pane Question (shown with passage)</Label>
+            <Label>Left Pane Question</Label>
             <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
               placeholder="Enter question text for left pane..."
+              minHeight="200px"
             />
           </div>
 
@@ -1402,83 +1403,6 @@ ${aiInput}`;
               onChange={(value) => updateField('rightPaneQuestion', value)}
               placeholder="Enter question text for right pane..."
             />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between mb-2">
-              <Label>Reading Passages</Label>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const passages = question.passages || [];
-                  updateField('passages', [
-                    ...passages,
-                    { id: `passage_${Date.now()}`, title: `Passage ${passages.length + 1}`, content: '' }
-                  ]);
-                }}
-                className="gap-1"
-              >
-                <Plus className="w-3 h-3" />
-                Add Passage
-              </Button>
-            </div>
-            
-            {(!question.passages || question.passages.length === 0) && (
-              <div className="space-y-2">
-                <Input
-                  placeholder="Passage title..."
-                  value="Main Passage"
-                  disabled
-                  className="font-medium text-sm"
-                />
-                <RichTextEditor
-                  value={question.passage || ''}
-                  onChange={(value) => updateField('passage', value)}
-                  placeholder="Enter the reading passage..."
-                  minHeight="150px"
-                />
-              </div>
-            )}
-            
-            {question.passages?.map((passage, idx) => (
-              <div key={passage.id} className="space-y-2 p-4 bg-slate-50 rounded-lg mb-3">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Passage title..."
-                    value={passage.title || ''}
-                    onChange={(e) => {
-                      const updated = [...question.passages];
-                      updated[idx] = { ...passage, title: e.target.value };
-                      updateField('passages', updated);
-                    }}
-                    className="font-medium text-sm"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      const updated = question.passages.filter((_, i) => i !== idx);
-                      updateField('passages', updated);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                <RichTextEditor
-                  value={passage.content || ''}
-                  onChange={(value) => {
-                    const updated = [...question.passages];
-                    updated[idx] = { ...passage, content: value };
-                    updateField('passages', updated);
-                  }}
-                  placeholder="Enter the reading passage..."
-                  minHeight="120px"
-                />
-              </div>
-            ))}
           </div>
 
           <div className="space-y-2">
