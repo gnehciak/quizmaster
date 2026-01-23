@@ -312,9 +312,17 @@ export default function CourseContentList({
                             <Pencil className="w-3 h-3" /> Edit
                         </Button>
                     </Link>
-                    <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
-                        <Button size="sm">Start</Button>
-                    </Link>
+                    {pausedAttempt ? (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}&resumeAttemptId=${pausedAttempt.id}`)}>
+                            <Button size="sm" className="gap-2 bg-amber-600 hover:bg-amber-700">
+                                <RotateCcw className="w-3 h-3" /> Resume
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
+                            <Button size="sm">Start</Button>
+                        </Link>
+                    )}
                 </>
             ) : (
                 <>
@@ -325,7 +333,13 @@ export default function CourseContentList({
                             <Button variant="outline" size="sm">Review</Button>
                         </Link>
                     )}
-                    {canRetry ? (
+                    {pausedAttempt ? (
+                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}&resumeAttemptId=${pausedAttempt.id}`)}>
+                            <Button size="sm" className="gap-2 bg-amber-600 hover:bg-amber-700">
+                                <RotateCcw className="w-3 h-3" /> Resume Quiz
+                            </Button>
+                        </Link>
+                    ) : canRetry ? (
                         <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
                             <Button size="sm" className="gap-2">
                                 <RotateCcw className="w-3 h-3" /> Retry
