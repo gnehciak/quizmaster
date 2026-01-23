@@ -2009,10 +2009,11 @@ Provide a helpful hint with quoted sentences. Example structure:
     );
   }
 
-  // Pre-start screen
-  if (!quizStarted && !showResults && !isReviewMode) {
+  // Pre-start screen (skip if resuming a paused quiz)
+  if (!quizStarted && !showResults && !isReviewMode && !pausedAttempt) {
     const attemptsAllowed = quiz.attempts_allowed || 999;
-    const attemptsUsed = userAttempts.length;
+    const completedAttempts = userAttempts.filter(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
+    const attemptsUsed = completedAttempts.length;
     const attemptsLeft = attemptsAllowed - attemptsUsed;
     const isAdmin = user?.role === 'admin';
     const canTakeQuiz = isAdmin || attemptsLeft > 0;
