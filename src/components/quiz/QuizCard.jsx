@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -375,10 +375,10 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         </div>
 
         <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tips</div>
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Pausable</div>
           <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
-            <Sparkles className="w-3 h-3 text-pink-500" />
-            {quiz.allow_tips ? (quiz.tips_allowed === 999 ? '∞' : quiz.tips_allowed) : 'Off'}
+            <Pause className="w-3 h-3 text-blue-500" />
+            {quiz.pausable ? 'Yes' : 'No'}
           </div>
         </div>
         
