@@ -21,7 +21,9 @@ import {
   Edit,
   BarChart3,
   Bot,
-  Save
+  Save,
+  Image,
+  Type
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +31,12 @@ export default function AdminDashboard() {
   const [aiConfigDialogOpen, setAiConfigDialogOpen] = useState(false);
   const [modelName, setModelName] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [siteConfigDialogOpen, setSiteConfigDialogOpen] = useState(false);
+  const [siteName, setSiteName] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [faviconUrl, setFaviconUrl] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -65,6 +73,14 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: siteConfig } = useQuery({
+    queryKey: ['siteConfig', 'branding'],
+    queryFn: async () => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'branding' });
+      return configs[0] || null;
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (aiConfig) {
@@ -91,6 +107,73 @@ export default function AdminDashboard() {
 
   const handleSaveAIConfig = () => {
     saveMutation.mutate({ model_name: modelName, api_key: apiKey });
+  };
+
+  const saveSiteConfigMutation = useMutation({
+    mutationFn: async (data) => {
+      if (siteConfig) {
+        return await base44.entities.SiteConfig.update(siteConfig.id, data);
+      } else {
+        return await base44.entities.SiteConfig.create({ key: 'branding', ...data });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['siteConfig'] });
+      setSiteConfigDialogOpen(false);
+      toast.success('Site branding saved');
+    },
+    onError: (error) => {
+      toast.error('Failed to save branding: ' + error.message);
+    }
+  });
+
+  const handleOpenSiteConfig = () => {
+    setSiteName(siteConfig?.content?.siteName || 'QuizMaster');
+    setLogoUrl(siteConfig?.content?.logoUrl || '');
+    setFaviconUrl(siteConfig?.content?.faviconUrl || '');
+    setSiteConfigDialogOpen(true);
+  };
+
+  const handleSaveSiteConfig = () => {
+    saveSiteConfigMutation.mutate({
+      content: {
+        siteName,
+        logoUrl,
+        faviconUrl
+      }
+    });
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setLogoUrl(file_url);
+      toast.success('Logo uploaded');
+    } catch (error) {
+      toast.error('Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleFaviconUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFavicon(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFaviconUrl(file_url);
+      toast.success('Favicon uploaded');
+    } catch (error) {
+      toast.error('Failed to upload favicon');
+    } finally {
+      setUploadingFavicon(false);
+    }
   };
 
   if (userLoading) {
@@ -205,8 +288,30 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* AI Configuration */}
-        <div className="mt-6">
+        {/* Site Configuration */}
+        <div className="mt-6 grid sm:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Type className="w-5 h-5 text-indigo-600" />
+                Site Branding
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="text-sm text-slate-600">
+                  <p><strong>Site Name:</strong> {siteConfig?.content?.siteName || 'QuizMaster'}</p>
+                  <p><strong>Logo:</strong> {siteConfig?.content?.logoUrl ? 'Set' : 'Not set'}</p>
+                  <p><strong>Favicon:</strong> {siteConfig?.content?.faviconUrl ? 'Set' : 'Not set'}</p>
+                </div>
+                <Button onClick={handleOpenSiteConfig} variant="outline" className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  Configure Site Branding
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -274,6 +379,112 @@ export default function AdminDashboard() {
             >
               <Save className="w-4 h-4" />
               {saveMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Site Branding Dialog */}
+      <Dialog open={siteConfigDialogOpen} onOpenChange={setSiteConfigDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Site Branding Configuration</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="site-name">Site Name</Label>
+              <Input
+                id="site-name"
+                value={siteName}
+                onChange={(e) => setSiteName(e.target.value)}
+                placeholder="QuizMaster"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logo-url">Logo</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="logo-url"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="Logo URL"
+                />
+                <input
+                  type="file"
+                  id="logo-upload"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('logo-upload').click()}
+                  disabled={uploadingLogo}
+                  className="gap-2 whitespace-nowrap"
+                >
+                  <Image className="w-4 h-4" />
+                  {uploadingLogo ? 'Uploading...' : 'Upload'}
+                </Button>
+              </div>
+              {logoUrl && (
+                <div className="mt-2 p-2 border border-slate-200 rounded-lg">
+                  <img src={logoUrl} alt="Logo preview" className="h-12 object-contain" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="favicon-url">Favicon</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="favicon-url"
+                  value={faviconUrl}
+                  onChange={(e) => setFaviconUrl(e.target.value)}
+                  placeholder="Favicon URL"
+                />
+                <input
+                  type="file"
+                  id="favicon-upload"
+                  accept="image/*"
+                  onChange={handleFaviconUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('favicon-upload').click()}
+                  disabled={uploadingFavicon}
+                  className="gap-2 whitespace-nowrap"
+                >
+                  <Image className="w-4 h-4" />
+                  {uploadingFavicon ? 'Uploading...' : 'Upload'}
+                </Button>
+              </div>
+              {faviconUrl && (
+                <div className="mt-2 p-2 border border-slate-200 rounded-lg">
+                  <img src={faviconUrl} alt="Favicon preview" className="h-8 object-contain" />
+                </div>
+              )}
+              <p className="text-xs text-slate-500">
+                Recommended: 32x32px or 64x64px PNG/ICO file
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setSiteConfigDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveSiteConfig} 
+              disabled={saveSiteConfigMutation.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700 gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {saveSiteConfigMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </DialogContent>

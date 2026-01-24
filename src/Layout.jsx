@@ -31,6 +31,34 @@ export default function Layout({ children, currentPageName }) {
     }
   });
 
+  const { data: siteConfig } = useQuery({
+    queryKey: ['siteConfig', 'branding'],
+    queryFn: async () => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'branding' });
+      return configs[0] || null;
+    },
+  });
+
+  const siteName = siteConfig?.content?.siteName || 'QuizMaster';
+  const logoUrl = siteConfig?.content?.logoUrl;
+  const faviconUrl = siteConfig?.content?.faviconUrl;
+
+  // Update favicon
+  React.useEffect(() => {
+    if (faviconUrl) {
+      const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+      link.type = 'image/x-icon';
+      link.rel = 'icon';
+      link.href = faviconUrl;
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+  }, [faviconUrl]);
+
+  // Update page title
+  React.useEffect(() => {
+    document.title = siteName;
+  }, [siteName]);
+
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -47,10 +75,16 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-between h-16">
               <Link to={createPageUrl('Home')} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                  Q
-                </div>
-                <span className="text-xl font-bold text-slate-800">QuizMaster</span>
+                {logoUrl ? (
+                  <img src={logoUrl} alt={siteName} className="h-8 object-contain" />
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                      {siteName.charAt(0)}
+                    </div>
+                    <span className="text-xl font-bold text-slate-800">{siteName}</span>
+                  </>
+                )}
               </Link>
 
               <div className="flex items-center gap-4">
