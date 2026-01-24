@@ -2069,6 +2069,18 @@ Provide a helpful hint with quoted sentences. Example structure:
                 </div>
               </div>
             </div>
+
+            {quiz?.pausable && (
+              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Pause className="w-6 h-6 text-blue-600" />
+                <div>
+                  <div className="font-semibold text-slate-800">Pausable Quiz</div>
+                  <div className="text-slate-600">
+                    You can save your progress and resume later
+                  </div>
+                </div>
+              </div>
+            )}
             </div>
 
             {quiz.allow_tips && (
@@ -2750,31 +2762,76 @@ Provide a helpful hint with quoted sentences. Example structure:
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-base font-medium text-slate-800">
-              Are you sure you want to leave this quiz?
+              {quiz?.pausable 
+                ? 'Would you like to save your progress and return later, or submit your quiz now?'
+                : 'Are you sure you want to leave this quiz?'}
             </p>
 
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">
-                ⚠️ <strong>Warning:</strong> You cannot come back to this quiz. Quitting now will abandon and submit your quiz early with your current answers.
-              </p>
-            </div>
+            {!quiz?.pausable && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800">
+                  ⚠️ <strong>Warning:</strong> You cannot come back to this quiz. Quitting now will abandon and submit your quiz early with your current answers.
+                </p>
+              </div>
+            )}
+
+            {quiz?.pausable && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💾 <strong>Pausable Quiz:</strong> You can save your current progress and continue later, or submit to complete the quiz now.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmExitOpen(false)}
-              className="px-6"
-            >
-              Continue Quiz
-            </Button>
-            <Button
-              onClick={handleConfirmExit}
-              className="bg-red-600 hover:bg-red-700 px-6"
-            >
-              Exit & Submit
-            </Button>
-          </div>
+          {quiz?.pausable ? (
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  setConfirmExitOpen(false);
+                  handleSaveAndExit();
+                }}
+                variant="outline"
+                className="w-full py-6"
+              >
+                💾 Save & Exit
+                <span className="text-xs text-slate-500 ml-2">(Resume later)</span>
+              </Button>
+              <Button
+                onClick={() => {
+                  setConfirmExitOpen(false);
+                  handleConfirmSubmit();
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 py-6"
+              >
+                ✓ Submit Now
+                <span className="text-xs text-emerald-200 ml-2">(Complete quiz)</span>
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmExitOpen(false)}
+                className="w-full"
+              >
+                Continue Quiz
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmExitOpen(false)}
+                className="px-6"
+              >
+                Continue Quiz
+              </Button>
+              <Button
+                onClick={handleConfirmExit}
+                className="bg-red-600 hover:bg-red-700 px-6"
+              >
+                Exit & Submit
+              </Button>
+            </div>
+          )}
           </DialogContent>
           </Dialog>
 

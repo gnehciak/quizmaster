@@ -591,15 +591,21 @@ export default function QuizAttempts() {
                             {format(new Date(attempt.created_date), 'MMM d, yyyy h:mm a')}
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              className={
-                                attempt.percentage >= 70 
-                                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' 
-                                  : 'bg-red-100 text-red-700 hover:bg-red-100'
-                              }
-                            >
-                              {attempt.percentage}%
-                            </Badge>
+                            {attempt.paused ? (
+                              <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                                Paused
+                              </Badge>
+                            ) : (
+                              <Badge 
+                                className={
+                                  attempt.percentage >= 70 
+                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' 
+                                    : 'bg-red-100 text-red-700 hover:bg-red-100'
+                                }
+                              >
+                                {attempt.percentage}%
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-slate-500">
                             {attempt.time_taken ? `${Math.floor(attempt.time_taken / 60)}m ${attempt.time_taken % 60}s` : '-'}
