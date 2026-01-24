@@ -25,7 +25,8 @@ import {
   ChevronRight,
   AlertCircle,
   FolderOpen,
-  Loader2
+  Loader2,
+  Pause
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -285,6 +286,12 @@ export default function CourseContentList({
                         <Clock className="w-3 h-3" />
                         {quiz.timer_duration}m
                     </span>
+                )}
+                {quiz.pausable && (
+                    <Badge variant="secondary" className="text-xs font-normal bg-blue-50 text-blue-700 border-blue-200">
+                        <Pause className="w-3 h-3 mr-1" />
+                        Pausable
+                    </Badge>
                 )}
                 {attemptsAllowed < 999 && (
                     <Badge variant="secondary" className="text-xs font-normal">
