@@ -375,10 +375,11 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         </div>
 
         <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Pausable</div>
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Pause/Tips</div>
           <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
-            <Pause className="w-3 h-3 text-blue-500" />
-            {quiz.pausable ? 'Yes' : 'No'}
+            {quiz.pausable && <Pause className="w-3 h-3 text-blue-500" />}
+            {quiz.allow_tips && <Sparkles className="w-3 h-3 text-purple-500" />}
+            {!quiz.pausable && !quiz.allow_tips && <span className="text-slate-400">—</span>}
           </div>
         </div>
         
