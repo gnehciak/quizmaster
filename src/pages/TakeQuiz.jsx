@@ -473,6 +473,49 @@ export default function TakeQuiz() {
         // Invalidate queries to refresh data across all pages
         queryClient.invalidateQueries({ queryKey: ['quizAttempts'] });
         queryClient.invalidateQueries({ queryKey: ['allQuizAttempts'] });
+
+        // Send completion email with breakdown
+        const questionBreakdown = questions.map((q, idx) => {
+          const answer = answers[idx];
+          let correct = false;
+          let points = 0;
+
+          if (q.isSubQuestion) {
+            correct = answer === q.subQuestion.correctAnswer;
+            points = correct ? 1 : 0;
+          } else if (q.type === 'multiple_choice') {
+            correct = answer === q.correctAnswer;
+            points = correct ? 1 : 0;
+          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
+            const zones = q.dropZones || [];
+            const correctCount = zones.filter(zone => answer?.[zone.id] === zone.correctAnswer).length;
+            points = correctCount;
+            correct = correctCount === zones.length;
+          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same' || q.type === 'inline_dropdown_typed') {
+            const blanks = q.blanks || [];
+            const correctCount = blanks.filter(blank => answer?.[blank.id] === blank.correctAnswer).length;
+            points = correctCount;
+            correct = correctCount === blanks.length;
+          } else if (q.type === 'matching_list_dual') {
+            const matchingQuestions = q.matchingQuestions || [];
+            const correctCount = matchingQuestions.filter(mq => answer?.[mq.id] === mq.correctAnswer).length;
+            points = correctCount;
+            correct = correctCount === matchingQuestions.length;
+          } else if (q.type === 'long_response_dual') {
+            correct = null;
+            points = q.marks || 0;
+          }
+
+          return { correct, points };
+        });
+
+        base44.functions.invoke('sendQuizCompletionEmail', {
+          quizTitle: quiz.title,
+          score,
+          total,
+          percentage,
+          questionBreakdown
+        }).catch(err => console.error('Failed to send completion email:', err));
       }
 
     } catch (e) {
