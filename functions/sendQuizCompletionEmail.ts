@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
 
     // Send the email
     await base44.asServiceRole.integrations.Core.SendEmail({
+      from_name: 'no-reply@app.writingcollege.com.au',
       to: user.email,
       subject: `Quiz Complete: ${quizTitle} - ${percentage}%`,
       body: emailBody
