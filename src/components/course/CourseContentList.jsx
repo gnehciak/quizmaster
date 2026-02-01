@@ -483,9 +483,18 @@ export default function CourseContentList({
             return (
                 <div key={block.id} className="relative">
                     {blockLocked && !isAdmin && (
-                        <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg w-fit">
-                            <Lock className="w-3 h-3" />
-                            {block.unlockDate ? `Unlocks ${new Date(block.unlockDate).toLocaleDateString()}` : "Content Locked"}
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <Lock className="w-8 h-8 text-slate-700" />
+                            </div>
+                            <p className="text-white font-semibold text-lg mb-1">Content Locked</p>
+                            {block.unlockDate && (
+                              <p className="text-white/80 text-sm">
+                                Unlocks {new Date(block.unlockDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
                         </div>
                     )}
                     <RenderBlockContent block={block} isLocked={blockLocked} />
