@@ -31,6 +31,14 @@ export default function Layout({ children, currentPageName }) {
     }
   });
 
+  const { data: logoConfig } = useQuery({
+    queryKey: ['siteConfig', 'logo'],
+    queryFn: async () => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'logo' });
+      return configs[0] || null;
+    },
+  });
+
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -47,10 +55,20 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-between h-16">
               <Link to={createPageUrl('Home')} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                  Q
-                </div>
-                <span className="text-xl font-bold text-slate-800">WWW Writing College Online</span>
+                {logoConfig?.content?.logo_url ? (
+                  <img 
+                    src={logoConfig.content.logo_url} 
+                    alt="Logo" 
+                    className="h-10 w-auto object-contain"
+                  />
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                      Q
+                    </div>
+                    <span className="text-xl font-bold text-slate-800">WWW Writing College Online</span>
+                  </>
+                )}
               </Link>
 
               <div className="flex items-center gap-4">

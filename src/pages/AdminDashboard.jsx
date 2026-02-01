@@ -21,7 +21,10 @@ import {
   Edit,
   BarChart3,
   Bot,
-  Save
+  Save,
+  Upload,
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +32,7 @@ export default function AdminDashboard() {
   const [aiConfigDialogOpen, setAiConfigDialogOpen] = useState(false);
   const [modelName, setModelName] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -65,6 +69,14 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: siteConfig } = useQuery({
+    queryKey: ['siteConfig', 'logo'],
+    queryFn: async () => {
+      const configs = await base44.entities.SiteConfig.filter({ key: 'logo' });
+      return configs[0] || null;
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (aiConfig) {
@@ -91,6 +103,30 @@ export default function AdminDashboard() {
 
   const handleSaveAIConfig = () => {
     saveMutation.mutate({ model_name: modelName, api_key: apiKey });
+  };
+
+  const handleLogoUpload = async (file) => {
+    setUploadingLogo(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      
+      if (siteConfig) {
+        await base44.entities.SiteConfig.update(siteConfig.id, {
+          content: { logo_url: result.file_url }
+        });
+      } else {
+        await base44.entities.SiteConfig.create({
+          key: 'logo',
+          content: { logo_url: result.file_url }
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['siteConfig', 'logo'] });
+      toast.success('Logo updated successfully');
+    } catch (e) {
+      toast.error('Failed to upload logo');
+    }
+    setUploadingLogo(false);
   };
 
   if (userLoading) {
@@ -200,6 +236,59 @@ export default function AdminDashboard() {
                     <span className="font-medium text-indigo-600">{attempt.percentage}%</span>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Logo Configuration */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-indigo-600" />
+                Navigation Bar Logo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {siteConfig?.content?.logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={siteConfig.content.logo_url} 
+                      alt="Logo" 
+                      className="h-12 w-auto object-contain border rounded p-2"
+                    />
+                  </div>
+                )}
+                <div>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) handleLogoUpload(file);
+                    }}
+                  />
+                  <Button 
+                    onClick={() => document.getElementById('logo-upload').click()}
+                    variant="outline" 
+                    className="gap-2"
+                    disabled={uploadingLogo}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Upload a logo image for the navigation bar (PNG, JPG, SVG)
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
