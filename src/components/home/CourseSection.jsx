@@ -193,8 +193,8 @@ export default function CourseSection({
 
         {courses.length > 0 ? (
           <div className="relative group/carousel">
-            <div className="overflow-hidden px-2 -mx-2" ref={emblaRef}>
-              <div className="flex -ml-8 py-4">
+            <div className="overflow-visible" ref={emblaRef}>
+              <div className="flex -ml-8 py-4 px-4 -mx-4">
                 {courses.map((course, idx) => (
                   <div key={course.id} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_33.33%] pl-8">
                     <CourseCard 
