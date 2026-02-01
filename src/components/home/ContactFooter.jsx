@@ -275,7 +275,7 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
           </div>
 
           <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm">© {new Date().getFullYear()} QuizMaster Education. All rights reserved.</p>
+            <p className="text-sm">© 2026 Sydney Elite Education Pty Ltd ABN 61 626 810 008 | All Rights Reserved | WWW Writing College</p>
             <div className="flex gap-4">
               <a href="#" className="hover:text-white transition-colors"><Facebook className="w-5 h-5" /></a>
               <a href="#" className="hover:text-white transition-colors"><Twitter className="w-5 h-5" /></a>
