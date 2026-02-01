@@ -481,23 +481,26 @@ export default function CourseContentList({
             const blockLocked = isBlockLocked(block);
             
             return (
-                <div key={block.id} className="relative">
+                <div key={block.id} className={cn("relative", blockLocked && !isAdmin && "min-h-[140px] flex items-stretch")}>
                     {blockLocked && !isAdmin && (
-                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
-                          <div className="text-center">
-                            <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <Lock className="w-8 h-8 text-slate-700" />
+                        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl overflow-hidden">
+                          <div className="absolute inset-0 bg-white/60 backdrop-blur-[3px]"></div>
+                          <div className="relative z-10 text-center p-4">
+                            <div className="w-10 h-10 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-2 border border-slate-200">
+                              <Lock className="w-5 h-5 text-slate-400" />
                             </div>
-                            <p className="text-white font-semibold text-lg mb-1">Content Locked</p>
+                            <p className="text-slate-900 font-medium text-sm">Content Locked</p>
                             {block.unlockDate && (
-                              <p className="text-white/80 text-sm">
+                              <p className="text-slate-500 text-xs mt-0.5">
                                 Unlocks {new Date(block.unlockDate).toLocaleDateString()}
                               </p>
                             )}
                           </div>
                         </div>
                     )}
-                    <RenderBlockContent block={block} isLocked={blockLocked} />
+                    <div className="w-full">
+                        <RenderBlockContent block={block} isLocked={blockLocked} />
+                    </div>
                 </div>
             );
         })}
