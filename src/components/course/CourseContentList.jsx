@@ -481,13 +481,13 @@ export default function CourseContentList({
             const blockLocked = isBlockLocked(block);
             
             return (
-                <div key={block.id} className={cn("relative", blockLocked && !isAdmin && "min-h-[140px] flex items-stretch")}>
+                <div key={block.id} className="relative">
                     {blockLocked && !isAdmin && (
                         <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl overflow-hidden">
                           <div className="absolute inset-0 bg-white/60 backdrop-blur-[3px]"></div>
                           <div className="relative z-10 text-center p-4">
-                            <div className="w-10 h-10 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-2 border border-slate-200">
-                              <Lock className="w-5 h-5 text-slate-400" />
+                            <div className="w-8 h-8 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-2 border border-slate-200">
+                              <Lock className="w-4 h-4 text-slate-400" />
                             </div>
                             <p className="text-slate-900 font-medium text-sm">Content Locked</p>
                             {block.unlockDate && (
@@ -498,9 +498,7 @@ export default function CourseContentList({
                           </div>
                         </div>
                     )}
-                    <div className="w-full">
-                        <RenderBlockContent block={block} isLocked={blockLocked} />
-                    </div>
+                    <RenderBlockContent block={block} isLocked={blockLocked} />
                 </div>
             );
         })}
