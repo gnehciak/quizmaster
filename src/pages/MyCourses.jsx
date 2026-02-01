@@ -75,15 +75,17 @@ export default function MyCourses() {
       const allCourses = await base44.entities.Course.list();
       let matchedCourse = null;
       let matchedClass = null;
+      let matchedCodeIndex = -1;
 
       for (const course of allCourses) {
         if (course.access_codes && Array.isArray(course.access_codes)) {
-          const match = course.access_codes.find(ac => 
+          const index = course.access_codes.findIndex(ac => 
             ac.code.toUpperCase() === code.toUpperCase()
           );
-          if (match) {
+          if (index !== -1) {
             matchedCourse = course;
-            matchedClass = match.class_name;
+            matchedClass = course.access_codes[index].class_name;
+            matchedCodeIndex = index;
             break;
           }
         }
@@ -113,6 +115,12 @@ export default function MyCourses() {
         unlock_method: 'code',
         class_name: matchedClass
       });
+
+      // Remove the used code from access_codes (for new system only, not legacy)
+      if (matchedCodeIndex !== -1) {
+        const updatedCodes = matchedCourse.access_codes.filter((_, idx) => idx !== matchedCodeIndex);
+        await base44.entities.Course.update(matchedCourse.id, { access_codes: updatedCodes });
+      }
 
       return matchedCourse;
     },
