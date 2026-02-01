@@ -124,7 +124,7 @@ export default function CourseContentList({
     
     const completed = quizChildren.filter(child => {
       const attempts = allQuizAttempts?.filter(a => a.quiz_id === child.quiz_id) || [];
-      return attempts.length > 0;
+      return attempts.some(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
     }).length;
     
     return { completed, total: quizChildren.length };

@@ -188,30 +188,47 @@ export default function CourseDetail() {
   const calculateProgress = () => {
     if (!contentBlocks.length) return 0;
     
-    // Count total interactive items that can be completed (quizzes)
-    const quizBlocks = contentBlocks.filter(b => b.type === 'quiz');
-    if (!quizBlocks.length) return 0;
+    const getAllQuizzes = (blocks) => {
+        let quizzes = [];
+        blocks.forEach(block => {
+            if (block.type === 'quiz') quizzes.push(block);
+            if (block.type === 'topic' && block.children) {
+                quizzes = [...quizzes, ...getAllQuizzes(block.children)];
+            }
+        });
+        return quizzes;
+    };
+    
+    const allQuizzes = getAllQuizzes(contentBlocks);
+    if (!allQuizzes.length) return 0;
 
-    const completedQuizzes = quizBlocks.filter(block => {
-      const quizAttempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
-      return quizAttempts.length > 0;
+    const completedQuizzes = allQuizzes.filter(block => {
+      const attempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
+      return attempts.some(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
     });
 
-    return (completedQuizzes.length / quizBlocks.length) * 100;
+    return (completedQuizzes.length / allQuizzes.length) * 100;
   };
 
   const progress = calculateProgress();
 
   // Find first incomplete block for "Continue" button
   const getFirstIncompleteBlock = () => {
-    const firstIncomplete = contentBlocks.find(block => {
-      if (block.type === 'quiz') {
-        const attempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
-        return attempts.length === 0;
-      }
-      return false; // Assume other content is "completed" once viewed, or logic TBD
-    });
-    return firstIncomplete?.id;
+    const findIncomplete = (blocks) => {
+        for (const block of blocks) {
+            if (block.type === 'quiz') {
+                const attempts = allQuizAttempts.filter(a => a.quiz_id === block.quiz_id);
+                const isCompleted = attempts.some(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
+                if (!isCompleted) return block.id;
+            }
+            if (block.type === 'topic' && block.children) {
+                const childId = findIncomplete(block.children);
+                if (childId) return childId;
+            }
+        }
+        return null;
+    };
+    return findIncomplete(contentBlocks);
   };
 
   // Handle payment status from URL
