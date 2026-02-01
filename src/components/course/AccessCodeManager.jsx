@@ -67,6 +67,24 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
     toast.success('Code copied to clipboard');
   };
 
+  const handleGenerateAndCopy = () => {
+    if (!newClassName.trim()) {
+      toast.error('Please enter a class name');
+      return;
+    }
+
+    const newCode = generateCode();
+    const newCodeObj = {
+      code: newCode,
+      class_name: newClassName.trim()
+    };
+
+    setCodes([...codes, newCodeObj]);
+    navigator.clipboard.writeText(newCode);
+    setNewClassName('');
+    toast.success('Code generated and copied!');
+  };
+
   const handleSave = () => {
     onUpdate(codes);
     onOpenChange(false);
@@ -108,6 +126,10 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
                     onChange={(e) => setCodeQuantity(parseInt(e.target.value) || 1)}
                   />
                 </div>
+                <Button onClick={handleGenerateAndCopy} variant="outline" className="gap-2 mt-5">
+                  <Copy className="w-4 h-4" />
+                  Generate One & Copy
+                </Button>
                 <Button onClick={handleAddClass} className="gap-2 mt-5">
                   <Plus className="w-4 h-4" />
                   Generate Codes
