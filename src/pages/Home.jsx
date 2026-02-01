@@ -103,6 +103,21 @@ export default function Home() {
     return true;
   });
 
+  const ocCourses = visibleCourses.filter(c => 
+    c.title.toLowerCase().includes('oc') || 
+    c.category?.toLowerCase().includes('oc') || 
+    c.category?.toLowerCase().includes('opportunity class')
+  );
+
+  const selectiveCourses = visibleCourses.filter(c => 
+    c.title.toLowerCase().includes('selective') || 
+    c.category?.toLowerCase().includes('selective')
+  );
+
+  const otherCourses = visibleCourses.filter(c => 
+    !ocCourses.includes(c) && !selectiveCourses.includes(c)
+  );
+
   if (isLoading || accessLoading || configLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -117,8 +132,7 @@ export default function Home() {
       title: defaultTitle,
       description: defaultDesc,
       iconName: defaultIcon,
-      color: defaultColor,
-      categoryFilter: 'all'
+      color: defaultColor
     };
   };
 
@@ -126,18 +140,16 @@ export default function Home() {
   const selConfig = getSectionConfig('selectiveSection', 'Selective Reading & Writing', 'Advanced trial tests and classes designed for Selective High School placement success.', 'PenTool', 'purple');
   const otherConfig = getSectionConfig('otherSection', 'More Courses', 'Explore our range of general knowledge and skill-building courses.', 'GraduationCap', 'emerald');
 
-  const getSectionCourses = (config) => {
+  const getSectionCourses = (config, defaultCourses) => {
     if (config?.categoryFilter && config.categoryFilter !== 'all') {
       return visibleCourses.filter(c => c.category === config.categoryFilter);
     }
-    // If no specific filter is set, and it's not explicitly 'all', we might want to default to 'all' or handle legacy behavior.
-    // Given the user wants to "fully use the category filter", we'll default to 'all' if not specified.
-    return visibleCourses;
+    return defaultCourses;
   };
 
-  const ocSectionCourses = getSectionCourses(ocConfig);
-  const selSectionCourses = getSectionCourses(selConfig);
-  const otherSectionCourses = getSectionCourses(otherConfig);
+  const ocSectionCourses = getSectionCourses(ocConfig, ocCourses);
+  const selSectionCourses = getSectionCourses(selConfig, selectiveCourses);
+  const otherSectionCourses = getSectionCourses(otherConfig, otherCourses);
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
