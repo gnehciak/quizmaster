@@ -10,8 +10,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DialogTrigger } from
+"@/components/ui/dialog";
 
 const DEFAULT_CONTENT = {
   title: "Get in touch",
@@ -21,17 +21,17 @@ const DEFAULT_CONTENT = {
   address: { label: "Visit us", value1: "123 Education Way,", value2: "Sydney NSW 2000, Australia" },
   footerDesc: "Empowering students to achieve their best in Opportunity Class and Selective High School Placement Tests through authentic practice and expert guidance.",
   links: [
-    { label: "OC Trial Tests", url: "#" },
-    { label: "Selective Reading", url: "#" },
-    { label: "Selective Writing", url: "#" },
-    { label: "Thinking Skills", url: "#" }
-  ],
+  { label: "OC Trial Tests", url: "#" },
+  { label: "Selective Reading", url: "#" },
+  { label: "Selective Writing", url: "#" },
+  { label: "Thinking Skills", url: "#" }],
+
   companyLinks: [
-    { label: "About Us", url: "#" },
-    { label: "Success Stories", url: "#" },
-    { label: "Careers", url: "#" },
-    { label: "Privacy Policy", url: "#" }
-  ]
+  { label: "About Us", url: "#" },
+  { label: "Success Stories", url: "#" },
+  { label: "Careers", url: "#" },
+  { label: "Privacy Policy", url: "#" }]
+
 };
 
 export default function ContactFooter({ content, onUpdate, editMode }) {
@@ -43,7 +43,7 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
     e.preventDefault();
     setUploading(true);
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     setUploading(false);
     toast.success("Message sent! We'll get back to you shortly.");
     e.target.reset();
@@ -81,8 +81,8 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
     <>
       {/* Contact Section */}
       <section className="py-24 bg-slate-50 relative group/footer">
-        {editMode && (
-          <div className="absolute top-4 right-4 z-10">
+        {editMode &&
+        <div className="absolute top-4 right-4 z-10">
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="secondary" className="shadow-lg gap-2">
@@ -134,13 +134,13 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
                           <Label>Program Links</Label>
                           <Button size="sm" variant="ghost" onClick={() => handleAddLink('links')}><Plus className="w-3 h-3" /></Button>
                         </div>
-                        {data.links?.map((link, i) => (
-                          <div key={i} className="flex gap-2">
+                        {data.links?.map((link, i) =>
+                      <div key={i} className="flex gap-2">
                             <Input value={link.label} onChange={(e) => handleLinkUpdate('links', i, 'label', e.target.value)} placeholder="Label" />
                             <Input value={link.url} onChange={(e) => handleLinkUpdate('links', i, 'url', e.target.value)} placeholder="URL" />
                             <Button size="icon" variant="ghost" onClick={() => handleRemoveLink('links', i)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                           </div>
-                        ))}
+                      )}
                       </div>
 
                       <div className="space-y-2">
@@ -148,13 +148,13 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
                           <Label>Company Links</Label>
                           <Button size="sm" variant="ghost" onClick={() => handleAddLink('companyLinks')}><Plus className="w-3 h-3" /></Button>
                         </div>
-                        {data.companyLinks?.map((link, i) => (
-                          <div key={i} className="flex gap-2">
+                        {data.companyLinks?.map((link, i) =>
+                      <div key={i} className="flex gap-2">
                             <Input value={link.label} onChange={(e) => handleLinkUpdate('companyLinks', i, 'label', e.target.value)} placeholder="Label" />
                             <Input value={link.url} onChange={(e) => handleLinkUpdate('companyLinks', i, 'url', e.target.value)} placeholder="URL" />
                             <Button size="icon" variant="ghost" onClick={() => handleRemoveLink('companyLinks', i)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                           </div>
-                        ))}
+                      )}
                       </div>
                     </div>
                   </div>
@@ -162,7 +162,7 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
               </DialogContent>
             </Dialog>
           </div>
-        )}
+        }
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-16">
@@ -248,7 +248,7 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                   Q
                 </div>
-                <span className="text-xl font-bold text-white">QuizMaster</span>
+                <span className="text-xl font-bold text-white">WWW Writing College Online</span>
               </div>
               <p className="text-slate-400 max-w-sm">
                 {data.footerDesc}
@@ -258,18 +258,18 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
             <div>
               <h4 className="text-white font-semibold mb-4">Programs</h4>
               <ul className="space-y-2">
-                {data.links?.map((link, i) => (
-                  <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.label}</a></li>
-                ))}
+                {data.links?.map((link, i) =>
+                <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.label}</a></li>
+                )}
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
+              <h4 className="text-white font-semibold mb-4">Join our Engaging Classes</h4>
               <ul className="space-y-2">
-                {data.companyLinks?.map((link, i) => (
-                  <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.label}</a></li>
-                ))}
+                {data.companyLinks?.map((link, i) =>
+                <li key={i}><a href={link.url} className="hover:text-white transition-colors">{link.label}</a></li>
+                )}
               </ul>
             </div>
           </div>
@@ -284,6 +284,6 @@ export default function ContactFooter({ content, onUpdate, editMode }) {
           </div>
         </div>
       </footer>
-    </>
-  );
+    </>);
+
 }
