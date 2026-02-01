@@ -34,6 +34,11 @@ export default function Home() {
     enabled: !!user?.email
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ['courseCategories'],
+    queryFn: () => base44.entities.CourseCategory.list(),
+  });
+
   // Site Config for Home Page
   const { data: siteConfig, isLoading: configLoading } = useQuery({
     queryKey: ['siteConfig', 'home'],
@@ -135,6 +140,17 @@ export default function Home() {
   const selConfig = getSectionConfig('selectiveSection', 'Selective Reading & Writing', 'Advanced trial tests and classes designed for Selective High School placement success.', 'PenTool', 'purple');
   const otherConfig = getSectionConfig('otherSection', 'More Courses', 'Explore our range of general knowledge and skill-building courses.', 'GraduationCap', 'emerald');
 
+  const getSectionCourses = (config, defaultCourses) => {
+    if (config?.categoryFilter && config.categoryFilter !== 'all') {
+      return visibleCourses.filter(c => c.category === config.categoryFilter);
+    }
+    return defaultCourses;
+  };
+
+  const ocSectionCourses = getSectionCourses(ocConfig, ocCourses);
+  const selSectionCourses = getSectionCourses(selConfig, selectiveCourses);
+  const otherSectionCourses = getSectionCourses(otherConfig, otherCourses);
+
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
       {user?.role === 'admin' && (
@@ -185,7 +201,8 @@ export default function Home() {
       <div id="courses">
         <CourseSection 
           {...ocConfig}
-          courses={ocCourses}
+          courses={ocSectionCourses}
+          categories={categories}
           accessMap={accessMap}
           onUpdate={(data) => handleUpdateSection('ocSection', data)}
           editMode={editMode}
@@ -193,16 +210,18 @@ export default function Home() {
 
         <CourseSection 
           {...selConfig}
-          courses={selectiveCourses}
+          courses={selSectionCourses}
+          categories={categories}
           accessMap={accessMap}
           onUpdate={(data) => handleUpdateSection('selectiveSection', data)}
           editMode={editMode}
         />
 
-        {otherCourses.length > 0 && (
+        {(otherSectionCourses.length > 0 || editMode) && (
           <CourseSection 
             {...otherConfig}
-            courses={otherCourses}
+            courses={otherSectionCourses}
+            categories={categories}
             accessMap={accessMap}
             onUpdate={(data) => handleUpdateSection('otherSection', data)}
             editMode={editMode}
