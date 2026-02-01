@@ -133,10 +133,6 @@ export default function CourseSection({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Category Link (optional)</Label>
-                  <Input value={categoryLink} onChange={(e) => handleUpdate('categoryLink', e.target.value)} placeholder="/courses/category" />
-                </div>
-                <div className="space-y-2">
                   <Label>Icon</Label>
                   <Select 
                     value={iconName} 
@@ -198,7 +194,7 @@ export default function CourseSection({
         {courses.length > 0 ? (
           <div className="relative group/carousel">
             <div className="overflow-hidden" ref={emblaRef}>
-              <div className="flex -ml-8">
+              <div className="flex -ml-8 py-4"> {/* Added padding to avoid card shadow clipping */}
                 {courses.map((course, idx) => (
                   <div key={course.id} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_33.33%] pl-8">
                     <CourseCard 
@@ -211,21 +207,29 @@ export default function CourseSection({
               </div>
             </div>
             
+            {/* Scroll Shadows */}
+            {canScrollPrev && (
+               <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+            )}
+            {canScrollNext && (
+               <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
+            )}
+            
             {courses.length > 3 && (
               <>
                 <button
                   onClick={scrollPrev}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 transition-all z-10 hover:bg-slate-50 ${!canScrollPrev ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 transition-all duration-300 z-20 hover:bg-slate-50 hover:scale-110 ${!canScrollPrev ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                   aria-label="Previous slide"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-8 h-8" />
                 </button>
                 <button
                   onClick={scrollNext}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 transition-all z-10 hover:bg-slate-50 ${!canScrollNext ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-14 h-14 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 transition-all duration-300 z-20 hover:bg-slate-50 hover:scale-110 ${!canScrollNext ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                   aria-label="Next slide"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-8 h-8" />
                 </button>
               </>
             )}
