@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const [modelName, setModelName] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [siteName, setSiteName] = useState('');
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -112,7 +113,7 @@ export default function AdminDashboard() {
       
       if (siteConfig) {
         await base44.entities.SiteConfig.update(siteConfig.id, {
-          content: { logo_url: result.file_url }
+          content: { ...siteConfig.content, logo_url: result.file_url }
         });
       } else {
         await base44.entities.SiteConfig.create({
@@ -127,6 +128,26 @@ export default function AdminDashboard() {
       toast.error('Failed to upload logo');
     }
     setUploadingLogo(false);
+  };
+
+  const handleSaveSiteName = async () => {
+    try {
+      if (siteConfig) {
+        await base44.entities.SiteConfig.update(siteConfig.id, {
+          content: { ...siteConfig.content, site_name: siteName }
+        });
+      } else {
+        await base44.entities.SiteConfig.create({
+          key: 'logo',
+          content: { site_name: siteName }
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['siteConfig', 'logo'] });
+      toast.success('Site name updated successfully');
+    } catch (e) {
+      toast.error('Failed to update site name');
+    }
   };
 
   if (userLoading) {
@@ -241,8 +262,8 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Logo Configuration */}
-        <div className="mt-6">
+        {/* Logo & Site Name Configuration */}
+        <div className="mt-6 grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -289,6 +310,41 @@ export default function AdminDashboard() {
                     Upload a logo image for the navigation bar (PNG, JPG, SVG)
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Edit className="w-5 h-5 text-indigo-600" />
+                Site Name
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="site-name">Navigation Bar Name</Label>
+                  <Input
+                    id="site-name"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                    placeholder={siteConfig?.content?.site_name || 'WWW Writing College Online'}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    This will appear next to the logo in the navigation bar
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleSaveSiteName}
+                  variant="outline" 
+                  className="gap-2"
+                  disabled={!siteName.trim()}
+                >
+                  <Save className="w-4 h-4" />
+                  Save Name
+                </Button>
               </div>
             </CardContent>
           </Card>

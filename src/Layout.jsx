@@ -62,13 +62,13 @@ export default function Layout({ children, currentPageName }) {
                     className="h-10 w-auto object-contain"
                   />
                 ) : (
-                  <>
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                      Q
-                    </div>
-                    <span className="text-xl font-bold text-slate-800">WWW Writing College Online</span>
-                  </>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                    Q
+                  </div>
                 )}
+                <span className="text-xl font-bold text-slate-800">
+                  {logoConfig?.content?.site_name || 'WWW Writing College Online'}
+                </span>
               </Link>
 
               <div className="flex items-center gap-4">
