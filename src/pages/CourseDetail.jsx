@@ -267,7 +267,8 @@ export default function CourseDetail() {
 
     // Check new access_codes array
     const accessCodes = course.access_codes || [];
-    const matchingCode = accessCodes.find(ac => ac.code.toUpperCase() === unlockCode.trim().toUpperCase());
+    const matchingCodeIndex = accessCodes.findIndex(ac => ac.code.toUpperCase() === unlockCode.trim().toUpperCase());
+    const matchingCode = matchingCodeIndex !== -1 ? accessCodes[matchingCodeIndex] : null;
 
     // Fallback to legacy unlock_code for backwards compatibility
     if (!matchingCode && unlockCode !== course.unlock_code) {
@@ -275,12 +276,23 @@ export default function CourseDetail() {
       return;
     }
 
+    // Create course access
     await unlockMutation.mutateAsync({
       user_email: user.email,
       course_id: courseId,
       unlock_method: 'code',
       class_name: matchingCode?.class_name || 'Legacy Access'
     });
+
+    // Remove the used code from the access_codes array (for new system only)
+    if (matchingCode) {
+      const updatedCodes = accessCodes.filter((_, idx) => idx !== matchingCodeIndex);
+      await updateCourseMutation.mutateAsync({ access_codes: updatedCodes });
+      toast.success('Code redeemed successfully! This code has been removed.');
+    }
+
+    setUnlockDialogOpen(false);
+    setUnlockCode('');
   };
 
   const handlePurchase = async () => {
