@@ -192,7 +192,7 @@ export default function CourseSection({
         </div>
 
         {courses.length > 0 ? (
-          <div className="relative group/carousel">
+          <div className="relative group/carousel overflow-hidden">
             <div className="overflow-visible" ref={emblaRef}>
               <div className="flex -ml-8 py-4 px-4 -mx-4">
                 {courses.map((course, idx) => (
@@ -209,10 +209,10 @@ export default function CourseSection({
             
             {/* Scroll Shadows */}
             {canScrollPrev && (
-               <div className="absolute -left-2 top-0 bottom-0 w-24 bg-gradient-to-r from-white via-white/70 to-transparent z-10 pointer-events-none" />
+               <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white via-white/70 to-transparent z-10 pointer-events-none" />
             )}
             {canScrollNext && (
-               <div className="absolute -right-2 top-0 bottom-0 w-24 bg-gradient-to-l from-white via-white/70 to-transparent z-10 pointer-events-none" />
+               <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white via-white/70 to-transparent z-10 pointer-events-none" />
             )}
             
             {courses.length > 3 && (
