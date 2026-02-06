@@ -57,6 +57,16 @@ export default function ManageQuizzes() {
     },
   });
 
+  React.useEffect(() => {
+    if (!userLoading && user && user.role !== 'admin') {
+      window.location.href = createPageUrl('Home');
+    }
+  }, [user, userLoading]);
+
+  if (!userLoading && user && user.role !== 'admin') {
+    return null;
+  }
+
   const { data: quizzes = [], isLoading } = useQuery({
     queryKey: ['quizzes'],
     queryFn: () => base44.entities.Quiz.list('-created_date')
