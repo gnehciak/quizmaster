@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function ManageQuizzes() {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(() => {
     return localStorage.getItem('manageQuizzes_selectedCategory') || 'all';
@@ -50,7 +49,12 @@ export default function ManageQuizzes() {
     queryKey: ['user'],
     queryFn: async () => {
       try {
-        return await base44.auth.me();
+        const currentUser = await base44.auth.me();
+        if (!currentUser || currentUser.role !== 'admin') {
+          window.location.href = createPageUrl('Home');
+          return null;
+        }
+        return currentUser;
       } catch (e) {
         base44.auth.redirectToLogin(window.location.pathname);
         return null;
@@ -58,13 +62,17 @@ export default function ManageQuizzes() {
     },
   });
 
-  React.useEffect(() => {
-    if (!userLoading && user && user.role !== 'admin') {
-      navigate(createPageUrl('Home'));
-    }
-  }, [user, userLoading, navigate]);
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
-  if (!userLoading && user && user.role !== 'admin') {
+  if (!user) {
     return null;
   }
 
