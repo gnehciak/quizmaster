@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function ManageQuizzes() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(() => {
     return localStorage.getItem('manageQuizzes_selectedCategory') || 'all';
@@ -59,9 +60,9 @@ export default function ManageQuizzes() {
 
   React.useEffect(() => {
     if (!userLoading && user && user.role !== 'admin') {
-      window.location.href = createPageUrl('Home');
+      navigate(createPageUrl('Home'));
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, navigate]);
 
   if (!userLoading && user && user.role !== 'admin') {
     return null;
