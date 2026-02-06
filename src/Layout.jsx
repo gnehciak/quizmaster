@@ -92,22 +92,23 @@ export default function Layout({ children, currentPageName }) {
                       </Button>
                     </Link>
 
-                    {(user.role === 'admin' || user.role === 'teacher') &&
-                <>
+                    {(user.role === 'admin' || user.role === 'teacher') && (
                         <Link to={createPageUrl('ManageCourses')}>
                           <Button variant="ghost" size="sm" className="gap-2">
                             <BookOpen className="w-4 h-4" />
                             Manage Courses
                           </Button>
                         </Link>
+                    )}
+
+                    {user.role === 'admin' && (
                         <Link to={createPageUrl('ManageQuizzes')}>
                           <Button variant="ghost" size="sm" className="gap-2">
                             <FileQuestion className="w-4 h-4" />
                             Manage Quizzes
                           </Button>
                         </Link>
-                      </>
-                }
+                    )}
 
                     {user.role === 'admin' &&
                 <Link to={createPageUrl('AdminDashboard')}>
