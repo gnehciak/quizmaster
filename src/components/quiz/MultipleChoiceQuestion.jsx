@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, X } from 'lucide-react';
+import { useImageLightbox } from './useImageLightbox';
 
 export default function MultipleChoiceQuestion({ 
   question, 
@@ -10,9 +11,27 @@ export default function MultipleChoiceQuestion({
   showResults 
 }) {
   const isUnattempted = showResults && (selectedAnswer === undefined || selectedAnswer === null || selectedAnswer === '');
+  const containerRef = useRef(null);
+  const { LightboxPortal } = useImageLightbox(containerRef);
+
+  // Keyboard shortcuts 1-9
+  useEffect(() => {
+    if (showResults) return;
+    const handleKeyPress = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key >= '1' && e.key <= '9') {
+        const index = parseInt(e.key) - 1;
+        if (question.options && index < question.options.length) {
+          onAnswer(question.options[index]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showResults, question, onAnswer]);
 
   return (
-    <div className="h-full p-8 overflow-y-auto">
+    <div ref={containerRef} className="h-full p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
         {isUnattempted && (
           <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
@@ -67,6 +86,15 @@ export default function MultipleChoiceQuestion({
                   dangerouslySetInnerHTML={{ __html: option }}
                 />
                 
+                {!showResults && idx < 9 && (
+                  <kbd 
+                    className="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 rounded border border-slate-300 ml-auto flex-shrink-0"
+                    title={`Press ${idx + 1} to select`}
+                  >
+                    {idx + 1}
+                  </kbd>
+                )}
+                
                 {showResults && isCorrect && (
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 ml-auto" />
                 )}
@@ -88,6 +116,7 @@ export default function MultipleChoiceQuestion({
           </div>
         )}
       </div>
+      {LightboxPortal}
     </div>
   );
 }
