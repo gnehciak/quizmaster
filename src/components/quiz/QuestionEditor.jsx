@@ -333,7 +333,8 @@ ${aiInput}`;
     inline_dropdown_same: 'Fill in the Blanks (Same Options)',
     inline_dropdown_typed: 'Fill in the Blanks (Typed Answer)',
     matching_list_dual: 'Matching List (Dual Pane)',
-    long_response_dual: 'Long Response (Dual Pane)'
+    long_response_dual: 'Long Response (Dual Pane)',
+    information: 'Information'
   };
 
   // Matching List handlers
@@ -503,14 +504,27 @@ ${aiInput}`;
           </div>
 
           <div className="space-y-1">
-            <Label className="text-sm">Question</Label>
+            <Label className="text-sm">{question.type === 'information' ? 'Title' : 'Question'}</Label>
             <RichTextEditor
               value={question.question || ''}
               onChange={(value) => updateField('question', value)}
-              placeholder="Enter your question..."
+              placeholder={question.type === 'information' ? "Enter a title..." : "Enter your question..."}
               minHeight="80px"
             />
           </div>
+
+          {/* Information Type - Body Text */}
+          {question.type === 'information' && (
+            <div className="space-y-2">
+              <Label className="text-sm">Body Text</Label>
+              <RichTextEditor
+                value={question.passage || ''}
+                onChange={(value) => updateField('passage', value)}
+                placeholder="Enter the information content..."
+                minHeight="150px"
+              />
+            </div>
+          )}
 
           {/* Multiple Choice Options */}
           {question.type === 'multiple_choice' && (

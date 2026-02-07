@@ -20,6 +20,7 @@ import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQues
 import InlineDropdownTypedQuestion from '@/components/quiz/InlineDropdownTypedQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import LongResponseDualQuestion from '@/components/quiz/LongResponseDualQuestion';
+import InformationQuestion from '@/components/quiz/InformationQuestion';
 import QuizResults from '@/components/quiz/QuizResults';
 import {
   Dialog,
@@ -2021,6 +2022,10 @@ Provide a helpful hint with quoted sentences. Example structure:
             onAnswer={handleAnswer}
             isAdmin={user?.role === 'admin'}
           />
+        );
+      case 'information':
+        return (
+          <InformationQuestion question={currentQuestion} />
         );
       default:
         return null;

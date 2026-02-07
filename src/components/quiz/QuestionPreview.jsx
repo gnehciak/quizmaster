@@ -8,6 +8,7 @@ import InlineDropdownSameQuestion from './InlineDropdownSameQuestion';
 import InlineDropdownTypedQuestion from './InlineDropdownTypedQuestion';
 import MatchingListQuestion from './MatchingListQuestion';
 import LongResponseDualQuestion from './LongResponseDualQuestion';
+import InformationQuestion from './InformationQuestion';
 
 export default function QuestionPreview({ question, index }) {
   // Dummy handlers for preview interaction
@@ -94,6 +95,10 @@ export default function QuestionPreview({ question, index }) {
               onAnswer={handleAnswer}
             />
           </div>
+        );
+      case 'information':
+        return (
+          <InformationQuestion question={question} />
         );
       default:
         return <div className="p-4 text-slate-500">Unsupported question type in preview</div>;

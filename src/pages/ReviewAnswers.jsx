@@ -37,6 +37,7 @@ import InlineDropdownSameQuestion from '@/components/quiz/InlineDropdownSameQues
 import InlineDropdownTypedQuestion from '@/components/quiz/InlineDropdownTypedQuestion';
 import MatchingListQuestion from '@/components/quiz/MatchingListQuestion';
 import LongResponseReview from '@/components/quiz/LongResponseReview';
+import InformationQuestion from '@/components/quiz/InformationQuestion';
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
 
@@ -2459,6 +2460,10 @@ Provide HTML formatted explanation:`;
             aiPrompts={globalPrompts}
             isAdmin={isAdmin}
           />
+        );
+      case 'information':
+        return (
+          <InformationQuestion question={currentQuestion} />
         );
       default:
         return null;
