@@ -234,6 +234,7 @@ export default function TakeQuiz() {
           });
         });
       } else {
+        // Include all types including information (displayed but not scored)
         flattened.push(q);
       }
     });
@@ -542,6 +543,7 @@ export default function TakeQuiz() {
     let correct = 0;
     
     questions.forEach((q, idx) => {
+      if (q.type === 'information') return; // Skip information blocks
       const answer = answers[idx];
 
       if (q.isSubQuestion) {
@@ -573,6 +575,7 @@ export default function TakeQuiz() {
   const getTotalPoints = () => {
     let total = 0;
     questions.forEach(q => {
+      if (q.type === 'information') return; // Skip information blocks
       if (q.isSubQuestion) {
         total++;
       } else if (q.type === 'multiple_choice') {
