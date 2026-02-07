@@ -1355,8 +1355,8 @@ Keep it simple and clear. Do NOT indicate which word is correct.`;
 
 console.log('Blank Help Prompt:', prompt);
 
-const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -1515,8 +1515,8 @@ ${hasPassages ? `[For passages]
 
 console.log('Reading Comprehension Help Prompt:', prompt);
 
-const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
 const result = await model.generateContent(prompt);
 const response = await result.response;
 const text = response.text();
@@ -1724,8 +1724,8 @@ Provide a helpful hint with quoted sentences. Example structure:
       prompt = prompt.replace(/\{\{CORRECT_ANSWER\}\}/g, matchingQ.correctAnswer);
       prompt = prompt.replace('{{PASSAGES}}', passageContext);
 
-  const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-09-2025' });
+  const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
