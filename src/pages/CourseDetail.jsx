@@ -251,15 +251,18 @@ export default function CourseDetail() {
   }, []);
 
   // Auto-generate initial access code if course is locked but has no codes
+  const [autoCodeGenerated, setAutoCodeGenerated] = React.useState(false);
   React.useEffect(() => {
+    if (autoCodeGenerated) return;
     if (isAdmin && course?.is_locked && (!course?.access_codes || course.access_codes.length === 0)) {
+      setAutoCodeGenerated(true);
       const defaultCode = {
         code: Math.random().toString(36).substring(2, 10).toUpperCase(),
         class_name: 'Default Class'
       };
       updateCourseMutation.mutate({ access_codes: [defaultCode] });
     }
-  }, [course?.is_locked, course?.access_codes, isAdmin]);
+  }, [course?.is_locked, course?.access_codes, isAdmin, autoCodeGenerated]);
 
   const updateCourseMutation = useMutation({
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
