@@ -2936,7 +2936,8 @@ Provide HTML formatted explanation:`;
               'inline_dropdown_separate': 'Fill in Blanks',
               'inline_dropdown_same': 'Fill in Blanks',
               'inline_dropdown_typed': 'Fill in Blanks',
-              'matching_list_dual': 'Matching List'
+              'matching_list_dual': 'Matching List',
+              'information': 'Information'
             };
 
             const sections = [];

@@ -2393,7 +2393,8 @@ Provide a helpful hint with quoted sentences. Example structure:
                     'inline_dropdown_same': 'Fill in the Blanks',
                     'inline_dropdown_typed': 'Fill in the Blanks',
                     'matching_list_dual': 'Matching List',
-                    'long_response_dual': 'Long Response'
+                    'long_response_dual': 'Long Response',
+                    'information': 'Information'
                   };
 
                   const sections = [];
