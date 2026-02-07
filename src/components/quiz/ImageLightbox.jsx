@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +8,13 @@ export default function ImageLightbox({ src, alt, onClose }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isClosing, setIsClosing] = useState(false);
   const containerRef = useRef(null);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(onClose, 200);
+  };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 5));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.25));
@@ -34,22 +41,30 @@ export default function ImageLightbox({ src, alt, onClose }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
       if (e.key === '+' || e.key === '=') handleZoomIn();
       if (e.key === '-') handleZoomOut();
       if (e.key === '0') handleReset();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   return (
-    <div 
+    <motion.div 
       className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isClosing ? 0 : 1 }}
+      transition={{ duration: 0.2 }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/50">
+      <motion.div 
+        className="flex items-center justify-between px-4 py-3 bg-black/50"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: isClosing ? -20 : 0, opacity: isClosing ? 0 : 1 }}
+        transition={{ duration: 0.25, delay: isClosing ? 0 : 0.1 }}
+      >
         <div className="flex items-center gap-2">
           <button onClick={handleZoomOut} className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors">
             <ZoomOut className="w-5 h-5" />
@@ -62,10 +77,10 @@ export default function ImageLightbox({ src, alt, onClose }) {
             <RotateCcw className="w-5 h-5" />
           </button>
         </div>
-        <button onClick={onClose} className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+        <button onClick={handleClose} className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors">
           <X className="w-6 h-6" />
         </button>
-      </div>
+      </motion.div>
 
       {/* Image */}
       <div 
@@ -76,11 +91,15 @@ export default function ImageLightbox({ src, alt, onClose }) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       >
-        <img
+        <motion.img
           src={src}
           alt={alt || 'Image'}
           className="max-w-none select-none"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: isClosing ? 0.8 : 1, opacity: isClosing ? 0 : 1 }}
+          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transition: isDragging ? 'none' : 'transform 0.2s ease',
@@ -90,6 +109,6 @@ export default function ImageLightbox({ src, alt, onClose }) {
           draggable={false}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
