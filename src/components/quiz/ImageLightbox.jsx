@@ -97,9 +97,9 @@ export default function ImageLightbox({ src, alt, onClose }) {
           src={src}
           alt={alt || 'Image'}
           className="max-w-none select-none"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: isClosing ? 0.8 : 1, opacity: isClosing ? 0 : 1 }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isClosing ? 0 : 1 }}
+          transition={{ duration: 0.2 }}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transition: isDragging ? 'none' : 'transform 0.2s ease',
