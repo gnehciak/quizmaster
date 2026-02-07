@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, GripVertical, Loader2, Sparkles, RefreshCw, Trash2, X, FileEdit, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useImageLightbox } from './useImageLightbox';
 
 export default function ReadingComprehensionQuestion({ 
   question, 
@@ -89,7 +90,9 @@ export default function ReadingComprehensionQuestion({
 
   const activePassage = passages.find(p => p.id === activeTab) || passages[0];
 
-  // Keyboard shortcuts for answer selection (1-4 keys)
+  const { LightboxPortal } = useImageLightbox(containerRef);
+
+  // Keyboard shortcuts for answer selection (1-9 keys)
   useEffect(() => {
     if (showResults) return;
 
@@ -102,8 +105,8 @@ export default function ReadingComprehensionQuestion({
       
       if (!options) return;
 
-      // Numbers 1-4 for answer selection
-      if (key >= '1' && key <= '4') {
+      // Numbers 1-9 for answer selection
+      if (key >= '1' && key <= '9') {
         const index = parseInt(key) - 1;
         if (index < options.length) {
           onAnswer(options[index]);
@@ -302,7 +305,7 @@ export default function ReadingComprehensionQuestion({
                         {option}
                       </span>
                       
-                      {!showResults && optIdx < 4 && (
+                      {!showResults && optIdx < 9 && (
                         <kbd 
                           className="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 rounded border border-slate-300"
                           title={`Press ${optIdx + 1} to select`}
@@ -534,7 +537,7 @@ export default function ReadingComprehensionQuestion({
                           {option}
                         </span>
                         
-                        {!showResults && optIdx < 4 && (
+                        {!showResults && optIdx < 9 && (
                           <kbd 
                             className="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 rounded border border-slate-300"
                             title={`Press ${optIdx + 1} to select`}
@@ -558,6 +561,7 @@ export default function ReadingComprehensionQuestion({
           )}
         </div>
       </div>
+      {LightboxPortal}
     </div>
   );
 }
