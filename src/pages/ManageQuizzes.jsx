@@ -336,6 +336,20 @@ export default function ManageQuizzes() {
             </div>
             
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['quizList'] });
+                  queryClient.invalidateQueries({ queryKey: ['allQuizAttemptsLite'] });
+                  queryClient.invalidateQueries({ queryKey: ['allCoursesLite'] });
+                  queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
+                  toast.success('Refreshing quizzes...');
+                }}
+                title="Refresh quizzes"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
               <Link to={createPageUrl('QuizAnalytics')}>
                 <Button variant="outline" className="gap-2">
                   <BarChart3 className="w-4 h-4" />
