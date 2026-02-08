@@ -168,6 +168,18 @@ export default function CourseDetail() {
     enabled: !!course && courseQuizIds.length > 0,
   });
 
+  // For the admin quiz picker dialog, fetch a lightweight list of all quizzes (only when adding content)
+  const { data: allQuizzesForPicker = [] } = useQuery({
+    queryKey: ['quizzesForPicker'],
+    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    select: (data) => data.map(q => ({
+      id: q.id,
+      title: q.title,
+      questions: q.questions?.map(() => ({})) || [],
+    })),
+    enabled: !!isAdmin,
+  });
+
   const { data: categories = [] } = useQuery({
     queryKey: ['courseCategories'],
     queryFn: () => base44.entities.CourseCategory.list(),
