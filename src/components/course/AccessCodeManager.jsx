@@ -16,6 +16,7 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
   const [codes, setCodes] = useState(accessCodes);
   const [newClassName, setNewClassName] = useState('');
   const [codeQuantity, setCodeQuantity] = useState(1);
+  const [newlyCreatedCodes, setNewlyCreatedCodes] = useState(null);
 
   const generateCode = () => {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -42,9 +43,9 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
     }
 
     setCodes([...codes, ...newCodes]);
+    setNewlyCreatedCodes({ className: newClassName.trim(), codes: newCodes });
     setNewClassName('');
     setCodeQuantity(1);
-    toast.success(`${codeQuantity} access code${codeQuantity > 1 ? 's' : ''} created for ${newClassName.trim()}`);
   };
 
   const handleRemoveClass = (index) => {
@@ -140,6 +141,69 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
               </p>
             </div>
           </div>
+
+          {/* Newly Created Codes Display */}
+          {newlyCreatedCodes && (
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm font-semibold text-green-800">
+                    ✅ {newlyCreatedCodes.codes.length} code{newlyCreatedCodes.codes.length !== 1 ? 's' : ''} created for "{newlyCreatedCodes.className}"
+                  </p>
+                  <p className="text-xs text-green-600 mt-0.5">Copy the codes below before closing</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-green-700 border-green-300 hover:bg-green-100"
+                    onClick={() => {
+                      const text = newlyCreatedCodes.codes.map(c => c.code).join('\n');
+                      navigator.clipboard.writeText(text);
+                      toast.success(`${newlyCreatedCodes.codes.length} code${newlyCreatedCodes.codes.length !== 1 ? 's' : ''} copied!`);
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy All
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                    onClick={() => setNewlyCreatedCodes(null)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-white rounded-md border border-green-200 max-h-48 overflow-y-auto">
+                {newlyCreatedCodes.codes.map((item, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2",
+                      i !== newlyCreatedCodes.codes.length - 1 && "border-b border-green-100"
+                    )}
+                  >
+                    <code className="font-mono font-bold text-sm text-green-700 tracking-wider">
+                      {item.code}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-green-500 hover:text-green-700"
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.code);
+                        toast.success('Code copied');
+                      }}
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Existing Classes */}
           <div className="space-y-3">
