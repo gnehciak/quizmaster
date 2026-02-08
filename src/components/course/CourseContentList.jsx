@@ -43,6 +43,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import TopicBlock from './TopicBlock';
 import { useLazyQuiz, QuizLoadingPlaceholder } from './LazyQuizLoader';
+import QuizBlockContent from './QuizBlockContent';
 
 export default function CourseContentList({ 
   blocks, 
@@ -214,145 +215,14 @@ export default function CourseContentList({
     }
 
     if (block.type === 'quiz') {
-      const quiz = quizzes.find(q => q.id === block.quiz_id);
-      
-      if (!quiz) {
-        if (loadingQuizzes[block.quiz_id] !== false) {
-          return (
-            <div className="flex items-center gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm w-full">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
-              </div>
-              <div className="flex-1">
-                <div className="h-5 bg-slate-200 rounded w-48 mb-2 animate-pulse"></div>
-                <div className="h-4 bg-slate-100 rounded w-32 animate-pulse"></div>
-              </div>
-            </div>
-          );
-        }
-        return <div className="p-4 bg-red-50 text-red-500 rounded-lg">Quiz not found</div>;
-      }
-      
-      const attempts = allQuizAttempts?.filter(a => a.quiz_id === quiz.id) || [];
-      const pausedAttempt = attempts.find(a => a.paused === true);
-      const completedAttempts = attempts.filter(a => a.completed === true || (!a.hasOwnProperty('completed') && !a.paused));
-      const attemptsAllowed = quiz.attempts_allowed || 999;
-      const attemptsUsed = completedAttempts.length;
-      const sortedAttempts = completedAttempts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      const latestAttempt = sortedAttempts[0];
-      const hasCompleted = !!latestAttempt;
-      const canRetry = hasCompleted && (attemptsUsed < attemptsAllowed);
-
       return (
-        <div className="flex items-center gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors w-full">
-            <div className="flex-shrink-0">
-                {hasCompleted && (hasAccess || isAdmin) ? (
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-200">
-                        <span className="text-sm font-bold text-emerald-700">{latestAttempt.percentage}%</span>
-                    </div>
-                ) : (
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center border-2 border-indigo-100">
-                        <PlayCircle className="w-6 h-6 text-indigo-500" />
-                    </div>
-                )}
-            </div>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-slate-900 text-lg">{quiz.title}</h3>
-            <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
-                <span>{quiz.questions?.length || 0} questions</span>
-                {quiz.timer_enabled && (
-                    <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {quiz.timer_duration}m
-                    </span>
-                )}
-                {quiz.pausable && (
-                    <Badge variant="secondary" className="text-xs font-normal bg-blue-50 text-blue-700 border-blue-200">
-                        <Pause className="w-3 h-3 mr-1" />
-                        Pausable
-                    </Badge>
-                )}
-                {attemptsAllowed < 999 && (
-                    <Badge variant="secondary" className="text-xs font-normal">
-                        {Math.max(0, attemptsAllowed - attemptsUsed)} attempts left
-                    </Badge>
-                )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isAdmin ? (
-                <>
-                    <Link to={createPageUrl(`QuizAttempts?id=${quiz.id}`)}>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <BarChart3 className="w-3 h-3" /> Stats
-                        </Button>
-                    </Link>
-                    {hasCompleted && (
-                        <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${block.courseId || ''}&attemptId=${latestAttempt.id}`)}>
-                            <Button variant="outline" size="sm">Review</Button>
-                        </Link>
-                    )}
-                    <Link to={createPageUrl(`CreateQuiz?id=${quiz.id}`)}>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Pencil className="w-3 h-3" /> Edit
-                        </Button>
-                    </Link>
-                    {pausedAttempt ? (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}&resumeAttemptId=${pausedAttempt.id}`)}>
-                            <Button size="sm" className="gap-2 bg-amber-600 hover:bg-amber-700">
-                                <RotateCcw className="w-3 h-3" /> Resume
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
-                            <Button size="sm">Start</Button>
-                        </Link>
-                    )}
-                </>
-            ) : (
-                <>
-                {hasAccess ? (
-                  <>
-                    {hasCompleted && (
-                        <Link to={createPageUrl(`ReviewAnswers?id=${quiz.id}&courseId=${block.courseId || ''}&attemptId=${latestAttempt.id}`)}>
-                            <Button variant="outline" size="sm">Review</Button>
-                        </Link>
-                    )}
-                    {pausedAttempt ? (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}&resumeAttemptId=${pausedAttempt.id}`)}>
-                            <Button size="sm" className="gap-2 bg-amber-600 hover:bg-amber-700">
-                                <RotateCcw className="w-3 h-3" /> Resume Quiz
-                            </Button>
-                        </Link>
-                    ) : canRetry ? (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
-                            <Button size="sm" className="gap-2">
-                                <RotateCcw className="w-3 h-3" /> Retry
-                            </Button>
-                        </Link>
-                    ) : !hasCompleted ? (
-                        <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}&courseId=${block.courseId || ''}`)}>
-                            <Button size="sm">Start</Button>
-                        </Link>
-                    ) : null}
-                  </>
-                ) : (
-                   <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-100">
-                        <Lock className="w-4 h-4 text-slate-400" />
-                   </div> 
-                )}
-                </>
-            )}
-            
-            {isAdmin && editMode && (
-                <div className="flex items-center gap-1 text-xs text-slate-400 border px-2 py-1 rounded bg-slate-50">
-                    ID: {quiz.id.substring(0,6)}...
-                </div>
-            )}
-          </div>
-        </div>
+        <QuizBlockContent
+          block={block}
+          isAdmin={isAdmin}
+          hasAccess={hasAccess}
+          editMode={editMode}
+          allQuizAttempts={allQuizAttempts}
+        />
       );
     }
 
