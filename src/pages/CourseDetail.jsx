@@ -1294,7 +1294,7 @@ export default function CourseDetail() {
                             </div>
 
                             <div className="space-y-2 max-h-64 overflow-y-auto">
-                              {quizzes
+                              {allQuizzesForPicker
                                 .filter(q => q.title?.toLowerCase().includes(quizSearch.toLowerCase()))
                                 .map(quiz => (
                                   <button
@@ -1351,7 +1351,7 @@ export default function CourseDetail() {
                                   type="button"
                                   variant="outline"
                                   onClick={async () => {
-                                    const quiz = quizzes.find(q => q.id === selectedQuizId);
+                                    const quiz = allQuizzesForPicker.find(q => q.id === selectedQuizId);
                                     if (!quiz) return;
 
                                     const duplicated = {
