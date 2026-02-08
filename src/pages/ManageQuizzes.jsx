@@ -76,19 +76,46 @@ export default function ManageQuizzes() {
     return null;
   }
 
-  const { data: quizzes = [], isLoading } = useQuery({
-    queryKey: ['quizzes'],
-    queryFn: () => base44.entities.Quiz.list('-created_date')
+  const { data: quizList = [], isLoading } = useQuery({
+    queryKey: ['quizList'],
+    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    select: (data) => data.map(q => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      category: q.category,
+      category_id: q.category_id,
+      status: q.status,
+      timer_enabled: q.timer_enabled,
+      timer_duration: q.timer_duration,
+      attempts_allowed: q.attempts_allowed,
+      allow_tips: q.allow_tips,
+      pausable: q.pausable,
+      created_date: q.created_date,
+      questions: q.questions?.map(qq => ({ type: qq.type })) || [],
+    }))
   });
+  const quizzes = quizList;
 
   const { data: allAttempts = [] } = useQuery({
-    queryKey: ['allQuizAttempts'],
-    queryFn: () => base44.entities.QuizAttempt.list()
+    queryKey: ['allQuizAttemptsLite'],
+    queryFn: () => base44.entities.QuizAttempt.list(),
+    select: (data) => data.map(a => ({
+      id: a.id,
+      quiz_id: a.quiz_id,
+      percentage: a.percentage,
+    }))
   });
 
   const { data: allCourses = [] } = useQuery({
-    queryKey: ['allCourses'],
-    queryFn: () => base44.entities.Course.list()
+    queryKey: ['allCoursesLite'],
+    queryFn: () => base44.entities.Course.list(),
+    select: (data) => data.map(c => ({
+      id: c.id,
+      title: c.title,
+      quiz_ids: c.quiz_ids,
+      content_blocks: c.content_blocks?.filter(b => b.type === 'quiz').map(b => ({ type: b.type, quiz_id: b.quiz_id })),
+    }))
   });
 
   const deleteMutation = useMutation({

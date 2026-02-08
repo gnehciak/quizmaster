@@ -141,9 +141,31 @@ export default function CourseDetail() {
     select: (data) => data[0]
   });
 
+  // Extract quiz IDs from content blocks (including nested topic children)
+  const courseQuizIds = React.useMemo(() => {
+    if (!course?.content_blocks) return [];
+    const ids = new Set();
+    const extractIds = (blocks) => {
+      (blocks || []).forEach(block => {
+        if (block.type === 'quiz' && block.quiz_id) ids.add(block.quiz_id);
+        if (block.type === 'topic' && block.children) extractIds(block.children);
+      });
+    };
+    extractIds(course.content_blocks);
+    return [...ids];
+  }, [course?.content_blocks]);
+
   const { data: quizzes = [] } = useQuery({
-    queryKey: ['quizzes'],
-    queryFn: () => base44.entities.Quiz.list(),
+    queryKey: ['courseQuizzes', courseId, courseQuizIds],
+    queryFn: async () => {
+      if (courseQuizIds.length === 0) return [];
+      // Fetch only the quizzes used in this course
+      const results = await Promise.all(
+        courseQuizIds.map(id => base44.entities.Quiz.filter({ id }).then(r => r[0]).catch(() => null))
+      );
+      return results.filter(Boolean);
+    },
+    enabled: !!course && courseQuizIds.length > 0,
   });
 
   const { data: categories = [] } = useQuery({
@@ -180,7 +202,6 @@ export default function CourseDetail() {
   }, [course, user]);
 
   const hasAccess = !course?.is_locked || !!access || user?.role === 'admin' || user?.role === 'teacher';
-  const courseQuizzes = quizzes.filter(q => course?.quiz_ids?.includes(q.id));
   const isAdmin = user?.role === 'admin' || user?.role === 'teacher';
   const contentBlocks = course?.content_blocks || [];
 
