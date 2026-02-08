@@ -70,7 +70,8 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     inline_dropdown_separate: 'Fill in Blanks (Separate)',
     inline_dropdown_same: 'Fill in Blanks (Same)',
     matching_list_dual: 'Matching List',
-    long_response_dual: 'Long Response'
+    long_response_dual: 'Long Response',
+    information: 'Information'
   };
 
   const typeColors = {
@@ -81,7 +82,8 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     inline_dropdown_separate: 'bg-emerald-100 text-emerald-700',
     inline_dropdown_same: 'bg-emerald-100 text-emerald-700',
     matching_list_dual: 'bg-pink-100 text-pink-700',
-    long_response_dual: 'bg-cyan-100 text-cyan-700'
+    long_response_dual: 'bg-cyan-100 text-cyan-700',
+    information: 'bg-slate-100 text-slate-700'
   };
 
   if (viewMode === 'compact') {
