@@ -12,21 +12,18 @@ import {
   Clock, 
   Calendar,
   FileText,
-  PlayCircle,
   Link as LinkIcon,
   FileUp,
   Upload,
   Youtube,
   MoreVertical,
   CheckCircle2,
-  BarChart3,
   RotateCcw,
   ChevronDown,
   ChevronRight,
   AlertCircle,
   FolderOpen,
-  Loader2,
-  Pause
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
