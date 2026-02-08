@@ -2261,6 +2261,7 @@ Provide HTML formatted explanation:`;
     if (!currentQuestion) return null;
 
     const isAdmin = user?.role === 'admin' || user?.role === 'teacher';
+    const aiExplanationEnabled = quiz?.ai_explanation_enabled !== false;
 
     const commonProps = {
       question: currentQuestion,
@@ -2285,13 +2286,13 @@ Provide HTML formatted explanation:`;
           tipsUsed={0}
           tipOpened={true}
           autoExpandTip={true}
-          autoExpandExplanation={true}
-          onGenerateExplanation={handleRCExplanation}
-          onRegenerateExplanation={handleRegenerateRCExplanation}
-          onDeleteExplanation={handleDeleteRCExplanation}
-          onEditExplanation={handleOpenEditExplanation}
-          onEditExplanationPrompt={handleOpenEditRCExplanationPrompt}
-          openedExplanations={openedExplanations}
+          autoExpandExplanation={aiExplanationEnabled}
+          onGenerateExplanation={aiExplanationEnabled ? handleRCExplanation : null}
+          onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateRCExplanation : null}
+          onDeleteExplanation={aiExplanationEnabled ? handleDeleteRCExplanation : null}
+          onEditExplanation={aiExplanationEnabled ? handleOpenEditExplanation : null}
+          onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditRCExplanationPrompt : null}
+          openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
         />
       );
     }
@@ -2311,26 +2312,26 @@ Provide HTML formatted explanation:`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={() => {}}
-            aiHelperContent={dropZoneHelperContent}
+            aiHelperContent={aiExplanationEnabled ? dropZoneHelperContent : {}}
             aiHelperLoading={{}}
-            highlightedPassages={dropZoneHighlightedPassages}
+            highlightedPassages={aiExplanationEnabled ? dropZoneHighlightedPassages : {}}
             isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
             currentIndex={currentIndex}
-            autoExpandTips={true}
-            onRequestExplanation={handleDropZoneExplanation}
-            onGenerateExplanation={handleDropZoneExplanation}
-            explanationContent={dropZoneExplanationContent}
-            explanationLoading={dropZoneExplanationLoading}
-            explanationHighlightedPassages={dropZoneHighlightedExplanations}
-            openedExplanations={openedExplanations}
-            onRegenerateExplanation={handleRegenerateDropZoneExplanation}
-            onDeleteExplanation={handleDeleteDropZoneExplanation}
-            onGenerateAllExplanations={generateAllExplanations}
-            onEditExplanation={handleOpenEditDropZoneExplanation}
-            onEditExplanationPrompt={handleOpenEditDropZoneExplanationPrompt}
+            autoExpandTips={aiExplanationEnabled}
+            onRequestExplanation={aiExplanationEnabled ? handleDropZoneExplanation : null}
+            onGenerateExplanation={aiExplanationEnabled ? handleDropZoneExplanation : null}
+            explanationContent={aiExplanationEnabled ? dropZoneExplanationContent : {}}
+            explanationLoading={aiExplanationEnabled ? dropZoneExplanationLoading : {}}
+            explanationHighlightedPassages={aiExplanationEnabled ? dropZoneHighlightedExplanations : {}}
+            openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
+            onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateDropZoneExplanation : null}
+            onDeleteExplanation={aiExplanationEnabled ? handleDeleteDropZoneExplanation : null}
+            onGenerateAllExplanations={aiExplanationEnabled ? generateAllExplanations : null}
+            onEditExplanation={aiExplanationEnabled ? handleOpenEditDropZoneExplanation : null}
+            onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditDropZoneExplanationPrompt : null}
           />
         );
       case 'drag_drop_dual':
@@ -2339,26 +2340,26 @@ Provide HTML formatted explanation:`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={() => {}}
-            aiHelperContent={dropZoneHelperContent}
+            aiHelperContent={aiExplanationEnabled ? dropZoneHelperContent : {}}
             aiHelperLoading={{}}
-            highlightedPassages={dropZoneHighlightedPassages}
+            highlightedPassages={aiExplanationEnabled ? dropZoneHighlightedPassages : {}}
             isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
             currentIndex={currentIndex}
-            autoExpandTips={true}
-            onRequestExplanation={handleDropZoneExplanation}
-            onGenerateExplanation={handleDropZoneExplanation}
-            explanationContent={dropZoneExplanationContent}
-            explanationLoading={dropZoneExplanationLoading}
-            explanationHighlightedPassages={dropZoneHighlightedExplanations}
-            openedExplanations={openedExplanations}
-            onRegenerateExplanation={handleRegenerateDropZoneExplanation}
-            onDeleteExplanation={handleDeleteDropZoneExplanation}
-            onGenerateAllExplanations={generateAllExplanations}
-            onEditExplanation={handleOpenEditDropZoneExplanation}
-            onEditExplanationPrompt={handleOpenEditDropZoneExplanationPrompt}
+            autoExpandTips={aiExplanationEnabled}
+            onRequestExplanation={aiExplanationEnabled ? handleDropZoneExplanation : null}
+            onGenerateExplanation={aiExplanationEnabled ? handleDropZoneExplanation : null}
+            explanationContent={aiExplanationEnabled ? dropZoneExplanationContent : {}}
+            explanationLoading={aiExplanationEnabled ? dropZoneExplanationLoading : {}}
+            explanationHighlightedPassages={aiExplanationEnabled ? dropZoneHighlightedExplanations : {}}
+            openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
+            onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateDropZoneExplanation : null}
+            onDeleteExplanation={aiExplanationEnabled ? handleDeleteDropZoneExplanation : null}
+            onGenerateAllExplanations={aiExplanationEnabled ? generateAllExplanations : null}
+            onEditExplanation={aiExplanationEnabled ? handleOpenEditDropZoneExplanation : null}
+            onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditDropZoneExplanationPrompt : null}
           />
         );
       case 'inline_dropdown_separate':
@@ -2367,24 +2368,24 @@ Provide HTML formatted explanation:`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={() => {}}
-            aiHelperContent={blankHelperContent}
+            aiHelperContent={aiExplanationEnabled ? blankHelperContent : {}}
             aiHelperLoading={{}}
             isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
             currentIndex={currentIndex}
-            autoExpandTips={true}
-            onRequestExplanation={handleBlankExplanation}
-            onGenerateExplanation={handleBlankExplanation}
-            explanationContent={blankExplanationContent}
-            explanationLoading={blankExplanationLoading}
-            openedExplanations={openedExplanations}
-            onRequestHelp={handleBlankExplanation}
-            onRegenerateExplanation={handleRegenerateBlankExplanation}
-            onDeleteExplanation={handleDeleteBlankExplanation}
-            onEditExplanation={handleOpenEditBlankExplanation}
-            onEditExplanationPrompt={handleOpenEditBlankExplanationPrompt}
+            autoExpandTips={aiExplanationEnabled}
+            onRequestExplanation={aiExplanationEnabled ? handleBlankExplanation : null}
+            onGenerateExplanation={aiExplanationEnabled ? handleBlankExplanation : null}
+            explanationContent={aiExplanationEnabled ? blankExplanationContent : {}}
+            explanationLoading={aiExplanationEnabled ? blankExplanationLoading : {}}
+            openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
+            onRequestHelp={aiExplanationEnabled ? handleBlankExplanation : null}
+            onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateBlankExplanation : null}
+            onDeleteExplanation={aiExplanationEnabled ? handleDeleteBlankExplanation : null}
+            onEditExplanation={aiExplanationEnabled ? handleOpenEditBlankExplanation : null}
+            onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditBlankExplanationPrompt : null}
           />
         );
       case 'inline_dropdown_same':
@@ -2393,24 +2394,24 @@ Provide HTML formatted explanation:`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={() => {}}
-            aiHelperContent={blankHelperContent}
+            aiHelperContent={aiExplanationEnabled ? blankHelperContent : {}}
             aiHelperLoading={{}}
             isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
             currentIndex={currentIndex}
-            autoExpandTips={true}
-            onRequestExplanation={handleBlankExplanation}
-            onGenerateExplanation={handleBlankExplanation}
-            explanationContent={blankExplanationContent}
-            explanationLoading={blankExplanationLoading}
-            openedExplanations={openedExplanations}
-            onRequestHelp={handleBlankExplanation}
-            onRegenerateExplanation={handleRegenerateBlankExplanation}
-            onDeleteExplanation={handleDeleteBlankExplanation}
-            onEditExplanation={handleOpenEditBlankExplanation}
-            onEditExplanationPrompt={handleOpenEditBlankExplanationPrompt}
+            autoExpandTips={aiExplanationEnabled}
+            onRequestExplanation={aiExplanationEnabled ? handleBlankExplanation : null}
+            onGenerateExplanation={aiExplanationEnabled ? handleBlankExplanation : null}
+            explanationContent={aiExplanationEnabled ? blankExplanationContent : {}}
+            explanationLoading={aiExplanationEnabled ? blankExplanationLoading : {}}
+            openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
+            onRequestHelp={aiExplanationEnabled ? handleBlankExplanation : null}
+            onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateBlankExplanation : null}
+            onDeleteExplanation={aiExplanationEnabled ? handleDeleteBlankExplanation : null}
+            onEditExplanation={aiExplanationEnabled ? handleOpenEditBlankExplanation : null}
+            onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditBlankExplanationPrompt : null}
           />
         );
       case 'inline_dropdown_typed':
@@ -2428,24 +2429,24 @@ Provide HTML formatted explanation:`;
             {...commonProps}
             selectedAnswers={answers[currentIndex] || {}}
             onAnswer={() => {}}
-            aiHelperContent={matchingHelperContent}
+            aiHelperContent={aiExplanationEnabled ? matchingHelperContent : {}}
             aiHelperLoading={{}}
             isAdmin={isAdmin}
             tipsAllowed={999}
             tipsUsed={0}
             openedTips={new Set()}
             currentIndex={currentIndex}
-            autoExpandTips={true}
-            onRequestExplanation={handleMatchingExplanation}
-            onGenerateExplanation={handleMatchingExplanation}
-            explanationContent={matchingExplanationContent}
-            explanationLoading={matchingExplanationLoading}
-            openedExplanations={openedExplanations}
-            onRegenerateExplanation={handleRegenerateMatchingExplanation}
-            onDeleteExplanation={handleDeleteMatchingExplanation}
-            onGenerateAllExplanations={generateAllExplanations}
-            onEditExplanation={handleOpenEditMatchingExplanation}
-            onEditExplanationPrompt={handleOpenEditMatchingExplanationPrompt}
+            autoExpandTips={aiExplanationEnabled}
+            onRequestExplanation={aiExplanationEnabled ? handleMatchingExplanation : null}
+            onGenerateExplanation={aiExplanationEnabled ? handleMatchingExplanation : null}
+            explanationContent={aiExplanationEnabled ? matchingExplanationContent : {}}
+            explanationLoading={aiExplanationEnabled ? matchingExplanationLoading : {}}
+            openedExplanations={aiExplanationEnabled ? openedExplanations : new Set()}
+            onRegenerateExplanation={aiExplanationEnabled ? handleRegenerateMatchingExplanation : null}
+            onDeleteExplanation={aiExplanationEnabled ? handleDeleteMatchingExplanation : null}
+            onGenerateAllExplanations={aiExplanationEnabled ? generateAllExplanations : null}
+            onEditExplanation={aiExplanationEnabled ? handleOpenEditMatchingExplanation : null}
+            onEditExplanationPrompt={aiExplanationEnabled ? handleOpenEditMatchingExplanationPrompt : null}
           />
         );
       case 'long_response_dual':
