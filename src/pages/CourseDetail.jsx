@@ -177,7 +177,7 @@ export default function CourseDetail() {
       title: q.title,
       questions: q.questions?.map(() => ({})) || [],
     })),
-    enabled: !!isAdmin,
+    enabled: !!(user?.role === 'admin' || user?.role === 'teacher'),
   });
 
   const { data: categories = [] } = useQuery({
