@@ -1337,7 +1337,8 @@ export default function CourseDetail() {
                                   const updatedBlocks = [...contentBlocks, newBlock];
                                   await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
                                   
-                                  queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+                                  queryClient.invalidateQueries({ queryKey: ['quizzesForPicker'] });
+                                  queryClient.invalidateQueries({ queryKey: ['courseQuizzes'] });
                                   setAddContentOpen(false);
                                   setContentType('');
                                   toast.success('Quiz created and added to course');
@@ -1362,7 +1363,8 @@ export default function CourseDetail() {
 
                                     const newQuiz = await base44.entities.Quiz.create(duplicated);
                                     setSelectedQuizId(newQuiz.id);
-                                    queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+                                    queryClient.invalidateQueries({ queryKey: ['quizzesForPicker'] });
+                                    queryClient.invalidateQueries({ queryKey: ['courseQuizzes'] });
                                     toast.success('Quiz duplicated successfully');
                                   }}
                                   className="gap-2"
