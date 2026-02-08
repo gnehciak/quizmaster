@@ -274,7 +274,6 @@ export default function CourseDetail() {
     mutationFn: (data) => base44.entities.Course.update(courseId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
-      queryClient.invalidateQueries({ queryKey: ['courseQuizzes', courseId] });
     }
   });
 
