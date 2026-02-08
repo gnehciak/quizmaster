@@ -16,12 +16,20 @@ import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/quiz/RichTextEditor';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function QuestionEditor({ question, onChange, onDelete, isCollapsed, onToggleCollapse, existingQuestionNames = [], onPreview, onCopy, onExport, onEditSchema, onEditAiPrompt }) {
   const [aiInput, setAiInput] = React.useState('');
   const [aiLoading, setAiLoading] = React.useState(false);
   const [showAiInput, setShowAiInput] = React.useState(false);
+  
+  const { data: aiConfig } = useQuery({
+    queryKey: ['aiConfig'],
+    queryFn: async () => {
+      const configs = await base44.entities.AIAPIConfig.filter({ key: 'default' });
+      return configs[0] || null;
+    },
+  });
   const [selectedAnswers, setSelectedAnswers] = React.useState(() => {
     // Initialize from question data
     const answers = {};
@@ -99,8 +107,8 @@ export default function QuestionEditor({ question, onChange, onDelete, isCollaps
     setAiLoading(true);
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
 
       const prompt = `Parse the following unformatted text into a quiz question with options and correct answer. The text may contain the question, multiple choice options (A, B, C, D or 1, 2, 3, 4 or just listed), and the correct answer. Extract and separate these parts intelligently.
 
@@ -165,8 +173,8 @@ ${aiInput}`;
     setAiLoading(true);
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
 
       const prompt = `Parse the following text into multiple matching questions with their correct answers. Extract each question and its corresponding correct answer. Keep the original sentences without rephrasing. Individual letters correspond to the correct answer for that line.
 
@@ -230,8 +238,8 @@ ${aiInput}`;
     setAiLoading(true);
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI('AIzaSyAF6MLByaemR1D8Zh1Ujz4lBfU_rcmMu98');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const genAI = new GoogleGenerativeAI(aiConfig?.api_key);
+      const model = genAI.getGenerativeModel({ model: aiConfig?.model_name });
 
       const prompt = `Parse the following text to extract a list of draggable items/options for a drag and drop question. Extract all the items that should be draggable.
 
