@@ -19,6 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TimeEditor, FeaturesEditor, AttemptsEditor } from '@/components/quiz/QuizCardEditors';
+import { Brain, RefreshCw } from 'lucide-react';
 
 export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, viewMode = 'card', attempts = [], courses = [] }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
