@@ -42,6 +42,7 @@ import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import TopicBlock from './TopicBlock';
+import { useLazyQuiz, QuizLoadingPlaceholder } from './LazyQuizLoader';
 
 export default function CourseContentList({ 
   blocks, 
@@ -61,27 +62,6 @@ export default function CourseContentList({
   allQuizAttempts
 }) {
   const [expandedTopics, setExpandedTopics] = React.useState({});
-  const [loadingQuizzes, setLoadingQuizzes] = React.useState({});
-
-  React.useEffect(() => {
-    const quizBlocks = blocks.filter(b => b.type === 'quiz');
-    const newLoading = {};
-    
-    quizBlocks.forEach(block => {
-      const quiz = quizzes.find(q => q.id === block.quiz_id);
-      if (!quiz && !loadingQuizzes[block.quiz_id]) {
-        newLoading[block.quiz_id] = true;
-        
-        setTimeout(() => {
-          setLoadingQuizzes(prev => ({ ...prev, [block.quiz_id]: false }));
-        }, 5000);
-      }
-    });
-    
-    if (Object.keys(newLoading).length > 0) {
-      setLoadingQuizzes(prev => ({ ...prev, ...newLoading }));
-    }
-  }, [blocks, quizzes]);
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     
