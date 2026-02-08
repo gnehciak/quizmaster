@@ -56,7 +56,6 @@ export default function CourseContentList({
   onReorderTopicChildren,
   isAdmin,
   hasAccess,
-  quizzes,
   allQuizAttempts
 }) {
   const [expandedTopics, setExpandedTopics] = React.useState({});
