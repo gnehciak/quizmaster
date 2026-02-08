@@ -1074,6 +1074,26 @@ Return ONLY the JSON object, no other text.`;
                       </p>
                     </div>
                   </div>
+
+                  <div className="flex items-start gap-3 p-4 border rounded-xl bg-slate-50">
+                    <div className="pt-1">
+                      <input
+                        type="checkbox"
+                        id="ai_explanation_enabled"
+                        checked={quiz.ai_explanation_enabled !== false}
+                        onChange={(e) => setQuiz(prev => ({ ...prev, ai_explanation_enabled: e.target.checked }))}
+                        className="w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="ai_explanation_enabled" className="text-base font-medium cursor-pointer block mb-1">
+                        AI Explanations in Review
+                      </Label>
+                      <p className="text-sm text-slate-500">
+                        Show AI-generated explanations when students review their answers after completing the quiz
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
