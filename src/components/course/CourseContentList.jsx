@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   GripVertical, 
@@ -18,7 +17,6 @@ import {
   Youtube,
   MoreVertical,
   CheckCircle2,
-  RotateCcw,
   ChevronDown,
   ChevronRight,
   AlertCircle,
@@ -36,10 +34,7 @@ import {
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Badge } from '@/components/ui/badge';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 import TopicBlock from './TopicBlock';
-import { useLazyQuiz, QuizLoadingPlaceholder } from './LazyQuizLoader';
 import QuizBlockContent from './QuizBlockContent';
 
 export default function CourseContentList({ 
