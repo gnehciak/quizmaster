@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, LayoutGrid, List, ListOrdered, Upload, Download, Info, FolderEdit } from 'lucide-react';
+import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, LayoutGrid, List, ListOrdered, Upload, Download, Info, FolderEdit, RefreshCw } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
