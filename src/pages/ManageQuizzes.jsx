@@ -133,6 +133,16 @@ export default function ManageQuizzes() {
     enabled: !!user,
   });
 
+  // Persist selected category to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('manageQuizzes_selectedCategory', selectedCategory);
+  }, [selectedCategory]);
+
+  const sortedCategories = React.useMemo(() => 
+    [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    [categories]
+  );
+
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
@@ -146,13 +156,6 @@ export default function ManageQuizzes() {
   if (!user) {
     return null;
   }
-
-  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-
-  // Persist selected category to localStorage
-  React.useEffect(() => {
-    localStorage.setItem('manageQuizzes_selectedCategory', selectedCategory);
-  }, [selectedCategory]);
 
   // Filter by search and category
   const filteredQuizzes = quizzes.filter((quiz) => {
