@@ -87,9 +87,9 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
   if (viewMode === 'compact') {
     return (
       <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.02 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
         className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-all"
       >
         <div className="flex items-center justify-between gap-4">
@@ -142,9 +142,9 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
   if (viewMode === 'list') {
     return (
       <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.03 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
         className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all"
       >
         <div className="flex gap-6">
@@ -226,9 +226,9 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
       className="group bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 flex flex-col h-full overflow-hidden"
     >
       {/* Card Header: Category & Status */}
