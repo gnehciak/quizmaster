@@ -62,20 +62,6 @@ export default function ManageQuizzes() {
     },
   });
 
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   const { data: quizList = [], isLoading } = useQuery({
     queryKey: ['quizList'],
     queryFn: () => base44.entities.Quiz.list('-created_date'),
@@ -93,7 +79,8 @@ export default function ManageQuizzes() {
       pausable: q.pausable,
       created_date: q.created_date,
       questions: q.questions?.map(qq => ({ type: qq.type })) || [],
-    }))
+    })),
+    enabled: !!user,
   });
   const quizzes = quizList;
 
@@ -104,7 +91,8 @@ export default function ManageQuizzes() {
       id: a.id,
       quiz_id: a.quiz_id,
       percentage: a.percentage,
-    }))
+    })),
+    enabled: !!user,
   });
 
   const { data: allCourses = [] } = useQuery({
@@ -115,7 +103,8 @@ export default function ManageQuizzes() {
       title: c.title,
       quiz_ids: c.quiz_ids,
       content_blocks: c.content_blocks?.filter(b => b.type === 'quiz').map(b => ({ type: b.type, quiz_id: b.quiz_id })),
-    }))
+    })),
+    enabled: !!user,
   });
 
   const deleteMutation = useMutation({
@@ -140,8 +129,23 @@ export default function ManageQuizzes() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['quizCategories'],
-    queryFn: () => base44.entities.QuizCategory.list()
+    queryFn: () => base44.entities.QuizCategory.list(),
+    enabled: !!user,
   });
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
 
