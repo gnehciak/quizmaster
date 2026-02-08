@@ -77,6 +77,7 @@ export default function ManageQuizzes() {
       attempts_allowed: q.attempts_allowed,
       allow_tips: q.allow_tips,
       pausable: q.pausable,
+      ai_explanation_enabled: q.ai_explanation_enabled,
       created_date: q.created_date,
       questions: q.questions?.map(qq => ({ type: qq.type })) || [],
     })),
