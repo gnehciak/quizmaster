@@ -141,33 +141,6 @@ export default function CourseDetail() {
     select: (data) => data[0]
   });
 
-  // Extract quiz IDs from content blocks (including nested topic children)
-  const courseQuizIds = React.useMemo(() => {
-    if (!course?.content_blocks) return [];
-    const ids = new Set();
-    const extractIds = (blocks) => {
-      (blocks || []).forEach(block => {
-        if (block.type === 'quiz' && block.quiz_id) ids.add(block.quiz_id);
-        if (block.type === 'topic' && block.children) extractIds(block.children);
-      });
-    };
-    extractIds(course.content_blocks);
-    return [...ids];
-  }, [course?.content_blocks]);
-
-  const { data: quizzes = [] } = useQuery({
-    queryKey: ['courseQuizzes', courseId, courseQuizIds],
-    queryFn: async () => {
-      if (courseQuizIds.length === 0) return [];
-      // Fetch only the quizzes used in this course
-      const results = await Promise.all(
-        courseQuizIds.map(id => base44.entities.Quiz.filter({ id }).then(r => r[0]).catch(() => null))
-      );
-      return results.filter(Boolean);
-    },
-    enabled: !!course && courseQuizIds.length > 0,
-  });
-
   // For the admin quiz picker dialog, fetch a lightweight list of all quizzes (only when adding content)
   const { data: allQuizzesForPicker = [] } = useQuery({
     queryKey: ['quizzesForPicker'],
@@ -1845,7 +1818,6 @@ export default function CourseDetail() {
             onReorderTopicChildren={handleReorderTopicChildren}
             isAdmin={isAdmin}
             hasAccess={hasAccess}
-            quizzes={quizzes}
             allQuizAttempts={allQuizAttempts}
           />
         </div>
