@@ -47,11 +47,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     ? Math.round(attempts.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / attempts.length)
     : 0;
   
-  const getQuestionTypes = () => {
-    if (!quiz.questions) return [];
-    return quiz.questions.map(q => q.type);
-  };
-
   const stripHtml = (html) => {
     if (!html) return '';
     const tmp = document.createElement("DIV");
