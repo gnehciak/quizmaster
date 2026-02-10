@@ -68,12 +68,8 @@ export default function ManageQuizzes() {
       '-created_date',
       5000,
       0,
-      ['title', 'description', 'category', 'category_id', 'status', 'timer_enabled', 'timer_duration', 'attempts_allowed', 'allow_tips', 'pausable', 'ai_explanation_enabled', 'created_date', 'questions']
+      ['title', 'description', 'category', 'category_id', 'status', 'timer_enabled', 'timer_duration', 'attempts_allowed', 'allow_tips', 'pausable', 'ai_explanation_enabled', 'created_date']
     ),
-    select: (data) => data.map(q => ({
-      ...q,
-      questions: q.questions?.map(qq => ({ type: qq.type })) || [],
-    })),
     enabled: !!user,
   });
 
