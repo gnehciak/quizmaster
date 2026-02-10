@@ -686,8 +686,7 @@ export default function ManageQuizzes() {
                 <SelectItem value="oldest">Oldest First</SelectItem>
                 <SelectItem value="title_asc">Title (A-Z)</SelectItem>
                 <SelectItem value="title_desc">Title (Z-A)</SelectItem>
-                <SelectItem value="questions_most">Most Questions</SelectItem>
-                <SelectItem value="questions_least">Fewest Questions</SelectItem>
+
               </SelectContent>
             </Select>
           </div>
