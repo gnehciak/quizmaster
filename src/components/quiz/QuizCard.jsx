@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, FileEdit, Trash2, Clock, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
