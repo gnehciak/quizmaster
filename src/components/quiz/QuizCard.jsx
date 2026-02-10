@@ -180,7 +180,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
           <div className="flex items-center gap-2">
             <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}`)}>
-              <Button variant="outline" size="sm" className="gap-2" disabled={questionCount === 0}>
+              <Button variant="outline" size="sm" className="gap-2">
                 <Play className="w-3.5 h-3.5" /> Start
               </Button>
             </Link>
