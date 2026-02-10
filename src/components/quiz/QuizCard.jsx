@@ -26,7 +26,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(quiz.title);
   const queryClient = useQueryClient();
-  const questionCount = quiz.questions?.length || 0;
   
   const handleSaveTitle = async () => {
     if (editedTitle.trim() && editedTitle !== quiz.title) {
