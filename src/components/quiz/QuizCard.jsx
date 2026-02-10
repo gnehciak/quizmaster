@@ -143,13 +143,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all"
       >
         <div className="flex gap-6">
-          <div className="w-16 h-16 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
-            <div className="flex flex-col items-center">
-              <span className="text-xl font-bold text-indigo-600">{questionCount}</span>
-              <span className="text-[10px] text-indigo-400 font-medium">Q</span>
-            </div>
-          </div>
-
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-bold text-lg text-slate-800">{quiz.title}</h3>
