@@ -412,7 +412,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
             variant="outline"
             size="sm"
             className="h-8 w-8 p-0 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
-            disabled={questionCount === 0}
             title="Preview / Start"
           >
             <Play className="w-4 h-4" />
