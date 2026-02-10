@@ -308,14 +308,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-px bg-slate-100 border-y border-slate-100 mt-2">
-        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
-          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Questions</div>
-          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
-            <FileQuestion className="w-3 h-3 text-indigo-500" />
-            {questionCount}
-          </div>
-        </div>
-        
         <TimeEditor quiz={quiz}>
           <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-indigo-50 transition-colors cursor-pointer">
             <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Time</div>
