@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
+import { Play, FileEdit, Trash2, Clock, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
