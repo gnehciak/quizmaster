@@ -62,28 +62,20 @@ export default function ManageQuizzes() {
     },
   });
 
-  const { data: quizList = [], isLoading } = useQuery({
+  const { data: quizzes = [], isLoading } = useQuery({
     queryKey: ['quizList'],
-    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    queryFn: () => base44.entities.Quiz.list(
+      '-created_date',
+      5000,
+      0,
+      ['title', 'description', 'category', 'category_id', 'status', 'timer_enabled', 'timer_duration', 'attempts_allowed', 'allow_tips', 'pausable', 'ai_explanation_enabled', 'created_date', 'questions']
+    ),
     select: (data) => data.map(q => ({
-      id: q.id,
-      title: q.title,
-      description: q.description,
-      category: q.category,
-      category_id: q.category_id,
-      status: q.status,
-      timer_enabled: q.timer_enabled,
-      timer_duration: q.timer_duration,
-      attempts_allowed: q.attempts_allowed,
-      allow_tips: q.allow_tips,
-      pausable: q.pausable,
-      ai_explanation_enabled: q.ai_explanation_enabled,
-      created_date: q.created_date,
+      ...q,
       questions: q.questions?.map(qq => ({ type: qq.type })) || [],
     })),
     enabled: !!user,
   });
-  const quizzes = quizList;
 
   const { data: allAttempts = [] } = useQuery({
     queryKey: ['allQuizAttemptsLite'],
