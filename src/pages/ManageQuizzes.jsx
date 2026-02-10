@@ -192,16 +192,18 @@ export default function ManageQuizzes() {
     }
   };
 
-  const handleExportQuiz = (quiz) => {
+  const handleExportQuiz = async (quiz) => {
+    toast.info('Fetching full quiz data...');
+    const fullQuiz = await base44.entities.Quiz.get(quiz.id);
     const exportData = {
-      title: quiz.title,
-      description: quiz.description,
-      category: quiz.category,
-      timer_enabled: quiz.timer_enabled,
-      timer_duration: quiz.timer_duration,
-      attempts_allowed: quiz.attempts_allowed,
-      questions: quiz.questions,
-      status: quiz.status
+      title: fullQuiz.title,
+      description: fullQuiz.description,
+      category: fullQuiz.category,
+      timer_enabled: fullQuiz.timer_enabled,
+      timer_duration: fullQuiz.timer_duration,
+      attempts_allowed: fullQuiz.attempts_allowed,
+      questions: fullQuiz.questions,
+      status: fullQuiz.status
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
