@@ -92,9 +92,6 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-8 h-8 rounded bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-sm flex-shrink-0">
-              {questionCount}
-            </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-slate-800 truncate">{quiz.title}</h3>
               <div className="flex items-center gap-2 text-xs text-slate-500">
