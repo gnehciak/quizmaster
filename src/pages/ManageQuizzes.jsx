@@ -79,22 +79,25 @@ export default function ManageQuizzes() {
 
   const { data: allAttempts = [] } = useQuery({
     queryKey: ['allQuizAttemptsLite'],
-    queryFn: () => base44.entities.QuizAttempt.list(),
-    select: (data) => data.map(a => ({
-      id: a.id,
-      quiz_id: a.quiz_id,
-      percentage: a.percentage,
-    })),
+    queryFn: () => base44.entities.QuizAttempt.list(
+      undefined,
+      5000,
+      0,
+      ['quiz_id', 'percentage']
+    ),
     enabled: !!user,
   });
 
   const { data: allCourses = [] } = useQuery({
     queryKey: ['allCoursesLite'],
-    queryFn: () => base44.entities.Course.list(),
+    queryFn: () => base44.entities.Course.list(
+      undefined,
+      5000,
+      0,
+      ['title', 'quiz_ids', 'content_blocks']
+    ),
     select: (data) => data.map(c => ({
-      id: c.id,
-      title: c.title,
-      quiz_ids: c.quiz_ids,
+      ...c,
       content_blocks: c.content_blocks?.filter(b => b.type === 'quiz').map(b => ({ type: b.type, quiz_id: b.quiz_id })),
     })),
     enabled: !!user,
