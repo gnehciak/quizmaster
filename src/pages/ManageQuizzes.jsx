@@ -171,9 +171,7 @@ export default function ManageQuizzes() {
       case 'title_desc':
         return (b.title || '').localeCompare(a.title || '');
       case 'questions_most':
-        return (b.questions?.length || 0) - (a.questions?.length || 0);
       case 'questions_least':
-        return (a.questions?.length || 0) - (b.questions?.length || 0);
       default:
         return 0;
     }
