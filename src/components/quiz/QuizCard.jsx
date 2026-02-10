@@ -303,45 +303,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         
         {!quiz.description && <div className="h-4 mb-3" />}
 
-        {/* Question Types - Mini Badges */}
-        <div className="flex flex-wrap gap-1.5 mb-3 mt-auto">
-          {getQuestionTypes().slice(0, 9).map((type, i) => (
-            <span 
-              key={`${type}-${i}`} 
-              className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
-                typeColors[type]
-              )}
-            >
-              {typeLabels[type]?.split(' ')[0]}
-            </span>
-          ))}
-          {getQuestionTypes().length > 9 && (
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <span className="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-200 cursor-help hover:bg-slate-200 transition-colors">
-                  +{getQuestionTypes().length - 9}
-                </span>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-64" align="start">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-900">More Question Types</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {getQuestionTypes().slice(9).map((type, i) => (
-                      <span 
-                        key={`${type}-${i + 9}`} 
-                        className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium", 
-                          typeColors[type]
-                        )}
-                      >
-                        {typeLabels[type]?.split(' ')[0]}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          )}
-        </div>
+        <div className="mt-auto" />
       </div>
 
       {/* Stats Grid */}
