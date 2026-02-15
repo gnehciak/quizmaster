@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, FileEdit, Trash2, Clock, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
+import { Play, FileEdit, Trash2, FileQuestion, Clock, Signal, Download, BarChart3, Copy, MoreHorizontal, Check, X, Sparkles, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -25,6 +26,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(quiz.title);
   const queryClient = useQueryClient();
+  const questionCount = quiz.questions?.length || 0;
   
   const handleSaveTitle = async () => {
     if (editedTitle.trim() && editedTitle !== quiz.title) {
@@ -46,6 +48,11 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
     ? Math.round(attempts.reduce((acc, curr) => acc + (curr.percentage || 0), 0) / attempts.length)
     : 0;
   
+  const getQuestionTypes = () => {
+    if (!quiz.questions) return [];
+    return quiz.questions.map(q => q.type);
+  };
+
   const stripHtml = (html) => {
     if (!html) return '';
     const tmp = document.createElement("DIV");
@@ -55,6 +62,30 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const typeLabels = {
+    multiple_choice: 'Multiple Choice',
+    reading_comprehension: 'Reading',
+    drag_drop_single: 'Drag & Drop (Single)',
+    drag_drop_dual: 'Drag & Drop (Dual)',
+    inline_dropdown_separate: 'Fill in Blanks (Separate)',
+    inline_dropdown_same: 'Fill in Blanks (Same)',
+    matching_list_dual: 'Matching List',
+    long_response_dual: 'Long Response',
+    information: 'Information'
+  };
+
+  const typeColors = {
+    multiple_choice: 'bg-blue-100 text-blue-700',
+    reading_comprehension: 'bg-violet-100 text-violet-700',
+    drag_drop_single: 'bg-amber-100 text-amber-700',
+    drag_drop_dual: 'bg-amber-100 text-amber-700',
+    inline_dropdown_separate: 'bg-emerald-100 text-emerald-700',
+    inline_dropdown_same: 'bg-emerald-100 text-emerald-700',
+    matching_list_dual: 'bg-pink-100 text-pink-700',
+    long_response_dual: 'bg-cyan-100 text-cyan-700',
+    information: 'bg-slate-100 text-slate-700'
   };
 
   if (viewMode === 'compact') {
@@ -67,6 +98,9 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center text-sm flex-shrink-0">
+              {questionCount}
+            </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-slate-800 truncate">{quiz.title}</h3>
               <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -118,6 +152,13 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all"
       >
         <div className="flex gap-6">
+          <div className="w-16 h-16 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex flex-col items-center">
+              <span className="text-xl font-bold text-indigo-600">{questionCount}</span>
+              <span className="text-[10px] text-indigo-400 font-medium">Q</span>
+            </div>
+          </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-bold text-lg text-slate-800">{quiz.title}</h3>
@@ -155,7 +196,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
 
           <div className="flex items-center gap-2">
             <Link to={createPageUrl(`TakeQuiz?id=${quiz.id}`)}>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" disabled={questionCount === 0}>
                 <Play className="w-3.5 h-3.5" /> Start
               </Button>
             </Link>
@@ -278,11 +319,57 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
         
         {!quiz.description && <div className="h-4 mb-3" />}
 
-        <div className="mt-auto" />
+        {/* Question Types - Mini Badges */}
+        <div className="flex flex-wrap gap-1.5 mb-3 mt-auto">
+          {getQuestionTypes().slice(0, 9).map((type, i) => (
+            <span 
+              key={`${type}-${i}`} 
+              className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium truncate max-w-[100px]", 
+                typeColors[type]
+              )}
+            >
+              {typeLabels[type]?.split(' ')[0]}
+            </span>
+          ))}
+          {getQuestionTypes().length > 9 && (
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <span className="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-200 cursor-help hover:bg-slate-200 transition-colors">
+                  +{getQuestionTypes().length - 9}
+                </span>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64" align="start">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900">More Question Types</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {getQuestionTypes().slice(9).map((type, i) => (
+                      <span 
+                        key={`${type}-${i + 9}`} 
+                        className={cn("text-[10px] px-1.5 py-0.5 rounded border font-medium", 
+                          typeColors[type]
+                        )}
+                      >
+                        {typeLabels[type]?.split(' ')[0]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          )}
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-px bg-slate-100 border-y border-slate-100 mt-2">
+        <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-slate-50 transition-colors">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Questions</div>
+          <div className="flex items-center gap-1 text-slate-700 font-semibold text-xs">
+            <FileQuestion className="w-3 h-3 text-indigo-500" />
+            {questionCount}
+          </div>
+        </div>
+        
         <TimeEditor quiz={quiz}>
           <div className="bg-white p-2 flex flex-col items-center justify-center gap-0.5 group/stat hover:bg-indigo-50 transition-colors cursor-pointer">
             <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Time</div>
@@ -387,6 +474,7 @@ export default function QuizCard({ quiz, onDelete, onEdit, onExport, index, view
             variant="outline"
             size="sm"
             className="h-8 w-8 p-0 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
+            disabled={questionCount === 0}
             title="Preview / Start"
           >
             <Play className="w-4 h-4" />

@@ -62,38 +62,47 @@ export default function ManageQuizzes() {
     },
   });
 
-  const { data: quizzes = [], isLoading } = useQuery({
+  const { data: quizList = [], isLoading } = useQuery({
     queryKey: ['quizList'],
-    queryFn: () => base44.entities.Quiz.list(
-      '-created_date',
-      5000,
-      0,
-      ['title', 'description', 'category', 'category_id', 'status', 'timer_enabled', 'timer_duration', 'attempts_allowed', 'allow_tips', 'pausable', 'ai_explanation_enabled', 'created_date']
-    ),
+    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    select: (data) => data.map(q => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      category: q.category,
+      category_id: q.category_id,
+      status: q.status,
+      timer_enabled: q.timer_enabled,
+      timer_duration: q.timer_duration,
+      attempts_allowed: q.attempts_allowed,
+      allow_tips: q.allow_tips,
+      pausable: q.pausable,
+      ai_explanation_enabled: q.ai_explanation_enabled,
+      created_date: q.created_date,
+      questions: q.questions?.map(qq => ({ type: qq.type })) || [],
+    })),
     enabled: !!user,
   });
+  const quizzes = quizList;
 
   const { data: allAttempts = [] } = useQuery({
     queryKey: ['allQuizAttemptsLite'],
-    queryFn: () => base44.entities.QuizAttempt.list(
-      undefined,
-      5000,
-      0,
-      ['quiz_id', 'percentage']
-    ),
+    queryFn: () => base44.entities.QuizAttempt.list(),
+    select: (data) => data.map(a => ({
+      id: a.id,
+      quiz_id: a.quiz_id,
+      percentage: a.percentage,
+    })),
     enabled: !!user,
   });
 
   const { data: allCourses = [] } = useQuery({
     queryKey: ['allCoursesLite'],
-    queryFn: () => base44.entities.Course.list(
-      undefined,
-      5000,
-      0,
-      ['title', 'quiz_ids', 'content_blocks']
-    ),
+    queryFn: () => base44.entities.Course.list(),
     select: (data) => data.map(c => ({
-      ...c,
+      id: c.id,
+      title: c.title,
+      quiz_ids: c.quiz_ids,
       content_blocks: c.content_blocks?.filter(b => b.type === 'quiz').map(b => ({ type: b.type, quiz_id: b.quiz_id })),
     })),
     enabled: !!user,
@@ -171,7 +180,9 @@ export default function ManageQuizzes() {
       case 'title_desc':
         return (b.title || '').localeCompare(a.title || '');
       case 'questions_most':
+        return (b.questions?.length || 0) - (a.questions?.length || 0);
       case 'questions_least':
+        return (a.questions?.length || 0) - (b.questions?.length || 0);
       default:
         return 0;
     }
@@ -192,18 +203,16 @@ export default function ManageQuizzes() {
     }
   };
 
-  const handleExportQuiz = async (quiz) => {
-    toast.info('Fetching full quiz data...');
-    const fullQuiz = await base44.entities.Quiz.get(quiz.id);
+  const handleExportQuiz = (quiz) => {
     const exportData = {
-      title: fullQuiz.title,
-      description: fullQuiz.description,
-      category: fullQuiz.category,
-      timer_enabled: fullQuiz.timer_enabled,
-      timer_duration: fullQuiz.timer_duration,
-      attempts_allowed: fullQuiz.attempts_allowed,
-      questions: fullQuiz.questions,
-      status: fullQuiz.status
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      timer_enabled: quiz.timer_enabled,
+      timer_duration: quiz.timer_duration,
+      attempts_allowed: quiz.attempts_allowed,
+      questions: quiz.questions,
+      status: quiz.status
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -688,7 +697,8 @@ export default function ManageQuizzes() {
                 <SelectItem value="oldest">Oldest First</SelectItem>
                 <SelectItem value="title_asc">Title (A-Z)</SelectItem>
                 <SelectItem value="title_desc">Title (Z-A)</SelectItem>
-
+                <SelectItem value="questions_most">Most Questions</SelectItem>
+                <SelectItem value="questions_least">Fewest Questions</SelectItem>
               </SelectContent>
             </Select>
           </div>
