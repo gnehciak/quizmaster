@@ -112,6 +112,7 @@ export default function CourseDetail() {
   const [blockToMove, setBlockToMove] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [accessCodeManagerOpen, setAccessCodeManagerOpen] = useState(false);
+  const [insertAfterBlockId, setInsertAfterBlockId] = useState(null);
 
   const quillModules = {
     toolbar: [
