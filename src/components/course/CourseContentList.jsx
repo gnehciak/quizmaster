@@ -192,6 +192,19 @@ export default function CourseContentList({
             <h3 className={cn("text-lg font-bold", !isHexColor ? colors.text : "text-slate-900")}>
               {block.title}
             </h3>
+            {isAdmin && editMode && onAddContentAfter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto gap-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddContentAfter(block.id);
+                }}
+              >
+                <Plus className="w-3 h-3" /> Add
+              </Button>
+            )}
           </div>
         );
     }
