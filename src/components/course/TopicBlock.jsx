@@ -28,6 +28,7 @@ const TopicBlock = React.memo(({
   onDelete,
   onAddToTopic,
   onReorderTopicChildren,
+  onAddContentAfter,
 }) => {
   const { completed, total } = calculateTopicCompletion(block);
   const isExpanded = expandedTopics[block.id] ?? true;
