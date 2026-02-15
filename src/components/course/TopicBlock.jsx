@@ -78,11 +78,11 @@ const TopicBlock = React.memo(({
         </div>
       </div>
       
-      {isExpanded && block.children && block.children.length > 0 && (
+      {isExpanded && (
         <div 
           className="ml-6 pl-6 border-l-2 border-indigo-200 space-y-3"
         >
-            {editMode && isAdmin ? (
+            {block.children && block.children.length > 0 && (editMode && isAdmin ? (
               <Droppable droppableId={`topic-${block.id}`} type={`topic-${block.id}`}>
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
