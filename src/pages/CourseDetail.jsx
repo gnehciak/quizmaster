@@ -408,7 +408,14 @@ export default function CourseDetail() {
         newBlock.children = [];
       }
 
-      const updatedBlocks = [...contentBlocks, newBlock];
+      let updatedBlocks;
+      if (insertAfterBlockId) {
+        const idx = contentBlocks.findIndex(b => b.id === insertAfterBlockId);
+        updatedBlocks = [...contentBlocks];
+        updatedBlocks.splice(idx + 1, 0, newBlock);
+      } else {
+        updatedBlocks = [...contentBlocks, newBlock];
+      }
       await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
     }
     
