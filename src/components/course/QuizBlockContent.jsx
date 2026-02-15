@@ -38,9 +38,17 @@ export default function QuizBlockContent({ block, isAdmin, hasAccess, editMode, 
     <div ref={ref} className="flex items-center gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors w-full">
       <div className="flex-shrink-0">
         {hasCompleted && (hasAccess || isAdmin) ? (
-          <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-200">
-            <span className="text-sm font-bold text-emerald-700">{latestAttempt.percentage}%</span>
-          </div>
+          (() => {
+            const pct = latestAttempt.percentage || 0;
+            const bgColor = pct >= 80 ? 'bg-emerald-100' : pct >= 60 ? 'bg-lime-100' : pct >= 40 ? 'bg-amber-100' : pct >= 20 ? 'bg-orange-100' : 'bg-red-100';
+            const borderColor = pct >= 80 ? 'border-emerald-200' : pct >= 60 ? 'border-lime-200' : pct >= 40 ? 'border-amber-200' : pct >= 20 ? 'border-orange-200' : 'border-red-200';
+            const textColor = pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-lime-700' : pct >= 40 ? 'text-amber-700' : pct >= 20 ? 'text-orange-700' : 'text-red-700';
+            return (
+              <div className={cn("w-12 h-12 rounded-full flex items-center justify-center border-2", bgColor, borderColor)}>
+                <span className={cn("text-sm font-bold", textColor)}>{pct}%</span>
+              </div>
+            );
+          })()
         ) : (
           <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center border-2 border-indigo-100">
             <PlayCircle className="w-6 h-6 text-indigo-500" />
