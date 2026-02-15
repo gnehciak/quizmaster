@@ -168,6 +168,19 @@ const TopicBlock = React.memo(({
                   );
                 })}
               </div>
+            ))}
+            {editMode && isAdmin && onAddContentAfter && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddContentAfter(block.id);
+                }}
+              >
+                <Plus className="w-4 h-4" /> Add Content Here
+              </Button>
             )}
         </div>
       )}
