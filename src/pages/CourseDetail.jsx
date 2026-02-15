@@ -1821,6 +1821,21 @@ export default function CourseDetail() {
           />
         </div>
       </div>
+      {/* Floating Edit Toggle */}
+      {isAdmin && (
+        <button
+          onClick={() => setEditMode(!editMode)}
+          className={cn(
+            "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110",
+            editMode 
+              ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+          )}
+          title={editMode ? "Exit edit mode" : "Edit content"}
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }
