@@ -1831,6 +1831,7 @@ export default function CourseDetail() {
             }}
             onAddToTopic={handleAddToTopic}
             onReorderTopicChildren={handleReorderTopicChildren}
+            onAddContentAfter={handleAddContentAfterSection}
             isAdmin={isAdmin}
             hasAccess={hasAccess}
             allQuizAttempts={allQuizAttempts}
