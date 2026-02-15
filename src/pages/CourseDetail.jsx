@@ -439,8 +439,18 @@ export default function CourseDetail() {
     setInsertAfterBlockId(null);
   };
 
-  const handleAddContentAfterSection = (sectionBlockId) => {
-    setInsertAfterBlockId(sectionBlockId);
+  const handleAddContentAfterSection = (blockId) => {
+    // Check if the blockId belongs to a topic (determine if we're adding inside a topic)
+    const topicBlock = contentBlocks.find(b => b.id === blockId && b.type === 'topic');
+    
+    if (topicBlock) {
+      // Adding inside a topic - we'll add to its children
+      setInsertAfterBlockId({ topicId: blockId, isInTopic: true });
+    } else {
+      // Adding after a section or other top-level block
+      setInsertAfterBlockId(blockId);
+    }
+    
     setEditingBlock(null);
     setContentType('');
     setAddContentOpen(true);
