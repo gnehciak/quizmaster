@@ -21,7 +21,8 @@ import {
   ChevronRight,
   AlertCircle,
   FolderOpen,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
