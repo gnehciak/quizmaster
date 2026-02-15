@@ -436,6 +436,14 @@ export default function CourseDetail() {
     setTopicDueDate('');
     setContentType('');
     setEditingBlock(null);
+    setInsertAfterBlockId(null);
+  };
+
+  const handleAddContentAfterSection = (sectionBlockId) => {
+    setInsertAfterBlockId(sectionBlockId);
+    setEditingBlock(null);
+    setContentType('');
+    setAddContentOpen(true);
   };
 
   const handleEditBlock = (block) => {
