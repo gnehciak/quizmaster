@@ -410,9 +410,24 @@ export default function CourseDetail() {
 
       let updatedBlocks;
       if (insertAfterBlockId) {
-        const idx = contentBlocks.findIndex(b => b.id === insertAfterBlockId);
-        updatedBlocks = [...contentBlocks];
-        updatedBlocks.splice(idx + 1, 0, newBlock);
+        // Check if we're adding inside a topic
+        if (typeof insertAfterBlockId === 'object' && insertAfterBlockId.isInTopic) {
+          const topicId = insertAfterBlockId.topicId;
+          updatedBlocks = contentBlocks.map(b => {
+            if (b.id === topicId && b.type === 'topic') {
+              return {
+                ...b,
+                children: [...(b.children || []), newBlock]
+              };
+            }
+            return b;
+          });
+        } else {
+          // Adding after a regular block at top level
+          const idx = contentBlocks.findIndex(b => b.id === insertAfterBlockId);
+          updatedBlocks = [...contentBlocks];
+          updatedBlocks.splice(idx + 1, 0, newBlock);
+        }
       } else {
         updatedBlocks = [...contentBlocks, newBlock];
       }
