@@ -168,7 +168,8 @@ const TopicBlock = React.memo(({
                   );
                 })}
               </div>
-            ))}
+            )
+            )}
             {editMode && isAdmin && onAddContentAfter && (
               <Button
                 variant="outline"
