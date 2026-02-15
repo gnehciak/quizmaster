@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
-  GripVertical, Pencil, Trash2, Lock, Calendar, CheckCircle2, AlertCircle, ChevronDown, ChevronRight, FolderOpen
+  GripVertical, Pencil, Trash2, Lock, Calendar, CheckCircle2, AlertCircle, ChevronDown, ChevronRight, FolderOpen, Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
