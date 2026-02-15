@@ -49,6 +49,7 @@ export default function CourseContentList({
   onScheduleLock,
   onAddToTopic,
   onReorderTopicChildren,
+  onAddContentAfter,
   isAdmin,
   hasAccess,
   allQuizAttempts
