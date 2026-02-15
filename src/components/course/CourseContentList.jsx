@@ -134,6 +134,7 @@ export default function CourseContentList({
           onDelete={onDelete}
           onAddToTopic={onAddToTopic}
           onReorderTopicChildren={onReorderTopicChildren}
+          onAddContentAfter={onAddContentAfter}
         />
       );
     }
