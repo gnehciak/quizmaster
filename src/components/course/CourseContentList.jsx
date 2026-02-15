@@ -175,7 +175,7 @@ export default function CourseContentList({
         return (
           <div 
             className={cn(
-              "flex items-center gap-4 px-5 py-4 rounded-xl border-l-4 shadow-sm w-full",
+              "flex items-center gap-4 px-5 py-4 rounded-xl border-l-4 shadow-sm w-full group/section",
               !isHexColor && `bg-gradient-to-r ${colors.from} ${colors.to} ${colors.border}`
             )}
             style={isHexColor ? { ...colors.gradient, borderLeftColor: colors.border.borderColor } : {}}
