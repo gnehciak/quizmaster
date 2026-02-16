@@ -213,8 +213,8 @@ export default function ManageQuizzes() {
     }
   });
 
-  // Calculate quiz counts by category
-  const quizCounts = quizzes.reduce((acc, quiz) => {
+  // Calculate quiz counts by category using all quizzes
+  const quizCounts = allQuizzes.reduce((acc, quiz) => {
     const categoryId = quiz.category_id || quiz.category;
     if (categoryId) {
       acc[categoryId] = (acc[categoryId] || 0) + 1;
