@@ -62,7 +62,6 @@ export default function ManageQuizzes() {
     },
   });
 
-  // Priority query: Load selected category quizzes first
   const { data: quizList = [], isLoading } = useQuery({
     queryKey: ['quizList', selectedCategory],
     queryFn: async () => {
@@ -99,22 +98,7 @@ export default function ManageQuizzes() {
     })),
     enabled: !!user,
   });
-
-  // Background query: Load all quizzes for category counts (only lightweight data)
-  const { data: allQuizzesForCounts = [] } = useQuery({
-    queryKey: ['allQuizzesForCounts'],
-    queryFn: () => base44.entities.Quiz.list('-created_date'),
-    select: (data) => data.map(q => ({
-      id: q.id,
-      category: q.category,
-      category_id: q.category_id,
-    })),
-    enabled: !!user && selectedCategory !== 'all',
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
   const quizzes = quizList;
-  const allQuizzes = selectedCategory === 'all' ? quizList : [...quizList, ...allQuizzesForCounts.filter(q => !quizList.some(ql => ql.id === q.id))];
 
   const { data: allAttempts = [] } = useQuery({
     queryKey: ['allQuizAttemptsLite'],
@@ -216,8 +200,8 @@ export default function ManageQuizzes() {
     }
   });
 
-  // Calculate quiz counts by category (using all quizzes for accurate counts)
-  const quizCounts = allQuizzes.reduce((acc, quiz) => {
+  // Calculate quiz counts by category
+  const quizCounts = quizzes.reduce((acc, quiz) => {
     const categoryId = quiz.category_id || quiz.category;
     if (categoryId) {
       acc[categoryId] = (acc[categoryId] || 0) + 1;
@@ -666,7 +650,7 @@ export default function ManageQuizzes() {
               className="whitespace-nowrap"
             >
               All Categories
-              <span className="ml-2 text-xs opacity-70">({allQuizzes.length})</span>
+              <span className="ml-2 text-xs opacity-70">({quizzes.length})</span>
             </Button>
             {sortedCategories.map((cat) => (
               <Button
