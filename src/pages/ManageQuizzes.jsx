@@ -173,14 +173,11 @@ export default function ManageQuizzes() {
     return null;
   }
 
-  // Filter by search and category
+  // Filter by search only (category filtering now happens server-side)
   const filteredQuizzes = quizzes.filter((quiz) => {
     const matchesSearch = quiz.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-      quiz.category_id === selectedCategory || 
-      (!quiz.category_id && quiz.category === selectedCategory);
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
   // Sort quizzes
