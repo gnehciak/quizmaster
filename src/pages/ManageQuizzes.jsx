@@ -62,6 +62,19 @@ export default function ManageQuizzes() {
     },
   });
 
+  // Fetch all quizzes for counting
+  const { data: allQuizzes = [] } = useQuery({
+    queryKey: ['allQuizzesCounts'],
+    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    select: (data) => data.map(q => ({
+      id: q.id,
+      category: q.category,
+      category_id: q.category_id,
+    })),
+    enabled: !!user,
+  });
+
+  // Fetch filtered quizzes for display
   const { data: quizList = [], isLoading } = useQuery({
     queryKey: ['quizList', selectedCategory],
     queryFn: async () => {
