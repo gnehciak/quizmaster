@@ -663,7 +663,7 @@ export default function ManageQuizzes() {
               className="whitespace-nowrap"
             >
               All Categories
-              <span className="ml-2 text-xs opacity-70">({quizzes.length})</span>
+              <span className="ml-2 text-xs opacity-70">({allQuizzes.length})</span>
             </Button>
             {sortedCategories.map((cat) => (
               <Button
