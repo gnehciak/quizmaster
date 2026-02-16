@@ -63,8 +63,23 @@ export default function ManageQuizzes() {
   });
 
   const { data: quizList = [], isLoading } = useQuery({
-    queryKey: ['quizList'],
-    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    queryKey: ['quizList', selectedCategory],
+    queryFn: async () => {
+      if (selectedCategory === 'all') {
+        return await base44.entities.Quiz.list('-created_date');
+      } else {
+        // Filter by category_id or legacy category field
+        const byNewCategory = await base44.entities.Quiz.filter({ category_id: selectedCategory }, '-created_date');
+        const byLegacyCategory = await base44.entities.Quiz.filter({ category: selectedCategory }, '-created_date');
+        
+        // Combine and deduplicate by id
+        const combined = [...byNewCategory, ...byLegacyCategory];
+        const uniqueQuizzes = Array.from(new Map(combined.map(q => [q.id, q])).values());
+        
+        // Sort by created_date descending
+        return uniqueQuizzes.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      }
+    },
     select: (data) => data.map(q => ({
       id: q.id,
       title: q.title,
