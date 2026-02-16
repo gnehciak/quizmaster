@@ -62,6 +62,7 @@ export default function ManageQuizzes() {
     },
   });
 
+  // Priority query: Load selected category quizzes first
   const { data: quizList = [], isLoading } = useQuery({
     queryKey: ['quizList', selectedCategory],
     queryFn: async () => {
@@ -98,7 +99,22 @@ export default function ManageQuizzes() {
     })),
     enabled: !!user,
   });
+
+  // Background query: Load all quizzes for category counts (only lightweight data)
+  const { data: allQuizzesForCounts = [] } = useQuery({
+    queryKey: ['allQuizzesForCounts'],
+    queryFn: () => base44.entities.Quiz.list('-created_date'),
+    select: (data) => data.map(q => ({
+      id: q.id,
+      category: q.category,
+      category_id: q.category_id,
+    })),
+    enabled: !!user && selectedCategory !== 'all',
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   const quizzes = quizList;
+  const allQuizzes = selectedCategory === 'all' ? quizList : [...quizList, ...allQuizzesForCounts.filter(q => !quizList.some(ql => ql.id === q.id))];
 
   const { data: allAttempts = [] } = useQuery({
     queryKey: ['allQuizAttemptsLite'],
