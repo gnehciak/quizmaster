@@ -1348,13 +1348,28 @@ export default function CourseDetail() {
                                     quiz_id: newQuiz.id
                                   };
                                   
-                                  const updatedBlocks = [...contentBlocks, newBlock];
+                                  let updatedBlocks;
+                                  if (insertAfterBlockId && typeof insertAfterBlockId === 'object' && insertAfterBlockId.isInTopic) {
+                                    const topicId = insertAfterBlockId.topicId;
+                                    updatedBlocks = contentBlocks.map(b => {
+                                      if (b.id === topicId && b.type === 'topic') {
+                                        return {
+                                          ...b,
+                                          children: [...(b.children || []), newBlock]
+                                        };
+                                      }
+                                      return b;
+                                    });
+                                  } else {
+                                    updatedBlocks = [...contentBlocks, newBlock];
+                                  }
                                   await updateCourseMutation.mutateAsync({ content_blocks: updatedBlocks });
                                   
                                   queryClient.invalidateQueries({ queryKey: ['quizzesForPicker'] });
                                   queryClient.invalidateQueries({ queryKey: ['courseQuizzes'] });
                                   setAddContentOpen(false);
                                   setContentType('');
+                                  setInsertAfterBlockId(null);
                                   toast.success('Quiz created and added to course');
                                 }}
                               >
