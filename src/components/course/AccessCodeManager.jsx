@@ -8,14 +8,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Copy, Trash2, RefreshCw } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Copy, Trash2, RefreshCw, Infinity, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 export default function AccessCodeManager({ open, onOpenChange, accessCodes = [], onUpdate }) {
   const [codes, setCodes] = useState(accessCodes);
   const [newClassName, setNewClassName] = useState('');
   const [codeQuantity, setCodeQuantity] = useState(1);
+  const [codeType, setCodeType] = useState('one_time');
   const [newlyCreatedCodes, setNewlyCreatedCodes] = useState(null);
 
   const generateCode = () => {
@@ -33,26 +42,26 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
       return;
     }
 
-    // Generate multiple unique codes for this class
     const newCodes = [];
     for (let i = 0; i < codeQuantity; i++) {
       newCodes.push({
         code: generateCode(),
-        class_name: newClassName.trim()
+        class_name: newClassName.trim(),
+        code_type: codeType
       });
     }
 
     setCodes([...codes, ...newCodes]);
-    setNewlyCreatedCodes({ className: newClassName.trim(), codes: newCodes });
+    setNewlyCreatedCodes({ className: newClassName.trim(), codes: newCodes, codeType });
     setNewClassName('');
     setCodeQuantity(1);
   };
 
   const handleRemoveClass = (index) => {
-    if (!confirm('Remove this class and its access code?')) return;
+    if (!confirm('Remove this access code?')) return;
     const updated = codes.filter((_, i) => i !== index);
     setCodes(updated);
-    toast.success('Class removed');
+    toast.success('Code removed');
   };
 
   const handleRegenerateCode = (index) => {
@@ -77,7 +86,8 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
     const newCode = generateCode();
     const newCodeObj = {
       code: newCode,
-      class_name: newClassName.trim()
+      class_name: newClassName.trim(),
+      code_type: codeType
     };
 
     setCodes([...codes, newCodeObj]);
@@ -115,29 +125,50 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
                   }
                 }}
               />
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs text-slate-600 mb-1 block">Number of Codes</Label>
+              <div className="flex gap-2 flex-wrap">
+                <div className="w-36">
+                  <Label className="text-xs text-slate-600 mb-1 block">Code Type</Label>
+                  <Select value={codeType} onValueChange={setCodeType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="one_time">
+                        <span className="flex items-center gap-1.5">
+                          <Hash className="w-3 h-3" /> One-Time
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="permanent">
+                        <span className="flex items-center gap-1.5">
+                          <Infinity className="w-3 h-3" /> Permanent
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-28">
+                  <Label className="text-xs text-slate-600 mb-1 block">Quantity</Label>
                   <Input
                     type="number"
                     min="1"
                     max="100"
-                    placeholder="Quantity"
                     value={codeQuantity}
                     onChange={(e) => setCodeQuantity(parseInt(e.target.value) || 1)}
                   />
                 </div>
-                <Button onClick={handleGenerateAndCopy} variant="outline" className="gap-2 mt-5">
-                  <Copy className="w-4 h-4" />
-                  Generate One & Copy
-                </Button>
-                <Button onClick={handleAddClass} className="gap-2 mt-5">
-                  <Plus className="w-4 h-4" />
-                  Generate Codes
-                </Button>
+                <div className="flex gap-2 items-end flex-1">
+                  <Button onClick={handleGenerateAndCopy} variant="outline" className="gap-2">
+                    <Copy className="w-4 h-4" />
+                    Generate 1 & Copy
+                  </Button>
+                  <Button onClick={handleAddClass} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Generate Codes
+                  </Button>
+                </div>
               </div>
               <p className="text-xs text-slate-500">
-                💡 Each code can only be used once and will be removed after redemption
+                💡 <strong>One-Time</strong> codes are removed after use. <strong>Permanent</strong> codes can be reused by multiple students.
               </p>
             </div>
           </div>
@@ -148,7 +179,7 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-sm font-semibold text-green-800">
-                    ✅ {newlyCreatedCodes.codes.length} code{newlyCreatedCodes.codes.length !== 1 ? 's' : ''} created for "{newlyCreatedCodes.className}"
+                    ✅ {newlyCreatedCodes.codes.length} {newlyCreatedCodes.codeType === 'permanent' ? 'permanent' : 'one-time'} code{newlyCreatedCodes.codes.length !== 1 ? 's' : ''} created for "{newlyCreatedCodes.className}"
                   </p>
                   <p className="text-xs text-green-600 mt-0.5">Copy the codes below before closing</p>
                 </div>
@@ -205,7 +236,7 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
             </div>
           )}
 
-          {/* Existing Classes */}
+          {/* Existing Codes */}
           <div className="space-y-3">
             {codes.length === 0 ? (
               <div className="text-center py-8 text-slate-500 border border-dashed rounded-lg">
@@ -236,8 +267,19 @@ export default function AccessCodeManager({ open, onOpenChange, accessCodes = []
                     className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-200 hover:border-indigo-300 transition-colors"
                   >
                     <div className="flex-1">
-                      <div className="font-semibold text-slate-800 mb-1">
-                        {item.class_name}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-slate-800">{item.class_name}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[10px] px-1.5 py-0",
+                            item.code_type === 'permanent' 
+                              ? "bg-purple-50 text-purple-700 border-purple-200" 
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          )}
+                        >
+                          {item.code_type === 'permanent' ? '♾ Permanent' : '1× One-Time'}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="text-lg font-mono font-bold text-indigo-600 tracking-wider">

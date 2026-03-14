@@ -265,7 +265,8 @@ export default function CourseDetail() {
       setAutoCodeGenerated(true);
       const defaultCode = {
         code: Math.random().toString(36).substring(2, 10).toUpperCase(),
-        class_name: 'Default Class'
+        class_name: 'Default Class',
+        code_type: 'one_time'
       };
       updateCourseMutation.mutate({ access_codes: [defaultCode] });
     }
@@ -311,11 +312,15 @@ export default function CourseDetail() {
       class_name: matchingCode?.class_name || 'Legacy Access'
     });
 
-    // Remove the used code from the access_codes array (for new system only)
+    // Remove the used code only if it's one-time
     if (matchingCode) {
-      const updatedCodes = accessCodes.filter((_, idx) => idx !== matchingCodeIndex);
-      await updateCourseMutation.mutateAsync({ access_codes: updatedCodes });
-      toast.success('Code redeemed successfully! This code has been removed.');
+      if (matchingCode.code_type !== 'permanent') {
+        const updatedCodes = accessCodes.filter((_, idx) => idx !== matchingCodeIndex);
+        await updateCourseMutation.mutateAsync({ access_codes: updatedCodes });
+        toast.success('Code redeemed successfully! This one-time code has been removed.');
+      } else {
+        toast.success('Code redeemed successfully!');
+      }
     }
 
     setUnlockDialogOpen(false);

@@ -116,10 +116,13 @@ export default function MyCourses() {
         class_name: matchedClass
       });
 
-      // Remove the used code from access_codes (for new system only, not legacy)
+      // Remove the used code only if it's one-time (for new system only, not legacy)
       if (matchedCodeIndex !== -1) {
-        const updatedCodes = matchedCourse.access_codes.filter((_, idx) => idx !== matchedCodeIndex);
-        await base44.entities.Course.update(matchedCourse.id, { access_codes: updatedCodes });
+        const matchedCodeObj = matchedCourse.access_codes[matchedCodeIndex];
+        if (matchedCodeObj.code_type !== 'permanent') {
+          const updatedCodes = matchedCourse.access_codes.filter((_, idx) => idx !== matchedCodeIndex);
+          await base44.entities.Course.update(matchedCourse.id, { access_codes: updatedCodes });
+        }
       }
 
       return matchedCourse;
