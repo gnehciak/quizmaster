@@ -1143,7 +1143,12 @@ export default function CourseDetail() {
             <div className="grid gap-2 sm:grid-cols-2">
               {course.access_codes.slice(0, 4).map((item, index) => (
                 <div key={index} className="bg-white rounded-lg p-3 border border-indigo-100">
-                  <div className="text-xs text-slate-500 mb-1">{item.class_name}</div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+                    <span>{item.class_name}</span>
+                    <span className={item.code_type === 'permanent' ? "text-purple-600 font-medium" : "text-amber-600 font-medium"}>
+                      {item.code_type === 'permanent' ? '♾ Permanent' : '1× One-Time'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <code className="text-sm font-mono font-bold text-indigo-600 tracking-wider">
                       {item.code}
