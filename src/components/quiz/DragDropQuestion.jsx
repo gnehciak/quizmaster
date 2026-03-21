@@ -345,7 +345,7 @@ export default function DragDropQuestion({
                   animate={{ scale: 1, opacity: 1 }}
                   draggable={!showResults}
                   onDragStart={(e) => handleDragStart(e, placedAnswer, zone.id)}
-                  onDragEnd={() => setDraggedItem(null)}
+                  onDragEnd={handleDragEnd}
                   className={cn(
                     "px-4 py-2.5 rounded-xl flex items-center justify-between gap-2",
                     !showResults && "bg-white border border-indigo-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
