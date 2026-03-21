@@ -4,20 +4,6 @@ Deno.serve(async (req) => {
   console.log('generateQuizAiData called');
   const base44 = createClientFromRequest(req);
 
-  // Allow admin users OR scheduled/service-role calls (no user header)
-  let isAuthorized = false;
-  try {
-    const user = await base44.auth.me();
-    if (user?.role === 'admin') isAuthorized = true;
-  } catch {
-    // No user = called from scheduler / service role
-    isAuthorized = true;
-  }
-
-  if (!isAuthorized) {
-    return Response.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   try {
     // Get AI config
     const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
