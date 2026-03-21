@@ -312,10 +312,29 @@ function sleep(ms) {
 
 // ─── Helper: call Gemini ────────────────────────────────────────────────────────
 async function callGemini(apiKey, modelName, prompt) {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName });
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  // Use OpenAI-compatible endpoint via REST with no compression to avoid Deno Brotli bug
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }]
+  });
+
+  // Use Deno's native TCP-level fetch with no Accept-Encoding to prevent Brotli
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept-Encoding': 'identity',
+    },
+    body,
+  });
+
+  const rawBuffer = await res.arrayBuffer();
+  const text = new TextDecoder().decode(rawBuffer);
+  if (!res.ok) {
+    throw new Error(`Gemini API error ${res.status}: ${text}`);
+  }
+  const data = JSON.parse(text);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 // ─── Build passage context ──────────────────────────────────────────────────────
