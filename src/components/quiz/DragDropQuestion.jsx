@@ -391,7 +391,7 @@ export default function DragDropQuestion({
                         ×
                       </button>
                     )}
-                  </motion.div>
+                  </div>
                 ) : (
                   <div className="text-slate-400 text-sm italic">
                     Drop answer here
