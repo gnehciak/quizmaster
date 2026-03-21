@@ -361,6 +361,73 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* AI Generation Log */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+                AI Tips & Explanations Generation Log
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => refetchLogs()} title="Refresh">
+                <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {aiLogs.length === 0 ? (
+                <p className="text-sm text-slate-500">No runs yet. The function runs every hour automatically.</p>
+              ) : (
+                <div className="space-y-3">
+                  {aiLogs.map((log) => (
+                    <div key={log.id} className="border border-slate-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {log.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                          {log.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+                          {log.status === 'running' && <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />}
+                          <span className="text-sm font-medium text-slate-700">
+                            {new Date(log.run_started_at).toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })}
+                          </span>
+                        </div>
+                        {log.stats && (
+                          <div className="flex gap-3 text-xs text-slate-500">
+                            <span className="text-indigo-600 font-medium">{log.stats.tipsGenerated || 0} tips</span>
+                            <span className="text-purple-600 font-medium">{log.stats.explanationsGenerated || 0} explanations</span>
+                            <span>{log.stats.errors || 0} errors</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {log.status === 'error' && (
+                        <p className="text-xs text-red-600 mb-2">{log.error}</p>
+                      )}
+
+                      {log.entries && log.entries.length > 0 ? (
+                        <div className="space-y-1 mt-2">
+                          {log.entries.map((entry, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 rounded px-3 py-1.5">
+                              <Sparkles className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+                              <span className="font-medium truncate flex-1">{entry.quiz_title}</span>
+                              {entry.tips_generated > 0 && (
+                                <span className="text-indigo-600 whitespace-nowrap">+{entry.tips_generated} tips</span>
+                              )}
+                              {entry.explanations_generated > 0 && (
+                                <span className="text-purple-600 whitespace-nowrap">+{entry.explanations_generated} explanations</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : log.status === 'completed' ? (
+                        <p className="text-xs text-slate-400 mt-1">No new AI data generated (all up to date)</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* AI Configuration */}
         <div className="mt-6">
           <Card>
