@@ -96,12 +96,20 @@ export default function DragDropQuestion({
   const handleDragStart = (e, option, fromZone = null) => {
     if (showResults) return;
     setDraggedItem({ item: option, fromZone });
+    isDraggingRef.current = true;
     e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    isDraggingRef.current = false;
+    stopAutoScroll();
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    handleDragOverScroll(e);
   };
 
   const handleDrop = (e, zoneId) => {
