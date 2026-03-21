@@ -267,11 +267,25 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.Quiz.update(quiz.id, { questions: updatedQuestions });
         stats.quizzesProcessed++;
         console.log(`Updated quiz: ${quiz.title} (${quiz.id})`);
+        logEntries.push({
+          quiz_id: quiz.id,
+          quiz_title: quiz.title,
+          tips_generated: hasTips ? (stats.tipsGenerated - (logEntries.reduce((s, e) => s + (e.tips_generated || 0), 0))) : 0,
+          explanations_generated: hasExplanations ? (stats.explanationsGenerated - (logEntries.reduce((s, e) => s + (e.explanations_generated || 0), 0))) : 0,
+        });
       }
 
       // Pause between quizzes to avoid rate limiting
       await sleep(500);
     }
+
+    // Finalize log record
+    await base44.asServiceRole.entities.AIGenerationLog.update(logRecord.id, {
+      run_finished_at: new Date().toISOString(),
+      status: 'completed',
+      entries: logEntries,
+      stats
+    });
 
     return Response.json({ success: true, stats });
   } catch (error) {
