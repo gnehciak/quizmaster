@@ -230,29 +230,23 @@ export default function DragDropQuestion({
           </p>
           
           <div className="flex flex-wrap gap-3 min-h-[60px]">
-            <AnimatePresence mode="popLayout">
               {availableOptions.map((option) => (
-                <motion.div
+                <div
                   key={option}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
                   draggable={!showResults}
                   onDragStart={(e) => handleDragStart(e, option, null)}
                   onDragEnd={handleDragEnd}
                   className={cn(
                     "px-4 py-2.5 bg-white rounded-xl border-2 border-slate-200",
-                    "flex items-center gap-2 cursor-grab active:cursor-grabbing",
+                    "flex items-center gap-2 cursor-grab active:cursor-grabbing select-none",
                     "hover:border-indigo-300 hover:shadow-md transition-all",
                     showResults && "cursor-default opacity-50"
                   )}
                 >
                   <GripVertical className="w-4 h-4 text-slate-400" />
                   <span className="font-medium text-slate-700">{option}</span>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
             
             {availableOptions.length === 0 && !showResults && (
               <p className="text-sm text-slate-400 italic">All items placed</p>
