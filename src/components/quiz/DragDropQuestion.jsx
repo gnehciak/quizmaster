@@ -288,7 +288,7 @@ export default function DragDropQuestion({
             const isLoadingExplanation = explanationLoading[zone.id];
             
             return (
-              <motion.div
+              <div
                 key={zone.id}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, zone.id)}
