@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Failed to create log: ' + logErr.message }, { status: 500 });
   }
 
-  // Run the actual processing in the background so we don't timeout
-  EdgeRuntime.waitUntil(runProcessing(base44, aiConfig, logRecord));
+  // Fire and forget — run processing without awaiting so we return quickly
+  runProcessing(base44, aiConfig, logRecord).catch(e => console.error('Background processing failed:', e.message));
 
   // Return immediately with the log record ID so frontend can poll
   return Response.json({ success: true, started: true, log_id: logRecord.id });
