@@ -1,4 +1,4 @@
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.21";
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.4";
 
 async function callGemini(aiConfig, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${aiConfig.model_name}:generateContent?key=${aiConfig.api_key}`;
