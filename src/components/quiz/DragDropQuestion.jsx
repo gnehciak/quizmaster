@@ -360,14 +360,12 @@ export default function DragDropQuestion({
                 </div>
                 
                 {placedAnswer ? (
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
+                  <div
                     draggable={!showResults}
                     onDragStart={(e) => handleDragStart(e, placedAnswer, zone.id)}
                     onDragEnd={handleDragEnd}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl flex items-center justify-between gap-2",
+                      "px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 select-none",
                       !showResults && "bg-white border border-indigo-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
                       isCorrect && "bg-emerald-100 border border-emerald-300",
                       isWrong && "bg-red-100 border border-red-300",
