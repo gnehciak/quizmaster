@@ -39,49 +39,53 @@ export default function DragDropQuestion({
   const [draggedItem, setDraggedItem] = useState(null);
   const scrollContainerRef = useRef(null);
   const scrollAnimRef = useRef(null);
+  const scrollSpeedRef = useRef(0);
   const isDraggingRef = useRef(false);
 
-  const SCROLL_ZONE = 80; // px from edge to start scrolling
-  const SCROLL_SPEED = 6; // px per frame
-
-  const handleDragOverScroll = useCallback((e) => {
-    if (!isDraggingRef.current || !scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    const rect = container.getBoundingClientRect();
-    const y = e.clientY;
-
-    const distFromBottom = rect.bottom - y;
-    const distFromTop = y - rect.top;
-
-    if (distFromBottom < SCROLL_ZONE) {
-      const intensity = 1 - (distFromBottom / SCROLL_ZONE);
-      startAutoScroll(intensity * SCROLL_SPEED);
-    } else if (distFromTop < SCROLL_ZONE) {
-      const intensity = 1 - (distFromTop / SCROLL_ZONE);
-      startAutoScroll(-intensity * SCROLL_SPEED);
-    } else {
-      stopAutoScroll();
-    }
-  }, []);
-
-  const startAutoScroll = useCallback((speed) => {
-    if (scrollAnimRef.current) return; // already scrolling
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const tick = () => {
-      container.scrollTop += speed;
-      scrollAnimRef.current = requestAnimationFrame(tick);
-    };
-    scrollAnimRef.current = requestAnimationFrame(tick);
-  }, []);
+  const SCROLL_ZONE = 80;
+  const MAX_SCROLL_SPEED = 8;
 
   const stopAutoScroll = useCallback(() => {
     if (scrollAnimRef.current) {
       cancelAnimationFrame(scrollAnimRef.current);
       scrollAnimRef.current = null;
     }
+    scrollSpeedRef.current = 0;
   }, []);
+
+  const startAutoScroll = useCallback(() => {
+    if (scrollAnimRef.current) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const tick = () => {
+      if (scrollSpeedRef.current !== 0) {
+        container.scrollTop += scrollSpeedRef.current;
+      }
+      scrollAnimRef.current = requestAnimationFrame(tick);
+    };
+    scrollAnimRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const handleDragOverScroll = useCallback((e) => {
+    if (!isDraggingRef.current || !scrollContainerRef.current) return;
+    const rect = scrollContainerRef.current.getBoundingClientRect();
+    const y = e.clientY;
+    const distFromBottom = rect.bottom - y;
+    const distFromTop = y - rect.top;
+
+    if (distFromBottom < SCROLL_ZONE) {
+      const intensity = 1 - Math.max(0, distFromBottom) / SCROLL_ZONE;
+      scrollSpeedRef.current = intensity * MAX_SCROLL_SPEED;
+      startAutoScroll();
+    } else if (distFromTop < SCROLL_ZONE) {
+      const intensity = 1 - Math.max(0, distFromTop) / SCROLL_ZONE;
+      scrollSpeedRef.current = -intensity * MAX_SCROLL_SPEED;
+      startAutoScroll();
+    } else {
+      stopAutoScroll();
+    }
+  }, [startAutoScroll, stopAutoScroll]);
 
   useEffect(() => {
     return () => stopAutoScroll();
