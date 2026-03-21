@@ -319,7 +319,7 @@ async function callGemini(apiKey, modelName, prompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept-Encoding': 'identity'
+      'Accept-Encoding': 'gzip',
     },
     body: JSON.stringify(body)
   });
@@ -327,7 +327,8 @@ async function callGemini(apiKey, modelName, prompt) {
     const err = await res.text();
     throw new Error(`Gemini API error ${res.status}: ${err}`);
   }
-  const data = await res.json();
+  const text = await res.text();
+  const data = JSON.parse(text);
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
