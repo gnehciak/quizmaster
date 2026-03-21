@@ -166,7 +166,7 @@ export default function DragDropQuestion({
   const isUnattempted = showResults && !hasAnswers;
 
   return (
-    <div className="h-full p-8 overflow-y-auto">
+    <div className="h-full p-8 overflow-y-auto" ref={scrollContainerRef} onDragOver={handleDragOverScroll}>
       <div className="max-w-3xl mx-auto space-y-8">
       {isUnattempted && (
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
