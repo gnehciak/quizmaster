@@ -18,9 +18,12 @@ Deno.serve(async (req) => {
     if (!aiConfig?.api_key || !aiConfig?.model_name) {
       return Response.json({ error: 'AI config not set up' }, { status: 500 });
     }
+    console.log('Using model:', aiConfig.model_name);
 
     // Get global prompts
+    console.log('Fetching prompts...');
     const globalPrompts = await base44.asServiceRole.entities.AIPrompt.list();
+    console.log('Prompts fetched:', globalPrompts?.length);
 
     // Fetch all published quizzes
     const allQuizzes = await base44.asServiceRole.entities.Quiz.filter({ status: 'published' });
