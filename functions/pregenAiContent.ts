@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@latest';
 
 const LITE_MODEL = 'gemini-3.1-flash-lite-preview';
 
