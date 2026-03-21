@@ -504,12 +504,7 @@ export default function DragDropQuestion({
       {/* Scroll Direction Indicators */}
       <AnimatePresence>
         {scrollDirection === 'down' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
             <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full shadow-lg">
               <ChevronDown className="w-4 h-4 animate-bounce" />
               <span className="text-sm font-medium">Scrolling down</span>
@@ -518,12 +513,7 @@ export default function DragDropQuestion({
           </div>
         )}
         {scrollDirection === 'up' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
             <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full shadow-lg">
               <ChevronUp className="w-4 h-4 animate-bounce" />
               <span className="text-sm font-medium">Scrolling up</span>
