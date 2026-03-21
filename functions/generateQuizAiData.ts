@@ -12,24 +12,45 @@ Deno.serve(async (req) => {
     console.error('SDK init error:', initErr.message);
     return Response.json({ error: 'SDK init failed: ' + initErr.message }, { status: 500 });
   }
+
+  // Validate config before starting background work
+  let aiConfig;
   try {
     console.log('Fetching AI config...');
     const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
     console.log('AI configs fetched:', aiConfigs?.length);
-    const aiConfig = aiConfigs[0];
+    aiConfig = aiConfigs[0];
     if (!aiConfig?.api_key || !aiConfig?.model_name) {
       return Response.json({ error: 'AI config not set up' }, { status: 500 });
     }
-    console.log('Using model:', aiConfig.model_name);
+  } catch(configErr) {
+    return Response.json({ error: 'Failed to load AI config: ' + configErr.message }, { status: 500 });
+  }
 
-    // Create a log record for this run
-    const logRecord = await base44.asServiceRole.entities.AIGenerationLog.create({
+  // Create log record synchronously so we can return it
+  let logRecord;
+  try {
+    logRecord = await base44.asServiceRole.entities.AIGenerationLog.create({
       run_started_at: new Date().toISOString(),
       status: 'running',
       entries: [],
       stats: {}
     });
-    const logEntries = [];
+  } catch(logErr) {
+    return Response.json({ error: 'Failed to create log: ' + logErr.message }, { status: 500 });
+  }
+
+  // Run the actual processing in the background so we don't timeout
+  EdgeRuntime.waitUntil(runProcessing(base44, aiConfig, logRecord));
+
+  // Return immediately with the log record ID so frontend can poll
+  return Response.json({ success: true, started: true, log_id: logRecord.id });
+});
+
+async function runProcessing(base44, aiConfig, logRecord) {
+  const logEntries = [];
+  try {
+    console.log('Using model:', aiConfig.model_name);
 
     // Get global prompts
     console.log('Fetching prompts...');
