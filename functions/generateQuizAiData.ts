@@ -286,7 +286,10 @@ async function callGemini(apiKey, modelName, prompt) {
   };
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept-Encoding': 'identity'
+    },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
