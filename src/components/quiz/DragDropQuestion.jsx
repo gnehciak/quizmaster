@@ -214,7 +214,7 @@ export default function DragDropQuestion({
                 exit={{ opacity: 0, scale: 0.8 }}
                 draggable={!showResults}
                 onDragStart={(e) => handleDragStart(e, option, null)}
-                onDragEnd={() => setDraggedItem(null)}
+                onDragEnd={handleDragEnd}
                 className={cn(
                   "px-4 py-2.5 bg-white rounded-xl border-2 border-slate-200",
                   "flex items-center gap-2 cursor-grab active:cursor-grabbing",
