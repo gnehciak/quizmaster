@@ -2,8 +2,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
   console.log('generateQuizAiData called');
+  let base44;
   try {
-    const base44 = createClientFromRequest(req);
+    base44 = createClientFromRequest(req);
+    console.log('SDK initialized');
+  } catch(initErr) {
+    console.error('SDK init error:', initErr.message);
+    return Response.json({ error: 'SDK init failed: ' + initErr.message }, { status: 500 });
+  }
+  try {
     // Get AI config
     const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
     const aiConfig = aiConfigs[0];
