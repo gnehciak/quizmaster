@@ -123,6 +123,7 @@ export default function DragDropQuestion({
     if (showResults) return;
     setDraggedItem({ item: option, fromZone });
     isDraggingRef.current = true;
+    e.dataTransfer.setData('text/plain', option);
     e.dataTransfer.effectAllowed = 'move';
   };
 
