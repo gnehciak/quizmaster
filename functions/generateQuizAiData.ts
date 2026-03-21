@@ -319,9 +319,12 @@ async function callGemini(apiKey, modelName, prompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept-Encoding': 'gzip',
+      'Accept-Encoding': 'identity',
+      'Accept': 'application/json',
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    // @ts-ignore - Deno-specific option to disable compression
+    compress: false,
   });
   if (!res.ok) {
     const err = await res.text();
