@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { GripVertical, CheckCircle2, XCircle, RotateCcw, Sparkles, Loader2, RefreshCw, X, Trash2, FileEdit, Code } from 'lucide-react';
