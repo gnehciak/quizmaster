@@ -1,7 +1,6 @@
 // AI Quiz Data Pre-Generator v2
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
-
 Deno.serve(async (req) => {
   console.log('generateQuizAiData called');
   let base44;
@@ -13,7 +12,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'SDK init failed: ' + initErr.message }, { status: 500 });
   }
 
-  // Validate config before starting background work
+  // Validate config before starting
   let aiConfig;
   try {
     console.log('Fetching AI config...');
@@ -23,11 +22,12 @@ Deno.serve(async (req) => {
     if (!aiConfig?.api_key || !aiConfig?.model_name) {
       return Response.json({ error: 'AI config not set up' }, { status: 500 });
     }
+    console.log('Using model:', aiConfig.model_name);
   } catch(configErr) {
     return Response.json({ error: 'Failed to load AI config: ' + configErr.message }, { status: 500 });
   }
 
-  // Create log record synchronously so we can return it
+  // Create log record synchronously
   let logRecord;
   try {
     logRecord = await base44.asServiceRole.entities.AIGenerationLog.create({
@@ -40,18 +40,18 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Failed to create log: ' + logErr.message }, { status: 500 });
   }
 
-  // Fire and forget — run processing without awaiting so we return quickly
-  runProcessing(base44, aiConfig, logRecord).catch(e => console.error('Background processing failed:', e.message));
+  // Fire-and-forget background processing — return quickly to avoid timeout
+  runProcessing(base44, aiConfig, logRecord).catch(e => {
+    console.error('Background processing error:', e.message);
+  });
 
-  // Return immediately with the log record ID so frontend can poll
   return Response.json({ success: true, started: true, log_id: logRecord.id });
 });
 
+// ─── Background processing ─────────────────────────────────────────────────────
 async function runProcessing(base44, aiConfig, logRecord) {
   const logEntries = [];
   try {
-    console.log('Using model:', aiConfig.model_name);
-
     // Get global prompts
     console.log('Fetching prompts...');
     const globalPrompts = await base44.asServiceRole.entities.AIPrompt.list();
@@ -73,32 +73,25 @@ async function runProcessing(base44, aiConfig, logRecord) {
       const hasExplanations = quiz.ai_explanation_enabled !== false;
 
       if (!hasTips && !hasExplanations) continue;
-
       if (!quiz.questions || quiz.questions.length === 0) continue;
 
       let quizUpdated = false;
-      const updatedQuestions = JSON.parse(JSON.stringify(quiz.questions)); // deep clone
+      const updatedQuestions = JSON.parse(JSON.stringify(quiz.questions));
 
       for (let qIdx = 0; qIdx < updatedQuestions.length; qIdx++) {
         const q = updatedQuestions[qIdx];
-
         stats.questionsProcessed++;
 
         // ─── TIPS ──────────────────────────────────────────────────────────────
         if (hasTips) {
-          // Reading comprehension: tips go inside each comprehensionQuestion
           if (q.type === 'reading_comprehension' && q.comprehensionQuestions?.length > 0) {
             for (let cIdx = 0; cIdx < q.comprehensionQuestions.length; cIdx++) {
               const cq = q.comprehensionQuestions[cIdx];
-              if (cq.ai_data?.helper_tip) continue; // already exists
-
+              if (cq.ai_data?.helper_tip) continue;
               try {
                 const tip = await generateRCHelperTip(aiConfig, globalPrompts, q, cq);
                 if (tip) {
-                  q.comprehensionQuestions[cIdx] = {
-                    ...cq,
-                    ai_data: { ...(cq.ai_data || {}), helper_tip: tip }
-                  };
+                  q.comprehensionQuestions[cIdx] = { ...cq, ai_data: { ...(cq.ai_data || {}), helper_tip: tip } };
                   quizUpdated = true;
                   stats.tipsGenerated++;
                 }
@@ -110,19 +103,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Drag Drop Dual / Single: tips per dropZone
           if ((q.type === 'drag_drop_dual' || q.type === 'drag_drop_single') && q.dropZones?.length > 0) {
             for (let zIdx = 0; zIdx < q.dropZones.length; zIdx++) {
               const zone = q.dropZones[zIdx];
               if (zone.ai_data?.helper_tip) continue;
-
               try {
                 const tip = await generateDropZoneHelperTip(aiConfig, globalPrompts, q, zone);
                 if (tip) {
-                  q.dropZones[zIdx] = {
-                    ...zone,
-                    ai_data: { ...(zone.ai_data || {}), helper_tip: tip }
-                  };
+                  q.dropZones[zIdx] = { ...zone, ai_data: { ...(zone.ai_data || {}), helper_tip: tip } };
                   quizUpdated = true;
                   stats.tipsGenerated++;
                 }
@@ -134,19 +122,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Inline Dropdown: tips per blank
           if ((q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && q.blanks?.length > 0) {
             for (let bIdx = 0; bIdx < q.blanks.length; bIdx++) {
               const blank = q.blanks[bIdx];
               if (blank.ai_data?.helper_tip) continue;
-
               try {
                 const tip = await generateBlankHelperTip(aiConfig, globalPrompts, q, blank, bIdx);
                 if (tip) {
-                  q.blanks[bIdx] = {
-                    ...blank,
-                    ai_data: { ...(blank.ai_data || {}), helper_tip: tip }
-                  };
+                  q.blanks[bIdx] = { ...blank, ai_data: { ...(blank.ai_data || {}), helper_tip: tip } };
                   quizUpdated = true;
                   stats.tipsGenerated++;
                 }
@@ -158,19 +141,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Matching List: tips per matchingQuestion
           if (q.type === 'matching_list_dual' && q.matchingQuestions?.length > 0) {
             for (let mIdx = 0; mIdx < q.matchingQuestions.length; mIdx++) {
               const mq = q.matchingQuestions[mIdx];
               if (mq.ai_data?.helper_tip) continue;
-
               try {
                 const tip = await generateMatchingHelperTip(aiConfig, globalPrompts, q, mq);
                 if (tip) {
-                  q.matchingQuestions[mIdx] = {
-                    ...mq,
-                    ai_data: { ...(mq.ai_data || {}), helper_tip: tip }
-                  };
+                  q.matchingQuestions[mIdx] = { ...mq, ai_data: { ...(mq.ai_data || {}), helper_tip: tip } };
                   quizUpdated = true;
                   stats.tipsGenerated++;
                 }
@@ -185,19 +163,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
 
         // ─── EXPLANATIONS ──────────────────────────────────────────────────────
         if (hasExplanations) {
-          // Reading comprehension: explanations per comprehensionQuestion
           if (q.type === 'reading_comprehension' && q.comprehensionQuestions?.length > 0) {
             for (let cIdx = 0; cIdx < q.comprehensionQuestions.length; cIdx++) {
               const cq = q.comprehensionQuestions[cIdx];
               if (cq.ai_data?.explanation) continue;
-
               try {
                 const explanation = await generateRCExplanation(aiConfig, globalPrompts, q, cq);
                 if (explanation) {
-                  q.comprehensionQuestions[cIdx] = {
-                    ...cq,
-                    ai_data: { ...(cq.ai_data || {}), explanation }
-                  };
+                  q.comprehensionQuestions[cIdx] = { ...cq, ai_data: { ...(cq.ai_data || {}), explanation } };
                   quizUpdated = true;
                   stats.explanationsGenerated++;
                 }
@@ -209,19 +182,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Drag Drop: explanations per dropZone
           if ((q.type === 'drag_drop_dual' || q.type === 'drag_drop_single') && q.dropZones?.length > 0) {
             for (let zIdx = 0; zIdx < q.dropZones.length; zIdx++) {
               const zone = q.dropZones[zIdx];
               if (zone.ai_data?.explanation) continue;
-
               try {
                 const explanation = await generateDropZoneExplanation(aiConfig, q, zone);
                 if (explanation) {
-                  q.dropZones[zIdx] = {
-                    ...zone,
-                    ai_data: { ...(zone.ai_data || {}), explanation: { advice: explanation } }
-                  };
+                  q.dropZones[zIdx] = { ...zone, ai_data: { ...(zone.ai_data || {}), explanation: { advice: explanation } } };
                   quizUpdated = true;
                   stats.explanationsGenerated++;
                 }
@@ -233,19 +201,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Inline Dropdown: explanations per blank
           if ((q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') && q.blanks?.length > 0) {
             for (let bIdx = 0; bIdx < q.blanks.length; bIdx++) {
               const blank = q.blanks[bIdx];
               if (blank.ai_data?.explanation) continue;
-
               try {
                 const explanation = await generateBlankExplanation(aiConfig, globalPrompts, q, blank, bIdx);
                 if (explanation) {
-                  q.blanks[bIdx] = {
-                    ...blank,
-                    ai_data: { ...(blank.ai_data || {}), explanation: { advice: explanation } }
-                  };
+                  q.blanks[bIdx] = { ...blank, ai_data: { ...(blank.ai_data || {}), explanation: { advice: explanation } } };
                   quizUpdated = true;
                   stats.explanationsGenerated++;
                 }
@@ -257,19 +220,14 @@ async function runProcessing(base44, aiConfig, logRecord) {
             }
           }
 
-          // Matching: explanations per matchingQuestion
           if (q.type === 'matching_list_dual' && q.matchingQuestions?.length > 0) {
             for (let mIdx = 0; mIdx < q.matchingQuestions.length; mIdx++) {
               const mq = q.matchingQuestions[mIdx];
               if (mq.ai_data?.explanation) continue;
-
               try {
                 const explanation = await generateMatchingExplanation(aiConfig, q, mq);
                 if (explanation) {
-                  q.matchingQuestions[mIdx] = {
-                    ...mq,
-                    ai_data: { ...(mq.ai_data || {}), explanation: { advice: explanation } }
-                  };
+                  q.matchingQuestions[mIdx] = { ...mq, ai_data: { ...(mq.ai_data || {}), explanation: { advice: explanation } } };
                   quizUpdated = true;
                   stats.explanationsGenerated++;
                 }
@@ -297,34 +255,28 @@ async function runProcessing(base44, aiConfig, logRecord) {
         });
       }
 
-      // Pause between quizzes to avoid rate limiting
       await sleep(500);
     }
 
-    // Finalize log record
     await base44.asServiceRole.entities.AIGenerationLog.update(logRecord.id, {
       run_finished_at: new Date().toISOString(),
       status: 'completed',
       entries: logEntries,
       stats
     });
+    console.log('Processing complete:', stats);
 
-    return Response.json({ success: true, stats });
   } catch (error) {
-    console.error('generateQuizAiData error:', error);
-    // Try to update log record with error if it was created
+    console.error('runProcessing error:', error.message);
     try {
-      if (typeof logRecord !== 'undefined') {
-        await base44.asServiceRole.entities.AIGenerationLog.update(logRecord.id, {
-          run_finished_at: new Date().toISOString(),
-          status: 'error',
-          error: error.message
-        });
-      }
+      await base44.asServiceRole.entities.AIGenerationLog.update(logRecord.id, {
+        run_finished_at: new Date().toISOString(),
+        status: 'error',
+        error: error.message
+      });
     } catch (_) {}
-    return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}
 
 // ─── Helper: sleep ─────────────────────────────────────────────────────────────
 function sleep(ms) {
@@ -333,22 +285,15 @@ function sleep(ms) {
 
 // ─── Helper: call Gemini ────────────────────────────────────────────────────────
 async function callGemini(apiKey, modelName, prompt) {
-  // Use OpenAI-compatible endpoint via REST with no compression to avoid Deno Brotli bug
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }]
-  });
-
-  // Use Deno's native TCP-level fetch with no Accept-Encoding to prevent Brotli
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Accept-Encoding': 'identity',
     },
-    body,
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
   });
-
   const rawBuffer = await res.arrayBuffer();
   const text = new TextDecoder().decode(rawBuffer);
   if (!res.ok) {
@@ -379,7 +324,6 @@ async function generateRCHelperTip(aiConfig, globalPrompts, q, cq) {
   const questionText = cq.question?.replace(/<[^>]*>/g, '');
   const passagesForPrompt = buildPassagesForPrompt(q);
   const passageContext = buildPassageContext(q);
-  const hasMultiplePassages = passagesForPrompt.length > 1;
   const options = cq.options;
   const correctAnswer = cq.correctAnswer;
   const optionsContext = options ? '\n\nOptions:\n' + options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join('\n') : '';
@@ -416,7 +360,6 @@ Correct Answer: ${answerContext}
   prompt = prompt.replace('{{CORRECT_ANSWER}}', answerContext);
 
   const text = await callGemini(aiConfig.api_key, aiConfig.model_name, prompt);
-
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return null;
   const parsed = JSON.parse(jsonMatch[0]);
@@ -460,7 +403,6 @@ For single passage use:
 {"advice": "...", "highlightedContent": "Full passage with <mark class=\\"bg-yellow-200 px-1 rounded\\"> tags"}`;
 
   const text = await callGemini(aiConfig.api_key, aiConfig.model_name, prompt);
-
   let advice = text;
   let passages = {};
 
@@ -630,7 +572,6 @@ IMPORTANT: Do NOT start with conversational phrases. Get straight to the explana
 3. Format using HTML tags: <p>, <strong>, <br>.
 
 Blank Number: ${bIdx + 1}
-Student's Answer: (pre-generated, no student context available)
 Correct Answer: ${blank.correctAnswer}
 Options: ${blank.options?.join(', ')}
 
