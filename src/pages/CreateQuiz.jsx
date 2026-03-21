@@ -533,10 +533,7 @@ Return ONLY the JSON object, no other text.`;
                   {quizId ? 'Edit Quiz' : 'Create Quiz'}
                 </h1>
                 {quizId && (
-                  <>
-                    <p className="text-sm text-slate-700 font-medium truncate max-w-xs">{quiz.title || 'Untitled Quiz'}</p>
-                    <p className="text-xs text-slate-500">ID: {quizId}</p>
-                  </>
+                  <p className="text-xs text-slate-500 mt-0.5">ID: {quizId}</p>
                 )}
               </div>
             </div>
