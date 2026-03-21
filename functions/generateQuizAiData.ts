@@ -21,6 +21,15 @@ Deno.serve(async (req) => {
     }
     console.log('Using model:', aiConfig.model_name);
 
+    // Create a log record for this run
+    const logRecord = await base44.asServiceRole.entities.AIGenerationLog.create({
+      run_started_at: new Date().toISOString(),
+      status: 'running',
+      entries: [],
+      stats: {}
+    });
+    const logEntries = [];
+
     // Get global prompts
     console.log('Fetching prompts...');
     const globalPrompts = await base44.asServiceRole.entities.AIPrompt.list();
