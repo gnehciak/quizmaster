@@ -1,125 +1,193 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.21";
 
-Deno.serve(async (req) => {
-  // AI data pre-generation function
-  const base44 = createClientFromRequest(req);
+async function callGemini(aiConfig, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${aiConfig.model_name}:generateContent?key=${aiConfig.api_key}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  if (!res.ok) throw new Error("Gemini API error: " + res.status);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
 
+function getPassageContext(q) {
+  if (q.passages?.length > 0) return "\n\nPassages:\n" + q.passages.map(p => p.title + ":\n" + p.content).join("\n\n");
+  if (q.passage) return "\n\nPassage:\n" + q.passage;
+  return "";
+}
+
+function stripHtml(s) { return (s || "").replace(/<[^>]*>/g, ""); }
+
+async function genRCExplanation(aiConfig, prompts, q, cq) {
+  const pList = (q.passages?.length > 0 ? q.passages : [{ id: "main", title: "Passage", content: q.passage }]);
+  const pStr = pList.map(p => "[" + p.id + "] " + p.title + ":\n" + p.content).join("\n\n");
+  const gp = prompts.find(p => p.key === "reading_comprehension_explanation");
+  const def = "You are a Year 6 teacher. Explain this RC question. State the correct answer, explain each option. Highlight evidence with <mark class=\"bg-yellow-200 px-1 rounded\">...</mark>. Return JSON: {\"advice\":\"...\",\"highlightedContent\":\"...\"}.\n\nQuestion: {{QUESTION}}\nPassage(s): {{PASSAGES}}\nOptions: {{OPTIONS}}\nCorrect Answer: {{CORRECT_ANSWER}}";
+  let prompt = gp?.template || def;
+  prompt = prompt.replace(/\{\{QUESTION\}\}/g, stripHtml(cq.question));
+  prompt = prompt.replace("{{PASSAGES}}", pStr);
+  prompt = prompt.replace("{{OPTIONS}}", (cq.options || []).join(", "));
+  prompt = prompt.replace("{{CORRECT_ANSWER}}", cq.correctAnswer || "");
+  const text = await callGemini(aiConfig, prompt);
+  const m = text.match(/\{[\s\S]*\}/);
+  if (m) {
+    const parsed = JSON.parse(m[0]);
+    const passages = {};
+    if (parsed.passages) {
+      (Array.isArray(parsed.passages) ? parsed.passages : []).forEach(p => { if (p.passageId) passages[p.passageId] = p.highlightedContent; });
+    } else if (parsed.highlightedContent) {
+      passages[pList[0]?.id || "main"] = parsed.highlightedContent;
+    }
+    return { advice: parsed.advice, passages };
+  }
+  return null;
+}
+
+async function genRCTip(aiConfig, prompts, q, cq) {
+  const pList = (q.passages?.length > 0 ? q.passages : [{ id: "main", title: "Passage", content: q.passage }]);
+  const pStr = pList.map(p => "[" + p.id + "] " + p.title + ":\n" + p.content).join("\n\n");
+  const gp = prompts.find(p => p.key === "reading_comprehension_tip");
+  const def = "You are a Year 6 teacher giving a hint. Do NOT reveal the answer. Highlight relevant passage sections with <mark>. Return JSON: {\"advice\":\"...\",\"highlightedContent\":\"...\"}.\n\nQuestion: " + stripHtml(cq.question) + "\nPassage(s): " + pStr + "\nOptions: " + (cq.options || []).join(", ");
+  const text = await callGemini(aiConfig, gp?.template || def);
+  const m = text.match(/\{[\s\S]*\}/);
+  if (m) {
+    const parsed = JSON.parse(m[0]);
+    const passages = {};
+    if (parsed.passages) {
+      (Array.isArray(parsed.passages) ? parsed.passages : []).forEach(p => { if (p.passageId) passages[p.passageId] = p.highlightedContent; });
+    } else if (parsed.highlightedContent) {
+      passages[pList[0]?.id || "main"] = parsed.highlightedContent;
+    }
+    return { advice: parsed.advice, passages };
+  }
+  return null;
+}
+
+async function genSimpleExplanation(aiConfig, prompt) {
+  const text = await callGemini(aiConfig, prompt);
+  return { advice: text };
+}
+
+async function genSimpleTip(aiConfig, prompt) {
+  const text = await callGemini(aiConfig, prompt);
+  return { advice: text };
+}
+
+async function genBlankExplanation(aiConfig, prompts, q, blank, bIdx) {
+  let passage = "";
+  if (q.textWithBlanks) passage = stripHtml(q.textWithBlanks);
+  else if (q.passages?.length > 0) passage = q.passages.map(p => p.title + ":\n" + stripHtml(p.content)).join("\n\n");
+  else if (q.passage) passage = stripHtml(q.passage);
+  const gp = prompts.find(p => p.key === "dropdown_blanks_explanation");
+  const def = "Explain this fill-in-the-blank. State the correct answer, explain each option. Format with HTML.\n\nBlank: {{BLANK_NUMBER}}\nCorrect: {{CORRECT_ANSWER}}\nOptions: {{OPTIONS}}\n\nPassage:\n{{PASSAGE}}";
+  let prompt = gp?.template || def;
+  prompt = prompt.replaceAll("{{BLANK_NUMBER}}", String(bIdx + 1));
+  prompt = prompt.replaceAll("{{USER_ANSWER}}", "Not answered");
+  prompt = prompt.replaceAll("{{CORRECT_ANSWER}}", blank.correctAnswer);
+  prompt = prompt.replaceAll("{{OPTIONS}}", blank.options.join(", "));
+  prompt = prompt.replaceAll("{{PASSAGE}}", passage || "No passage");
+  return await callGemini(aiConfig, prompt);
+}
+
+Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
   try {
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    if (user?.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
 
-    // Fetch AI config
-    const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
+    const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: "default" });
     const aiConfig = aiConfigs[0];
-    if (!aiConfig?.api_key || !aiConfig?.model_name) {
-      return Response.json({ error: 'AI API config not found' }, { status: 400 });
-    }
+    if (!aiConfig?.api_key) return Response.json({ error: "AI config not found" }, { status: 400 });
 
-    // Fetch global prompts
-    const globalPrompts = await base44.asServiceRole.entities.AIPrompt.list();
+    const prompts = await base44.asServiceRole.entities.AIPrompt.list();
+    const allQuizzes = await base44.asServiceRole.entities.Quiz.filter({ status: "published" });
 
-    // Fetch all published quizzes
-    const allQuizzes = await base44.asServiceRole.entities.Quiz.filter({ status: 'published' });
-
-    const stats = { quizzesProcessed: 0, explanationsGenerated: 0, tipsGenerated: 0, skipped: 0, errors: [] };
+    const stats = { processed: 0, explanations: 0, tips: 0, skipped: 0, errors: [] };
 
     for (const quiz of allQuizzes) {
-      const needsExplanations = quiz.ai_explanation_enabled !== false;
-      const needsTips = quiz.allow_tips === true;
+      const wantExpl = quiz.ai_explanation_enabled !== false;
+      const wantTips = quiz.allow_tips === true;
+      if ((!wantExpl && !wantTips) || !quiz.questions?.length) { stats.skipped++; continue; }
 
-      if (!needsExplanations && !needsTips) {
-        stats.skipped++;
-        continue;
-      }
+      let changed = false;
+      const qs = JSON.parse(JSON.stringify(quiz.questions));
 
-      if (!quiz.questions || quiz.questions.length === 0) {
-        stats.skipped++;
-        continue;
-      }
-
-      let updated = false;
-      const questions = JSON.parse(JSON.stringify(quiz.questions));
-
-      for (let qIdx = 0; qIdx < questions.length; qIdx++) {
-        const q = questions[qIdx];
-
+      for (let qi = 0; qi < qs.length; qi++) {
+        const q = qs[qi];
         try {
-          if (q.type === 'reading_comprehension') {
-            for (let cIdx = 0; cIdx < (q.comprehensionQuestions || []).length; cIdx++) {
-              const cq = q.comprehensionQuestions[cIdx];
-              if (needsExplanations && !cq.ai_data?.explanation) {
-                const result = await generateRCExplanation(aiConfig, globalPrompts, q, cq);
-                if (result) {
-                  questions[qIdx].comprehensionQuestions[cIdx] = { ...cq, ai_data: { ...cq.ai_data, explanation: result } };
-                  updated = true;
-                  stats.explanationsGenerated++;
-                }
+          if (q.type === "reading_comprehension") {
+            for (let ci = 0; ci < (q.comprehensionQuestions || []).length; ci++) {
+              const cq = q.comprehensionQuestions[ci];
+              if (wantExpl && !cq.ai_data?.explanation) {
+                const r = await genRCExplanation(aiConfig, prompts, q, cq);
+                if (r) { qs[qi].comprehensionQuestions[ci] = { ...cq, ai_data: { ...cq.ai_data, explanation: r } }; changed = true; stats.explanations++; }
               }
-              if (needsTips && !cq.ai_data?.helper_tip) {
-                const result = await generateRCTip(aiConfig, globalPrompts, q, cq);
-                if (result) {
-                  questions[qIdx].comprehensionQuestions[cIdx] = { ...questions[qIdx].comprehensionQuestions[cIdx], ai_data: { ...questions[qIdx].comprehensionQuestions[cIdx].ai_data, helper_tip: result } };
-                  updated = true;
-                  stats.tipsGenerated++;
-                }
+              if (wantTips && !cq.ai_data?.helper_tip) {
+                const r = await genRCTip(aiConfig, prompts, q, cq);
+                if (r) { qs[qi].comprehensionQuestions[ci] = { ...qs[qi].comprehensionQuestions[ci], ai_data: { ...qs[qi].comprehensionQuestions[ci].ai_data, helper_tip: r } }; changed = true; stats.tips++; }
               }
             }
-          } else if (q.type === 'multiple_choice') {
-            if (needsExplanations && !q.ai_data?.explanation) {
-              const result = await generateMCExplanation(aiConfig, q);
-              if (result) { questions[qIdx] = { ...q, ai_data: { ...q.ai_data, explanation: result } }; updated = true; stats.explanationsGenerated++; }
+          } else if (q.type === "multiple_choice") {
+            if (wantExpl && !q.ai_data?.explanation) {
+              const r = await genSimpleExplanation(aiConfig, "Year 6 teacher. Explain this MC question. State correct answer, explain each option. HTML format.\n\nQuestion: " + stripHtml(q.question) + "\nOptions: " + (q.options || []).join(", ") + "\nCorrect: " + q.correctAnswer);
+              if (r) { qs[qi] = { ...q, ai_data: { ...q.ai_data, explanation: r } }; changed = true; stats.explanations++; }
             }
-            if (needsTips && !q.ai_data?.helper_tip) {
-              const result = await generateMCTip(aiConfig, q);
-              if (result) { questions[qIdx] = { ...questions[qIdx], ai_data: { ...questions[qIdx].ai_data, helper_tip: result } }; updated = true; stats.tipsGenerated++; }
+            if (wantTips && !q.ai_data?.helper_tip) {
+              const r = await genSimpleTip(aiConfig, "Year 6 teacher. Give a hint for this MC question. Do NOT reveal the answer. HTML format.\n\nQuestion: " + stripHtml(q.question) + "\nOptions: " + (q.options || []).join(", "));
+              if (r) { qs[qi] = { ...qs[qi], ai_data: { ...qs[qi].ai_data, helper_tip: r } }; changed = true; stats.tips++; }
             }
-          } else if (q.type === 'drag_drop_single' || q.type === 'drag_drop_dual') {
-            for (let zIdx = 0; zIdx < (q.dropZones || []).length; zIdx++) {
-              const zone = q.dropZones[zIdx];
-              if (needsExplanations && !zone.ai_data?.explanation) {
-                const result = await generateDropZoneExplanation(aiConfig, q, zone);
-                if (result) { questions[qIdx].dropZones[zIdx] = { ...zone, ai_data: { ...zone.ai_data, explanation: { advice: result } } }; updated = true; stats.explanationsGenerated++; }
+          } else if (q.type === "drag_drop_single" || q.type === "drag_drop_dual") {
+            const pc = getPassageContext(q);
+            for (let zi = 0; zi < (q.dropZones || []).length; zi++) {
+              const z = q.dropZones[zi];
+              if (wantExpl && !z.ai_data?.explanation) {
+                const t = await callGemini(aiConfig, "Year 6 teacher. Explain drag-and-drop answer. State correct answer for \"" + z.label + "\". Explain why. HTML format." + pc + "\n\nGap: " + z.label + "\nCorrect: " + z.correctAnswer);
+                if (t) { qs[qi].dropZones[zi] = { ...z, ai_data: { ...z.ai_data, explanation: { advice: t } } }; changed = true; stats.explanations++; }
               }
-              if (needsTips && !zone.ai_data?.helper_tip) {
-                const result = await generateDropZoneTip(aiConfig, q, zone);
-                if (result) { questions[qIdx].dropZones[zIdx] = { ...questions[qIdx].dropZones[zIdx], ai_data: { ...questions[qIdx].dropZones[zIdx].ai_data, helper_tip: { advice: result } } }; updated = true; stats.tipsGenerated++; }
-              }
-            }
-          } else if (q.type === 'inline_dropdown_separate' || q.type === 'inline_dropdown_same') {
-            for (let bIdx = 0; bIdx < (q.blanks || []).length; bIdx++) {
-              const blank = q.blanks[bIdx];
-              if (needsExplanations && !blank.ai_data?.explanation) {
-                const result = await generateBlankExplanation(aiConfig, globalPrompts, q, blank, bIdx);
-                if (result) { questions[qIdx].blanks[bIdx] = { ...blank, ai_data: { ...blank.ai_data, explanation: { advice: result } } }; updated = true; stats.explanationsGenerated++; }
-              }
-              if (needsTips && !blank.ai_data?.helper_tip) {
-                const result = await generateBlankTip(aiConfig, q, blank, bIdx);
-                if (result) { questions[qIdx].blanks[bIdx] = { ...questions[qIdx].blanks[bIdx], ai_data: { ...questions[qIdx].blanks[bIdx].ai_data, helper_tip: { advice: result } } }; updated = true; stats.tipsGenerated++; }
+              if (wantTips && !z.ai_data?.helper_tip) {
+                const t = await callGemini(aiConfig, "Year 6 teacher. Give hint for drag-drop. Do NOT reveal answer. HTML format." + pc + "\n\nGap: " + z.label + "\nOptions: " + (q.options || []).join(", "));
+                if (t) { qs[qi].dropZones[zi] = { ...qs[qi].dropZones[zi], ai_data: { ...qs[qi].dropZones[zi].ai_data, helper_tip: { advice: t } } }; changed = true; stats.tips++; }
               }
             }
-          } else if (q.type === 'matching_list_dual') {
-            for (let mIdx = 0; mIdx < (q.matchingQuestions || []).length; mIdx++) {
-              const mq = q.matchingQuestions[mIdx];
-              if (needsExplanations && !mq.ai_data?.explanation) {
-                const result = await generateMatchingExplanation(aiConfig, q, mq);
-                if (result) { questions[qIdx].matchingQuestions[mIdx] = { ...mq, ai_data: { ...mq.ai_data, explanation: { advice: result } } }; updated = true; stats.explanationsGenerated++; }
+          } else if (q.type === "inline_dropdown_separate" || q.type === "inline_dropdown_same") {
+            for (let bi = 0; bi < (q.blanks || []).length; bi++) {
+              const b = q.blanks[bi];
+              if (wantExpl && !b.ai_data?.explanation) {
+                const t = await genBlankExplanation(aiConfig, prompts, q, b, bi);
+                if (t) { qs[qi].blanks[bi] = { ...b, ai_data: { ...b.ai_data, explanation: { advice: t } } }; changed = true; stats.explanations++; }
               }
-              if (needsTips && !mq.ai_data?.helper_tip) {
-                const result = await generateMatchingTip(aiConfig, q, mq);
-                if (result) { questions[qIdx].matchingQuestions[mIdx] = { ...questions[qIdx].matchingQuestions[mIdx], ai_data: { ...questions[qIdx].matchingQuestions[mIdx].ai_data, helper_tip: { advice: result } } }; updated = true; stats.tipsGenerated++; }
+              if (wantTips && !b.ai_data?.helper_tip) {
+                let passage = "";
+                if (q.textWithBlanks) passage = stripHtml(q.textWithBlanks);
+                else if (q.passage) passage = stripHtml(q.passage);
+                const t = await callGemini(aiConfig, "Year 6 teacher. Give hint for fill-in-blank. Do NOT reveal answer. HTML format.\n\nBlank " + (bi+1) + "\nOptions: " + b.options.join(", ") + "\n\nPassage:\n" + (passage || "No passage"));
+                if (t) { qs[qi].blanks[bi] = { ...qs[qi].blanks[bi], ai_data: { ...qs[qi].blanks[bi].ai_data, helper_tip: { advice: t } } }; changed = true; stats.tips++; }
+              }
+            }
+          } else if (q.type === "matching_list_dual") {
+            const pc = getPassageContext(q);
+            for (let mi = 0; mi < (q.matchingQuestions || []).length; mi++) {
+              const mq = q.matchingQuestions[mi];
+              if (wantExpl && !mq.ai_data?.explanation) {
+                const t = await callGemini(aiConfig, "Year 6 teacher. Explain matching answer. State correct match. Explain why. HTML format." + pc + "\n\nQuestion: " + mq.question + "\nCorrect: " + mq.correctAnswer);
+                if (t) { qs[qi].matchingQuestions[mi] = { ...mq, ai_data: { ...mq.ai_data, explanation: { advice: t } } }; changed = true; stats.explanations++; }
+              }
+              if (wantTips && !mq.ai_data?.helper_tip) {
+                const t = await callGemini(aiConfig, "Year 6 teacher. Give hint for matching question. Do NOT reveal answer. HTML format." + pc + "\n\nQuestion: " + mq.question);
+                if (t) { qs[qi].matchingQuestions[mi] = { ...qs[qi].matchingQuestions[mi], ai_data: { ...qs[qi].matchingQuestions[mi].ai_data, helper_tip: { advice: t } } }; changed = true; stats.tips++; }
               }
             }
           }
         } catch (err) {
-          stats.errors.push(`Quiz ${quiz.id} Q${qIdx + 1}: ${err.message}`);
+          stats.errors.push("Quiz " + quiz.id + " Q" + (qi+1) + ": " + err.message);
         }
       }
 
-      if (updated) {
-        await base44.asServiceRole.entities.Quiz.update(quiz.id, { questions });
-        stats.quizzesProcessed++;
+      if (changed) {
+        await base44.asServiceRole.entities.Quiz.update(quiz.id, { questions: qs });
+        stats.processed++;
       }
     }
 
@@ -128,277 +196,3 @@ Deno.serve(async (req) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
-
-// ========== Gemini API via fetch ==========
-async function callGemini(aiConfig, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${aiConfig.model_name}:generateContent?key=${aiConfig.api_key}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemini API error: ${res.status} ${errText}`);
-  }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
-
-// ========== EXPLANATION GENERATORS ==========
-
-async function generateRCExplanation(aiConfig, globalPrompts, q, cq) {
-  const passagesForPrompt = q.passages?.length > 0
-    ? q.passages.map(p => ({ id: p.id, title: p.title, content: p.content }))
-    : [{ id: 'main', title: 'Passage', content: q.passage }];
-  const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
-
-  const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension_explanation');
-  const defaultPrompt = `You are a Year 6 teacher helping a student understand a reading comprehension question.
-Tone: Encouraging, simple, and direct. Do NOT start with conversational phrases.
-
-**CRITICAL RULES:**
-1. **Highlighting:** Locate ALL evidence. Wrap in: <mark class="bg-yellow-200 px-1 rounded">EVIDENCE</mark>.
-2. **Text Integrity:** Return ENTIRE passage text, preserving all HTML.
-3. **Advice:** State the correct answer first. Then explain EACH option individually.
-4. Return valid raw JSON only.
-
-Question: {{QUESTION}}
-Passage(s): {{PASSAGES}}
-Options: {{OPTIONS}}
-Correct Answer: {{CORRECT_ANSWER}}
-
-**OUTPUT FORMAT (JSON):**
-${passagesForPrompt.length > 1 ? `{
-  "advice": "HTML formatted advice",
-  "passages": [${passagesForPrompt.map(p => `{"passageId": "${p.id}", "highlightedContent": "Full passage with highlights"}`).join(', ')}]
-}` : `{
-  "advice": "HTML formatted advice",
-  "highlightedContent": "Full passage with highlights"
-}`}`;
-
-  let prompt = globalPrompt?.template || defaultPrompt;
-  prompt = prompt.replace(/\{\{QUESTION\}\}/g, cq.question?.replace(/<[^>]*>/g, '') || '');
-  prompt = prompt.replace('{{PASSAGES}}', passagesList);
-  prompt = prompt.replace('{{OPTIONS}}', cq.options?.join(', ') || '');
-  prompt = prompt.replace('{{CORRECT_ANSWER}}', cq.correctAnswer || '');
-
-  const text = await callGemini(aiConfig, prompt);
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    const parsed = JSON.parse(jsonMatch[0]);
-    let cleanedPassages = {};
-    if (parsed.passages) {
-      if (Array.isArray(parsed.passages)) {
-        parsed.passages.forEach(p => { if (p.passageId && p.highlightedContent) cleanedPassages[p.passageId] = p.highlightedContent; });
-      } else {
-        Object.keys(parsed.passages).forEach(key => { cleanedPassages[key] = parsed.passages[key]; });
-      }
-    } else if (parsed.highlightedContent) {
-      cleanedPassages[passagesForPrompt[0]?.id || 'main'] = parsed.highlightedContent;
-    }
-    return { advice: parsed.advice, passages: cleanedPassages };
-  }
-  return null;
-}
-
-async function generateRCTip(aiConfig, globalPrompts, q, cq) {
-  const passagesForPrompt = q.passages?.length > 0
-    ? q.passages.map(p => ({ id: p.id, title: p.title, content: p.content }))
-    : [{ id: 'main', title: 'Passage', content: q.passage }];
-  const passagesList = passagesForPrompt.map(p => `[${p.id}] ${p.title}:\n${p.content}`).join('\n\n');
-
-  const globalPrompt = globalPrompts.find(p => p.key === 'reading_comprehension_tip');
-  const defaultPrompt = `You are a Year 6 teacher giving a helpful hint for a reading comprehension question.
-Do NOT reveal the answer. Guide them to find it themselves.
-Highlight relevant parts using <mark class="bg-yellow-200 px-1 rounded">...</mark>.
-Return valid JSON only.
-
-Question: ${cq.question?.replace(/<[^>]*>/g, '')}
-Passage(s): ${passagesList}
-Options: ${cq.options?.join(', ')}
-
-OUTPUT FORMAT (JSON):
-${passagesForPrompt.length > 1 ? `{
-  "advice": "HTML formatted hint",
-  "passages": [${passagesForPrompt.map(p => `{"passageId": "${p.id}", "highlightedContent": "Full passage with highlights"}`).join(', ')}]
-}` : `{
-  "advice": "HTML formatted hint",
-  "highlightedContent": "Full passage with highlights"
-}`}`;
-
-  const prompt = globalPrompt?.template || defaultPrompt;
-  const text = await callGemini(aiConfig, prompt);
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    const parsed = JSON.parse(jsonMatch[0]);
-    let cleanedPassages = {};
-    if (parsed.passages) {
-      if (Array.isArray(parsed.passages)) {
-        parsed.passages.forEach(p => { if (p.passageId && p.highlightedContent) cleanedPassages[p.passageId] = p.highlightedContent; });
-      } else {
-        Object.keys(parsed.passages).forEach(key => { cleanedPassages[key] = parsed.passages[key]; });
-      }
-    } else if (parsed.highlightedContent) {
-      cleanedPassages[passagesForPrompt[0]?.id || 'main'] = parsed.highlightedContent;
-    }
-    return { advice: parsed.advice, passages: cleanedPassages };
-  }
-  return null;
-}
-
-async function generateMCExplanation(aiConfig, q) {
-  const prompt = `You are a Year 6 teacher helping a student understand a multiple choice question.
-Do NOT start with conversational phrases.
-State the correct answer first, then explain why each option is correct or incorrect.
-Format using HTML tags: <p>, <strong>, <br>.
-
-Question: ${q.question?.replace(/<[^>]*>/g, '')}
-Options: ${q.options?.join(', ')}
-Correct Answer: ${q.correctAnswer}
-
-Provide HTML formatted explanation:`;
-
-  const text = await callGemini(aiConfig, prompt);
-  return { advice: text };
-}
-
-async function generateMCTip(aiConfig, q) {
-  const prompt = `You are a Year 6 teacher giving a helpful hint for a multiple choice question.
-Do NOT reveal the answer. Guide them to think about it.
-Format using HTML: <p>, <strong>, <br>.
-
-Question: ${q.question?.replace(/<[^>]*>/g, '')}
-Options: ${q.options?.join(', ')}
-
-Provide HTML formatted hint (do NOT reveal the answer):`;
-
-  const text = await callGemini(aiConfig, prompt);
-  return { advice: text };
-}
-
-async function generateDropZoneExplanation(aiConfig, q, zone) {
-  let passageContext = '';
-  if (q.passages?.length > 0) passageContext = '\n\nPassages:\n' + q.passages.map(p => `${p.title}:\n${p.content}`).join('\n\n');
-  else if (q.passage) passageContext = '\n\nPassage:\n' + q.passage;
-
-  const prompt = `You are a Year 6 teacher explaining a drag-and-drop answer.
-Do NOT start with conversational phrases.
-1. State the correct answer for "${zone.label}".
-2. Explain why the correct answer fits${passageContext ? ', quoting from the passage' : ''}.
-Format using HTML: <p>, <strong>, <br>.
-
-Gap Label: ${zone.label}
-Correct Answer: ${zone.correctAnswer}${passageContext}
-
-Provide HTML formatted explanation:`;
-
-  return await callGemini(aiConfig, prompt);
-}
-
-async function generateDropZoneTip(aiConfig, q, zone) {
-  let passageContext = '';
-  if (q.passages?.length > 0) passageContext = '\n\nPassages:\n' + q.passages.map(p => `${p.title}:\n${p.content}`).join('\n\n');
-  else if (q.passage) passageContext = '\n\nPassage:\n' + q.passage;
-
-  const prompt = `You are a Year 6 teacher giving a hint for a drag-and-drop question.
-Do NOT reveal the answer. Guide the student.
-Format using HTML: <p>, <strong>, <br>.
-
-Gap Label: ${zone.label}
-Available Options: ${q.options?.join(', ')}${passageContext}
-
-Provide HTML formatted hint (do NOT reveal the answer):`;
-
-  return await callGemini(aiConfig, prompt);
-}
-
-async function generateBlankExplanation(aiConfig, globalPrompts, q, blank, blankIndex) {
-  let passageText = '';
-  if (q.textWithBlanks) passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '');
-  else if (q.passages?.length > 0) passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
-  else if (q.passage) passageText = q.passage?.replace(/<[^>]*>/g, '');
-
-  const globalPrompt = globalPrompts.find(p => p.key === 'dropdown_blanks_explanation');
-  const defaultPrompt = `You are a Year 6 teacher helping a student understand a fill-in-the-blank question.
-Do NOT start with conversational phrases.
-1. State the correct answer.
-2. Explain EACH option individually.
-Format using HTML: <p>, <strong>, <br>.
-
-Blank Number: {{BLANK_NUMBER}}
-Correct Answer: {{CORRECT_ANSWER}}
-Options: {{OPTIONS}}
-
-Passage:
-{{PASSAGE}}
-
-Provide HTML formatted explanation:`;
-
-  let prompt = globalPrompt?.template || defaultPrompt;
-  prompt = prompt.replaceAll('{{BLANK_NUMBER}}', (blankIndex + 1).toString());
-  prompt = prompt.replaceAll('{{USER_ANSWER}}', 'Not answered');
-  prompt = prompt.replaceAll('{{CORRECT_ANSWER}}', blank.correctAnswer);
-  prompt = prompt.replaceAll('{{OPTIONS}}', blank.options.join(', '));
-  prompt = prompt.replaceAll('{{PASSAGE}}', passageText || 'No passage provided');
-
-  return await callGemini(aiConfig, prompt);
-}
-
-async function generateBlankTip(aiConfig, q, blank, blankIndex) {
-  let passageText = '';
-  if (q.textWithBlanks) passageText = q.textWithBlanks?.replace(/<[^>]*>/g, '');
-  else if (q.passages?.length > 0) passageText = q.passages.map(p => `${p.title}:\n${p.content?.replace(/<[^>]*>/g, '')}`).join('\n\n');
-  else if (q.passage) passageText = q.passage?.replace(/<[^>]*>/g, '');
-
-  const prompt = `You are a Year 6 teacher giving a hint for a fill-in-the-blank question.
-Do NOT reveal the answer. Guide the student.
-Format using HTML: <p>, <strong>, <br>.
-
-Blank Number: ${blankIndex + 1}
-Options: ${blank.options.join(', ')}
-
-Passage:
-${passageText || 'No passage provided'}
-
-Provide HTML formatted hint (do NOT reveal the answer):`;
-
-  return await callGemini(aiConfig, prompt);
-}
-
-async function generateMatchingExplanation(aiConfig, q, mq) {
-  let passageContext = '';
-  if (q.passages?.length > 0) passageContext = '\n\nPassages:\n' + q.passages.map(p => `${p.title}:\n${p.content}`).join('\n\n');
-  else if (q.passage) passageContext = '\n\nPassage:\n' + q.passage;
-
-  const prompt = `You are a Year 6 teacher explaining a matching question answer.
-Do NOT start with conversational phrases.
-1. State the correct match.
-2. Explain why it is the correct match${passageContext ? ', quoting from the passage' : ''}.
-Format using HTML: <p>, <strong>, <br>.
-
-Question: ${mq.question}
-Correct Answer: ${mq.correctAnswer}${passageContext}
-
-Provide HTML formatted explanation:`;
-
-  return await callGemini(aiConfig, prompt);
-}
-
-async function generateMatchingTip(aiConfig, q, mq) {
-  let passageContext = '';
-  if (q.passages?.length > 0) passageContext = '\n\nPassages:\n' + q.passages.map(p => `${p.title}:\n${p.content}`).join('\n\n');
-  else if (q.passage) passageContext = '\n\nPassage:\n' + q.passage;
-
-  const prompt = `You are a Year 6 teacher giving a hint for a matching question.
-Do NOT reveal the answer. Guide the student.
-Format using HTML: <p>, <strong>, <br>.
-
-Question: ${mq.question}${passageContext}
-
-Provide HTML formatted hint (do NOT reveal the answer):`;
-
-  return await callGemini(aiConfig, prompt);
-}
