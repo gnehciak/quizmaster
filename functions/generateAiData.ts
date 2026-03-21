@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai';
+import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.15.0';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
