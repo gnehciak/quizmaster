@@ -290,6 +290,16 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, stats });
   } catch (error) {
     console.error('generateQuizAiData error:', error);
+    // Try to update log record with error if it was created
+    try {
+      if (typeof logRecord !== 'undefined') {
+        await base44.asServiceRole.entities.AIGenerationLog.update(logRecord.id, {
+          run_finished_at: new Date().toISOString(),
+          status: 'error',
+          error: error.message
+        });
+      }
+    } catch (_) {}
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
