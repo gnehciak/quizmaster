@@ -1,6 +1,6 @@
 // AI Quiz Data Pre-Generator v2
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai';
+
 
 Deno.serve(async (req) => {
   console.log('generateQuizAiData called');
