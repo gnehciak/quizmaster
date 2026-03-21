@@ -515,7 +515,7 @@ export default function DragDropQuestion({
               <span className="text-sm font-medium">Scrolling down</span>
               <ChevronDown className="w-4 h-4 animate-bounce" />
             </div>
-          </motion.div>
+          </div>
         )}
         {scrollDirection === 'up' && (
           <motion.div
@@ -529,7 +529,7 @@ export default function DragDropQuestion({
               <span className="text-sm font-medium">Scrolling up</span>
               <ChevronUp className="w-4 h-4 animate-bounce" />
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
