@@ -2,9 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
   console.log('generateQuizAiData called');
-  const base44 = createClientFromRequest(req);
-
   try {
+    const base44 = createClientFromRequest(req);
     // Get AI config
     const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
     const aiConfig = aiConfigs[0];
