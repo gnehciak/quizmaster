@@ -312,28 +312,10 @@ function sleep(ms) {
 
 // ─── Helper: call Gemini ────────────────────────────────────────────────────────
 async function callGemini(apiKey, modelName, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }]
-  };
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept-Encoding': 'identity',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify(body),
-    // @ts-ignore - Deno-specific option to disable compression
-    compress: false,
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini API error ${res.status}: ${err}`);
-  }
-  const text = await res.text();
-  const data = JSON.parse(text);
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: modelName });
+  const result = await model.generateContent(prompt);
+  return result.response.text();
 }
 
 // ─── Build passage context ──────────────────────────────────────────────────────
