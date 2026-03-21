@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
+  console.log('generateQuizAiData called');
   const base44 = createClientFromRequest(req);
 
   // Allow admin users OR scheduled/service-role calls (no user header)
