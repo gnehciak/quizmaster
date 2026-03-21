@@ -24,7 +24,12 @@ import {
   Save,
   Upload,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
