@@ -11,8 +11,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'SDK init failed: ' + initErr.message }, { status: 500 });
   }
   try {
-    // Get AI config
+    console.log('Fetching AI config...');
     const aiConfigs = await base44.asServiceRole.entities.AIAPIConfig.filter({ key: 'default' });
+    console.log('AI configs fetched:', aiConfigs?.length);
     const aiConfig = aiConfigs[0];
     if (!aiConfig?.api_key || !aiConfig?.model_name) {
       return Response.json({ error: 'AI config not set up' }, { status: 500 });
