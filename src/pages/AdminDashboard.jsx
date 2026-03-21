@@ -67,6 +67,8 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.QuizAttempt.list('-created_date', 100),
   });
 
+  const [isRunningAI, setIsRunningAI] = useState(false);
+
   const { data: aiLogs = [], isLoading: logsLoading, refetch: refetchLogs } = useQuery({
     queryKey: ['aiGenerationLogs'],
     queryFn: () => base44.entities.AIGenerationLog.list('-created_date', 10),
