@@ -381,8 +381,11 @@ export default function AdminDashboard() {
                     setIsRunningAI(true);
                     try {
                       await base44.functions.invoke('generateQuizAiData', {});
+                      // Poll logs a few times to show the running entry
                       await refetchLogs();
-                    } finally {
+                      setTimeout(() => refetchLogs(), 5000);
+                      setTimeout(() => { refetchLogs(); setIsRunningAI(false); }, 15000);
+                    } catch(e) {
                       setIsRunningAI(false);
                     }
                   }}
