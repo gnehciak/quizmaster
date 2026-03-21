@@ -369,9 +369,29 @@ export default function AdminDashboard() {
                 <Sparkles className="w-5 h-5 text-indigo-600" />
                 AI Tips & Explanations Generation Log
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => refetchLogs()} title="Refresh">
-                <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isRunningAI}
+                  onClick={async () => {
+                    setIsRunningAI(true);
+                    try {
+                      await base44.functions.invoke('generateQuizAiData', {});
+                      await refetchLogs();
+                    } finally {
+                      setIsRunningAI(false);
+                    }
+                  }}
+                >
+                  {isRunningAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isRunningAI ? 'Running...' : 'Run Now'}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => refetchLogs()} title="Refresh">
+                  <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {aiLogs.length === 0 ? (
