@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, LayoutGrid, List, ListOrdered, Upload, Download, Info, FolderEdit, RefreshCw } from 'lucide-react';
+import { Plus, Search, BookOpen, Sparkles, ChevronLeft, BarChart3, LayoutGrid, List, ListOrdered, Upload, Download, Info, FolderEdit, RefreshCw, ScanSearch } from 'lucide-react';
 import QuizCard from '@/components/quiz/QuizCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,7 @@ export default function ManageQuizzes() {
   const [importCategorySearch, setImportCategorySearch] = useState('');
   const [importCategoryDropdownOpen, setImportCategoryDropdownOpen] = useState(false);
   const [pastedJson, setPastedJson] = useState('');
+  const [scanning, setScanning] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -127,12 +128,24 @@ export default function ManageQuizzes() {
   const { data: allCourses = [] } = useQuery({
     queryKey: ['allCoursesLite'],
     queryFn: () => base44.entities.Course.list(),
-    select: (data) => data.map(c => ({
-      id: c.id,
-      title: c.title,
-      quiz_ids: c.quiz_ids,
-      content_blocks: c.content_blocks?.filter(b => b.type === 'quiz').map(b => ({ type: b.type, quiz_id: b.quiz_id })),
-    })),
+    select: (data) => data.map(c => {
+      // Recursively collect quiz blocks from content_blocks (including inside topics)
+      const collectQuizBlocks = (blocks) => {
+        const result = [];
+        if (!blocks) return result;
+        for (const b of blocks) {
+          if (b.type === 'quiz') result.push({ type: b.type, quiz_id: b.quiz_id });
+          if (b.children) result.push(...collectQuizBlocks(b.children));
+        }
+        return result;
+      };
+      return {
+        id: c.id,
+        title: c.title,
+        quiz_ids: c.quiz_ids,
+        content_blocks: collectQuizBlocks(c.content_blocks),
+      };
+    }),
     enabled: !!user,
   });
 
@@ -367,6 +380,7 @@ export default function ManageQuizzes() {
                 size="icon"
                 onClick={() => {
                   queryClient.invalidateQueries({ queryKey: ['quizList'] });
+                  queryClient.invalidateQueries({ queryKey: ['allQuizzesCounts'] });
                   queryClient.invalidateQueries({ queryKey: ['allQuizAttemptsLite'] });
                   queryClient.invalidateQueries({ queryKey: ['allCoursesLite'] });
                   queryClient.invalidateQueries({ queryKey: ['quizCategories'] });
@@ -375,6 +389,28 @@ export default function ManageQuizzes() {
                 title="Refresh quizzes"
               >
                 <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={scanning}
+                onClick={async () => {
+                  setScanning(true);
+                  try {
+                    await queryClient.refetchQueries({ queryKey: ['allCoursesLite'] });
+                    await queryClient.refetchQueries({ queryKey: ['quizList'] });
+                    await queryClient.refetchQueries({ queryKey: ['allQuizzesCounts'] });
+                    toast.success('Quiz usage scan complete!');
+                  } catch (e) {
+                    toast.error('Scan failed: ' + e.message);
+                  } finally {
+                    setScanning(false);
+                  }
+                }}
+                title="Scan which quizzes are used in which courses"
+              >
+                {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ScanSearch className="w-4 h-4" />}
+                {scanning ? 'Scanning...' : 'Scan Usage'}
               </Button>
               <Link to={createPageUrl('QuizAnalytics')}>
                 <Button variant="outline" className="gap-2">
