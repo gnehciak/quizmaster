@@ -12,7 +12,8 @@ import {
   Loader2,
   Eye,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Download
 } from 'lucide-react';
 import {
   Select,
@@ -153,6 +154,24 @@ export default function UserManagement() {
                 <p className="text-sm text-slate-500">{sortedUsers.length} total users</p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                const json = JSON.stringify(users, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'users.json';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              disabled={!users.length}
+            >
+              <Download className="w-4 h-4" />
+              Export JSON
+            </Button>
           </div>
         </div>
       </div>
